@@ -3,8 +3,6 @@ package org.team3128.common.drive.routemaker;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ctre.phoenix.motion.TrajectoryPoint.TrajectoryDuration;
-
 import org.team3128.common.drive.Odometer;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.util.Convert;
@@ -42,9 +40,8 @@ import edu.wpi.first.wpilibj.Timer;
  * 
  */
 public class Routemaker {
-    final public static TrajectoryDuration duration = TrajectoryDuration.Trajectory_Duration_30ms;
-    final public static double durationSec = duration.value / 1000.0;
-    final public static int durationMs = duration.value;
+    final public static int durationMs = 30;
+    final public static double durationSec = durationMs / 1000.0;
 
     /**
      * How many parincs would fit in a single meter

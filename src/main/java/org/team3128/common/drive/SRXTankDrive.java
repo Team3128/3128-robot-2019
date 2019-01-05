@@ -501,7 +501,7 @@ public class SRXTankDrive implements ITankDrive
 			this.smoothness = smoothness;
 
 			trajPoint.profileSlotSelect0 = 0;
-			trajPoint.timeDur = Routemaker.duration;
+			trajPoint.timeDur = Routemaker.durationMs;
 			trajPoint.zeroPos = false;
 			trajPoint.isLastPoint = false;
 
@@ -608,7 +608,7 @@ public class SRXTankDrive implements ITankDrive
 
 			TrajectoryPoint point = new TrajectoryPoint();
 			point.profileSlotSelect0 = 0;
-			point.timeDur = Routemaker.duration;
+			point.timeDur = Routemaker.durationMs;
 			point.zeroPos = false;
 			point.isLastPoint = false;
 				

@@ -56,7 +56,7 @@ public abstract class NarwhalRobot extends RobotBase {
 	 * 
 	 * This function will called multiple times.
 	 */
-	protected abstract void constructAutoPrograms();
+	protected void constructAutoPrograms() {}
     
     /**
     * Initialization code for disabled mode should go here.
@@ -424,6 +424,16 @@ public abstract class NarwhalRobot extends RobotBase {
 				return;
 			}
     	}
+    }
+
+    /**
+     * Add a listener manager to the list of ones to be ticked in teleopPeriodic().
+     * @param manager
+     */
+    public void addListenerManager(ListenerManager manager)
+    {
+    	Assert.notNull(manager);
+    	listenerManagers.add(manager);
     }
 
     //works around an annoying (though understandable) WPILib issue:
