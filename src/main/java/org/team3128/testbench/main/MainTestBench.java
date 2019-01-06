@@ -39,6 +39,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -115,6 +116,10 @@ public class MainTestBench extends NarwhalRobot {
     @Override
     protected void autonomousInit() {
         
+    }
+
+    public static void main(String[] args) {
+        RobotBase.startRobot(MainTestBench::new);
     }
 
 }

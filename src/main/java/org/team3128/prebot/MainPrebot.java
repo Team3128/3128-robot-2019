@@ -1,6 +1,7 @@
 package org.team3128.prebot;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import org.team3128.common.NarwhalRobot;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
@@ -103,14 +104,41 @@ public class MainPrebot extends NarwhalRobot {
 		
     }
 =======
+=======
+import org.team3128.common.NarwhalRobot;
+
+>>>>>>> 8ba96472eeb5424e2a419b079d021d2d6cfbe712
 import edu.wpi.first.wpilibj.RobotBase;
 
-public final class MainPrebot {
-  private MainPrebot() {
-  }
+public class MainPrebot extends NarwhalRobot {
+	@Override
+	protected void constructHardware() {
+        
+    }
+    
+    @Override
+    protected void constructAutoPrograms() {
 
+    }
+
+	@Override
+	protected void setupListeners() {
+		
+	}
+    
+    @Override
+    protected void updateDashboard() {
+        
+    }
+
+<<<<<<< HEAD
   public static void main(String... args) {
     RobotBase.startRobot(PrebotRobot::new);
   }
 >>>>>>> d08c47aec9817089955b131e5bee31e258ef1183
+=======
+    public static void main(String... args) {
+        RobotBase.startRobot(MainPrebot::new);
+    }
+>>>>>>> 8ba96472eeb5424e2a419b079d021d2d6cfbe712
 }
