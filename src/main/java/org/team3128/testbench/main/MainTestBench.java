@@ -1,6 +1,5 @@
 package org.team3128.testbench.main;
 
-<<<<<<< HEAD
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import org.team3128.common.NarwhalRobot;
@@ -10,7 +9,6 @@ import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.util.units.Length;
 
 import edu.wpi.first.wpilibj.Joystick;
-=======
 
 import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.SRXTankDrive;
@@ -48,7 +46,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
->>>>>>> d08c47aec9817089955b131e5bee31e258ef1183
 
 public class MainTestBench extends NarwhalRobot {
 
@@ -57,8 +54,6 @@ public class MainTestBench extends NarwhalRobot {
     public Joystick leftJoystick, rightJoystick;
     public double wheelCirc;
     public int lowGearMaxSpeed;
-    public SRXTankDrive drive;
-
     public SRXTankDrive drive;
 
     @Override

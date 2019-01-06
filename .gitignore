@@ -14,9 +14,5 @@
 hs_err_pid*
 
 build/
-<<<<<<< HEAD
-build/libs/3128-robot-2019.jar
-=======
 
 .gradle
->>>>>>> 8ba96472eeb5424e2a419b079d021d2d6cfbe712
