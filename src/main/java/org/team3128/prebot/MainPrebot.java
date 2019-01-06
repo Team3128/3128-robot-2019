@@ -1,5 +1,6 @@
 package org.team3128.prebot;
 
+<<<<<<< HEAD
 import org.team3128.common.NarwhalRobot;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
@@ -101,4 +102,15 @@ public class MainPrebot extends NarwhalRobot {
 		SmartDashboard.putNumber("Right Speed (nu)", rightDriveFront.getSelectedSensorVelocity(0));
 		
     }
+=======
+import edu.wpi.first.wpilibj.RobotBase;
+
+public final class MainPrebot {
+  private MainPrebot() {
+  }
+
+  public static void main(String... args) {
+    RobotBase.startRobot(PrebotRobot::new);
+  }
+>>>>>>> d08c47aec9817089955b131e5bee31e258ef1183
 }
