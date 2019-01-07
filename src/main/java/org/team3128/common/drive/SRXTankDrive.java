@@ -102,11 +102,6 @@ public class SRXTankDrive implements ITankDrive
 	private double gearRatio;
 
 	/**
-	 * Inversions for each side of the drive.
-	 */
-	private boolean leftInverted, rightInverted;
-
-	/**
 	 * The maxiumum measured speed of the drive motors, in native units
 	 * per 100ms, of the robot driving on the ground at 100% throttle
 	 */
@@ -187,8 +182,6 @@ public class SRXTankDrive implements ITankDrive
 		{
 			throw new IllegalArgumentException("Invalid gear ratio");
 		}
-
-		setReversed(false);
 	}
 
 	private void configureForTeleop()
@@ -258,16 +251,6 @@ public class SRXTankDrive implements ITankDrive
 		spdR = RobotMath.clampPosNeg1(joyY + joyX);
 		spdL = RobotMath.clampPosNeg1(joyY - joyX);
 
-		if (leftInverted)
-		{
-			spdL *= -1;
-		}
-
-		if (rightInverted)
-		{
-			spdR *= -1;
-		}
-
 		// Log.debug("SRXTankDrive", "x1: " + joyX + " throttle: " + throttle +
 		// " spdR: " + spdR + " spdL: " + spdL);
 
@@ -294,34 +277,6 @@ public class SRXTankDrive implements ITankDrive
 	}
 
 	/**
-	 * Set whether the drive is reversed (switch the side that is inverted). By
-	 * default, the right motors are inverted, and the left are not.
-	 * 
-	 */
-	public void setReversed(boolean reversed)
-	{
-		leftInverted = reversed;
-		rightInverted = !reversed;
-
-		// this affects closed-loop control only
-		rightMotors.setInverted(!reversed);
-		leftMotors.setInverted(reversed);
-	}
-
-	public void setReversedAutonomous(boolean reversed)
-	{
-		// this affects closed-loop control only
-		rightMotors.setInverted(!reversed);
-		leftMotors.setInverted(reversed);
-	}
-
-	public void setReversedTeleop(boolean reversed)
-	{
-		leftInverted = reversed;
-		rightInverted = !reversed;
-	}
-
-	/**
 	 * Drive by providing motor powers for each side.
 	 * 
 	 * @param powL
@@ -332,8 +287,8 @@ public class SRXTankDrive implements ITankDrive
 	public void tankDrive(double powL, double powR)
 	{
 		configureForTeleop();
-		leftMotors.set(ControlMode.PercentOutput, (leftInverted ? -1 : 1) * powL);
-		rightMotors.set(ControlMode.PercentOutput, (rightInverted ? -1 : 1) * powR);
+		leftMotors.set(ControlMode.PercentOutput, powL);
+		rightMotors.set(ControlMode.PercentOutput, powR);
 	}
 
 	public void clearEncoders()

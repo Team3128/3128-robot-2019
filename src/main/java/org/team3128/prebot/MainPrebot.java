@@ -41,11 +41,15 @@ public class MainPrebot extends NarwhalRobot {
 
     public double wheelDiameter;
 
+    public double maxLeftSpeed = 0;
+    public double maxRightSpeed = 0;
+
     @Override
 	protected void constructHardware() {
         rightDriveFront = new TalonSRX(0);
         rightDriveMiddle = new TalonSRX(1);
         rightDriveBack = new TalonSRX(2);
+
         leftDriveFront = new TalonSRX(3);
         leftDriveMiddle = new TalonSRX(4);
         leftDriveBack = new TalonSRX(5);
@@ -61,6 +65,10 @@ public class MainPrebot extends NarwhalRobot {
         wheelDiameter = 3.68 * Length.in;
         SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelDiameter * Math.PI, 1, 23.70*Length.in, 28.45*Length.in, 400);
         tankDrive = SRXTankDrive.getInstance();
+
+        leftDriveFront.setInverted(true);
+        leftDriveMiddle.setInverted(true);
+        leftDriveBack.setInverted(true);
         
         joystick = new Joystick(1);
 		lm = new ListenerManager(joystick);
@@ -82,7 +90,7 @@ public class MainPrebot extends NarwhalRobot {
 		lm.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");		
 
         lm.addMultiListener(() -> {
-			tankDrive.arcadeDrive(/*.5 * */lm.getAxis("MoveTurn"),
+			tankDrive.arcadeDrive(-0.5 * lm.getAxis("MoveTurn"),
 					lm.getAxis("MoveForwards"),
 					-1 * lm.getAxis("Throttle"),
 					true);		
@@ -92,14 +100,15 @@ public class MainPrebot extends NarwhalRobot {
     @Override
     protected void updateDashboard() {
         SmartDashboard.putNumber("Gyro Angle", RobotMath.normalizeAngle(gyro.getAngle()));
-        SmartDashboard.putNumber("Left Drive Current", leftDriveFront.getOutputCurrent());
-        SmartDashboard.putNumber("Right Drive Current", leftDriveFront.getOutputCurrent());
-        SmartDashboard.putNumber("Left Distance (in)", tankDrive.encDistanceToCm(leftDriveFront.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU) / Length.in);
-		SmartDashboard.putNumber("Right Distance (in)", tankDrive.encDistanceToCm(rightDriveFront.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU) / Length.in);
-		SmartDashboard.putNumber("Left Encoder Position", leftDriveFront.getSelectedSensorPosition(0));
-		SmartDashboard.putNumber("Right Encoder Position", rightDriveFront.getSelectedSensorPosition(0));
-		SmartDashboard.putNumber("Left Speed (nu)", leftDriveFront.getSelectedSensorVelocity(0));
-		SmartDashboard.putNumber("Right Speed (nu)", rightDriveFront.getSelectedSensorVelocity(0));
+
+		SmartDashboard.putNumber("Left Speed (nu/100ms)", leftDriveFront.getSelectedSensorVelocity(0));
+        SmartDashboard.putNumber("Right Speed (nu/100ms)", rightDriveFront.getSelectedSensorVelocity(0));
+        
+        maxLeftSpeed = Math.max(leftDriveFront.getSelectedSensorVelocity(), maxLeftSpeed);
+        maxRightSpeed = Math.max(rightDriveFront.getSelectedSensorVelocity(), maxRightSpeed);
+
+        SmartDashboard.putNumber("Max Left Speed", maxLeftSpeed);
+        SmartDashboard.putNumber("Max Right Speed", maxRightSpeed);
 		
     }
     public static void main(String... args) {
