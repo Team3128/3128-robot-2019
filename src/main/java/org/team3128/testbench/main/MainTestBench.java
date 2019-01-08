@@ -97,15 +97,19 @@ public class MainTestBench extends NarwhalRobot {
         
         listenerRight.nameControl(new Button(2), "LightOn");
 		listenerRight.addButtonDownListener("LightOn", () -> {
-		    table.getEntry("ledMode").setNumber(3);
+            table.getEntry("ledMode").setNumber(3);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
         });
-        listenerRight.nameControl(new Button(2), "LightOff");
+        /*listenerRight.nameControl(new Button(2), "LightOff");
 		listenerRight.addButtonUpListener("LightOff", () -> {
 		    table.getEntry("ledMode").setNumber(1);
-		});
+		});*/
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "LightBlink");
 		listenerRight.addButtonDownListener("LightBlink", () -> { 
-			table.getEntry("ledMode").setNumber(2);
+            table.getEntry("ledMode").setNumber(2);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
 		});
     }
 
@@ -121,6 +125,7 @@ public class MainTestBench extends NarwhalRobot {
 
     @Override
     protected void teleopPeriodic() {
+
 
     }
 
