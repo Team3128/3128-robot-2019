@@ -110,7 +110,21 @@ public class MainTestBench extends NarwhalRobot {
             table.getEntry("ledMode").setNumber(2);
             Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
   
-		});
+        });
+        
+        listenerRight.nameControl(new Button(7), "CamMode");
+        listenerRight.addButtonDownListener("CamMode", () -> {
+            table.getEntry("camMode").setNumber(0);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
+        });
+
+        listenerRight.nameControl(new Button(8), "DriveMode");
+        listenerRight.addButtonDownListener("DriveMode", () -> {
+            table.getEntry("camMode").setNumber(1);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
+        });
     }
 
     @Override
