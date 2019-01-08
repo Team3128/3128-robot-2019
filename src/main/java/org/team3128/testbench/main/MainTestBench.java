@@ -55,9 +55,12 @@ public class MainTestBench extends NarwhalRobot {
     public double wheelCirc;
     public int lowGearMaxSpeed;
     public SRXTankDrive drive;
+    public NetworkTable table;
 
-    @Override
-    protected void constructHardware() {
+	@Override
+	protected void constructHardware()
+	{
+		table = NetworkTableInstance.getDefault().getTable("limelight");
 
         boi1 = new TalonSRX(1);
         boi2 = new TalonSRX(2);
@@ -90,7 +93,20 @@ public class MainTestBench extends NarwhalRobot {
 			double y = listenerRight.getAxis("MoveTurn");
 			double t = listenerRight.getAxis("Throttle") * -1;
 			drive.arcadeDrive(x, y, t, true);
-		}, "MoveForwards", "MoveTurn", "Throttle");
+        }, "MoveForwards", "MoveTurn", "Throttle");
+        
+        listenerRight.nameControl(new Button(2), "LightOn");
+		listenerRight.addButtonDownListener("LightOn", () -> {
+		    table.getEntry("ledMode").setNumber(3);
+        });
+        listenerRight.nameControl(new Button(2), "LightOff");
+		listenerRight.addButtonUpListener("LightOff", () -> {
+		    table.getEntry("ledMode").setNumber(1);
+		});
+		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "LightBlink");
+		listenerRight.addButtonDownListener("LightBlink", () -> { 
+			table.getEntry("ledMode").setNumber(2);
+		});
     }
 
     @Override
