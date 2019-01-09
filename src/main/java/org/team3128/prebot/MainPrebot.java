@@ -43,9 +43,13 @@ public class MainPrebot extends NarwhalRobot {
 
     public double maxLeftSpeed = 0;
     public double maxRightSpeed = 0;
+    public NetworkTable table;
 
-    @Override
-	protected void constructHardware() {
+	@Override
+	protected void constructHardware()
+	{
+		table = NetworkTableInstance.getDefault().getTable("limelight");
+
         rightDriveFront = new TalonSRX(0);
         rightDriveMiddle = new TalonSRX(1);
         rightDriveBack = new TalonSRX(2);
@@ -95,6 +99,38 @@ public class MainPrebot extends NarwhalRobot {
 					-1 * lm.getAxis("Throttle"),
 					true);		
         }, "MoveTurn", "MoveForwards", "Throttle");
+
+        lm.nameControl(new Button(2), "LightOn");
+		lm.addButtonDownListener("LightOn", () -> {
+            table.getEntry("ledMode").setNumber(3);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
+        });
+        /*listenerRight.nameControl(new Button(2), "LightOff");
+		listenerRight.addButtonUpListener("LightOff", () -> {
+		    table.getEntry("ledMode").setNumber(1);
+		});*/
+		lm.nameControl(ControllerExtreme3D.TRIGGER, "LightBlink");
+		lm.addButtonDownListener("LightBlink", () -> { 
+            table.getEntry("ledMode").setNumber(2);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
+        });
+        
+        lm.nameControl(new Button(7), "CamMode");
+        lm.addButtonDownListener("CamMode", () -> {
+            table.getEntry("camMode").setNumber(0);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
+        });
+
+        lm.nameControl(new Button(8), "DriveMode");
+        lm.addButtonDownListener("DriveMode", () -> {
+            table.getEntry("camMode").setNumber(1);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
+        });
+    }
 	}
     
     @Override
