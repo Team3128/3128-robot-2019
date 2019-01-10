@@ -14,6 +14,7 @@ import org.team3128.common.util.RobotMath;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.POVValue;
 import org.team3128.common.listener.controltypes.POV;
+import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.listener.controltypes.Button;
 
@@ -21,6 +22,9 @@ import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 
 
 public class MainPrebot extends NarwhalRobot {
@@ -131,10 +135,11 @@ public class MainPrebot extends NarwhalRobot {
   
         });
     }
-	}
     
     @Override
     protected void updateDashboard() {
+        NarwhalDashboard.put("tx", table.getEntry("tx").getDouble(0.0));
+        NarwhalDashboard.put("ty", table.getEntry("ty").getDouble(0.0));
         SmartDashboard.putNumber("Gyro Angle", RobotMath.normalizeAngle(gyro.getAngle()));
 
 		SmartDashboard.putNumber("Left Speed (nu/100ms)", leftDriveFront.getSelectedSensorVelocity(0));
