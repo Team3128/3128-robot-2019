@@ -140,6 +140,10 @@ public class MainPrebot extends NarwhalRobot {
     protected void updateDashboard() {
         NarwhalDashboard.put("tx", table.getEntry("tx").getDouble(0.0));
         NarwhalDashboard.put("ty", table.getEntry("ty").getDouble(0.0));
+        NarwhalDashboard.put("tv", table.getEntry("tv").getDouble(0.0));
+        NarwhalDashboard.put("ta", table.getEntry("ta").getDouble(0.0));
+        NarwhalDashboard.put("ts", table.getEntry("ts").getDouble(0.0));
+        NarwhalDashboard.put("tl", table.getEntry("tl").getDouble(0.0));
         SmartDashboard.putNumber("Gyro Angle", RobotMath.normalizeAngle(gyro.getAngle()));
 
 		SmartDashboard.putNumber("Left Speed (nu/100ms)", leftDriveFront.getSelectedSensorVelocity(0));
