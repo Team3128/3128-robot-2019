@@ -14,6 +14,7 @@ import org.team3128.common.util.RobotMath;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.POVValue;
 import org.team3128.common.listener.controltypes.POV;
+import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.listener.controltypes.Button;
 
@@ -21,6 +22,9 @@ import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 
 
 public class MainPrebot extends NarwhalRobot {
@@ -43,9 +47,13 @@ public class MainPrebot extends NarwhalRobot {
 
     public double maxLeftSpeed = 0;
     public double maxRightSpeed = 0;
+    public NetworkTable table;
 
-    @Override
-	protected void constructHardware() {
+	@Override
+	protected void constructHardware()
+	{
+		table = NetworkTableInstance.getDefault().getTable("limelight");
+
         rightDriveFront = new TalonSRX(0);
         rightDriveMiddle = new TalonSRX(1);
         rightDriveBack = new TalonSRX(2);
@@ -95,10 +103,47 @@ public class MainPrebot extends NarwhalRobot {
 					-1 * lm.getAxis("Throttle"),
 					true);		
         }, "MoveTurn", "MoveForwards", "Throttle");
-	}
+
+        lm.nameControl(new Button(2), "LightOn");
+		lm.addButtonDownListener("LightOn", () -> {
+            table.getEntry("ledMode").setNumber(3);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
+        });
+        /*listenerRight.nameControl(new Button(2), "LightOff");
+		listenerRight.addButtonUpListener("LightOff", () -> {
+		    table.getEntry("ledMode").setNumber(1);
+		});*/
+		lm.nameControl(ControllerExtreme3D.TRIGGER, "LightBlink");
+		lm.addButtonDownListener("LightBlink", () -> { 
+            table.getEntry("ledMode").setNumber(2);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
+        });
+        
+        lm.nameControl(new Button(7), "CamMode");
+        lm.addButtonDownListener("CamMode", () -> {
+            table.getEntry("camMode").setNumber(0);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
+        });
+
+        lm.nameControl(new Button(8), "DriveMode");
+        lm.addButtonDownListener("DriveMode", () -> {
+            table.getEntry("camMode").setNumber(1);
+            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+  
+        });
+    }
     
     @Override
     protected void updateDashboard() {
+        NarwhalDashboard.put("tx", table.getEntry("tx").getDouble(0.0));
+        NarwhalDashboard.put("ty", table.getEntry("ty").getDouble(0.0));
+        NarwhalDashboard.put("tv", table.getEntry("tv").getDouble(0.0));
+        NarwhalDashboard.put("ta", table.getEntry("ta").getDouble(0.0));
+        NarwhalDashboard.put("ts", table.getEntry("ts").getDouble(0.0));
+        NarwhalDashboard.put("tl", table.getEntry("tl").getDouble(0.0));
         SmartDashboard.putNumber("Gyro Angle", RobotMath.normalizeAngle(gyro.getAngle()));
 
 		SmartDashboard.putNumber("Left Speed (nu/100ms)", leftDriveFront.getSelectedSensorVelocity(0));
