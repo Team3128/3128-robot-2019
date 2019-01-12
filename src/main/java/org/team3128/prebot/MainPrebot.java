@@ -50,6 +50,10 @@ public class MainPrebot extends NarwhalRobot {
     public NetworkTable table;
     public NetworkTable table2;
 
+    public double valCurrent1 = 0.0;
+    public double valCurrent2 = 0.0;
+    public double valCurrent3 = 0.0;
+
 	@Override
 	protected void constructHardware()
 	{
@@ -115,11 +119,22 @@ public class MainPrebot extends NarwhalRobot {
 		listenerRight.addButtonUpListener("LightOff", () -> {
 		    table.getEntry("ledMode").setNumber(1);
 		});*/
-		lm.nameControl(ControllerExtreme3D.TRIGGER, "LightBlink");
-		lm.addButtonDownListener("LightBlink", () -> { 
-            table.getEntry("ledMode").setNumber(2);
-            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
-  
+		lm.nameControl(ControllerExtreme3D.TRIGGER, "LogLimelight");
+		lm.addButtonDownListener("LogLimelight", () -> { 
+            for(int i = 0; i<5; i++){
+                Log.info("trigger", "trigger triggered");
+                valCurrent1 = valCurrent1 + table.getEntry("tx").getDouble(0.0);
+                valCurrent2 = valCurrent2 + table.getEntry("ty").getDouble(0.0);
+                valCurrent3 = valCurrent3 + table.getEntry("tz").getDouble(0.0);
+
+            }
+            valCurrent1 = valCurrent1/5;
+            valCurrent2 = valCurrent2/5;
+            valCurrent3 = valCurrent3/5;
+            Log.info("vals", String.valueOf(valCurrent1));
+            NarwhalDashboard.put("txav", String.valueOf(valCurrent1));
+            NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));
+            NarwhalDashboard.put("tzav", String.valueOf(valCurrent3));
         });
         
         lm.nameControl(new Button(7), "CamMode");
@@ -140,13 +155,7 @@ public class MainPrebot extends NarwhalRobot {
     @Override
     protected void updateDashboard() {
         //NarwhalDashboard.put("tx", table.getEntry("tx").getNumber(0));
-        NetworkTableEntry txvalue = table.getEntry("a");
-        Log.info("ronak", String.valueOf(txvalue)); 
-        if (txvalue == null){
-            Log.info("null-check", "YES");
-        } else {
-            Log.info("null-check", "NO");
-        }
+        NarwhalDashboard.put("tx", table.getEntry("tx").getDouble(0.0));
         NarwhalDashboard.put("ty", table.getEntry("ty").getDouble(0.0));
         NarwhalDashboard.put("tv", table.getEntry("tv").getDouble(0.0));
         NarwhalDashboard.put("ta", table.getEntry("ta").getDouble(0.0));
