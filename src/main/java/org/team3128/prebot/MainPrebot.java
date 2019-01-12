@@ -48,6 +48,7 @@ public class MainPrebot extends NarwhalRobot {
     public double maxLeftSpeed = 0;
     public double maxRightSpeed = 0;
     public NetworkTable table;
+    public NetworkTable table2;
 
 	@Override
 	protected void constructHardware()
@@ -138,7 +139,14 @@ public class MainPrebot extends NarwhalRobot {
     
     @Override
     protected void updateDashboard() {
-        NarwhalDashboard.put("tx", table.getEntry("tx").getDouble(0.0));
+        //NarwhalDashboard.put("tx", table.getEntry("tx").getNumber(0));
+        NetworkTableEntry txvalue = table.getEntry("a");
+        Log.info("ronak", String.valueOf(txvalue)); 
+        if (txvalue == null){
+            Log.info("null-check", "YES");
+        } else {
+            Log.info("null-check", "NO");
+        }
         NarwhalDashboard.put("ty", table.getEntry("ty").getDouble(0.0));
         NarwhalDashboard.put("tv", table.getEntry("tv").getDouble(0.0));
         NarwhalDashboard.put("ta", table.getEntry("ta").getDouble(0.0));
