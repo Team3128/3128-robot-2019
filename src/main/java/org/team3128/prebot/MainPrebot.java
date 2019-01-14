@@ -53,6 +53,7 @@ public class MainPrebot extends NarwhalRobot {
     public double valCurrent1 = 0.0;
     public double valCurrent2 = 0.0;
     public double valCurrent3 = 0.0;
+    public double valCurrent4 = 0.0;
 
 	@Override
 	protected void constructHardware()
@@ -121,26 +122,31 @@ public class MainPrebot extends NarwhalRobot {
 		});*/
 		lm.nameControl(ControllerExtreme3D.TRIGGER, "LogLimelight");
 		lm.addButtonDownListener("LogLimelight", () -> { 
-            for(int i = 0; i<5; i++){
-                Log.info("trigger", "trigger triggered");
-                valCurrent1 = valCurrent1 + table.getEntry("tx").getDouble(0.0);
-                valCurrent2 = valCurrent2 + table.getEntry("ty").getDouble(0.0);
-                valCurrent3 = valCurrent3 + table.getEntry("tz").getDouble(0.0);
-
-            }
-            valCurrent1 = valCurrent1/5;
-            valCurrent2 = valCurrent2/5;
-            valCurrent3 = valCurrent3/5;
-            Log.info("vals", String.valueOf(valCurrent1));
-            NarwhalDashboard.put("txav", String.valueOf(valCurrent1));
-            NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));
-            NarwhalDashboard.put("tzav", String.valueOf(valCurrent3));
         });
         
         lm.nameControl(new Button(7), "CamMode");
         lm.addButtonDownListener("CamMode", () -> {
-            table.getEntry("camMode").setNumber(0);
-            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+            for(int i = 0; i<10000; i++){
+                Log.info("trigger", "trigger triggered");
+                valCurrent1 = valCurrent1 + table.getEntry("tx").getDouble(0.0);
+                valCurrent2 = valCurrent2 + table.getEntry("ty").getDouble(0.0);
+                valCurrent3 = valCurrent3 + table.getEntry("ts").getDouble(0.0);
+                valCurrent4 = valCurrent4 + table.getEntry("ta").getDouble(0.0);
+
+            }
+            valCurrent1 = valCurrent1/10000;
+            valCurrent2 = valCurrent2/10000;
+            valCurrent3 = valCurrent3/10000;
+            valCurrent4 = valCurrent4/10000;
+            Log.info("vals", String.valueOf(valCurrent1));
+            NarwhalDashboard.put("txav", String.valueOf(valCurrent1));
+            NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));
+            NarwhalDashboard.put("tzav", String.valueOf(valCurrent3));
+            NarwhalDashboard.put("taav", String.valueOf(valCurrent4));
+            valCurrent1 = 0.0;
+            valCurrent2 = 0.0;
+            valCurrent3 = 0.0;
+            valCurrent4 = 0.0;
   
         });
 
