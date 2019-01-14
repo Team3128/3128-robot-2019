@@ -8,6 +8,8 @@ import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.util.units.Length;
 
+import org.team3128.testbench.autonomous.Test;
+
 import edu.wpi.first.wpilibj.Joystick;
 
 import org.team3128.common.NarwhalRobot;
@@ -129,7 +131,7 @@ public class MainTestBench extends NarwhalRobot {
 
     @Override
     protected void constructAutoPrograms() {
-
+        NarwhalDashboard.addAuto("Test", new Test(drive));
     }
 
     @Override
