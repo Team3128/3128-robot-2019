@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.command.CommandGroup;
 
 
 public class MainPrebot extends NarwhalRobot {
@@ -51,6 +52,8 @@ public class MainPrebot extends NarwhalRobot {
     public double valCurrent2 = 0.0;
     public double valCurrent3 = 0.0;
     public double valCurrent4 = 0.0;
+
+    public CommandGroup cmdRunner;
 
 	@Override
 	protected void constructHardware()
@@ -179,6 +182,24 @@ public class MainPrebot extends NarwhalRobot {
             table.getEntry("camMode").setNumber(1);
             Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
   
+        });
+
+        lm.nameControl(new Button(11), "DriveLL");
+        lm.addButtonDownListener("DriveLL", () -> {
+            for(int i = 0; i<2000; i++){
+                Log.info("trigger", "trigger triggered");
+                valCurrent2 = valCurrent2 + table.getEntry("ty").getDouble(0.0);
+
+            }
+            valCurrent2 = valCurrent2/2000;
+
+            double d = (28.5 - 9.5) / Math.tan(28.0 + valCurrent2);
+
+            cmdRunner.addSequential(tankDrive.new CmdMoveForward((d * Length.in), 10000, true));
+
+            Log.info("tyav", String.valueOf(valCurrent2));
+            NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));
+            valCurrent2 = 0.0;
         });
     }
     
