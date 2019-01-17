@@ -1,7 +1,7 @@
 package org.team3128.prebot.main;
 
 import org.team3128.common.NarwhalRobot;
-import org.team3128.prebot.autonomous.TestTurn;
+import org.team3128.prebot.autonomous.*;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
@@ -18,6 +18,7 @@ import org.team3128.common.listener.controltypes.Button;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -75,10 +76,14 @@ public class MainPrebot extends NarwhalRobot {
         wheelDiameter = 3.68 * Length.in;
         SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelDiameter * Math.PI, 1, 23.70*Length.in, 28.45*Length.in, 400);
         tankDrive = SRXTankDrive.getInstance();
-
+        tankDrive.setLeftSpeedScalar(0.96038845);
+        
         leftDriveFront.setInverted(true);
         leftDriveMiddle.setInverted(true);
         leftDriveBack.setInverted(true);
+
+        leftDriveFront.setSensorPhase(true);
+        rightDriveFront.setSensorPhase(true);
         
         joystick = new Joystick(1);
 		lm = new ListenerManager(joystick);
@@ -90,7 +95,9 @@ public class MainPrebot extends NarwhalRobot {
     
     @Override
     protected void constructAutoPrograms() {
-        NarwhalDashboard.addAuto("Turn", new TestTurn(tankDrive));
+        NarwhalDashboard.addAuto("Fast", new TurnFast(tankDrive));
+        NarwhalDashboard.addAuto("Slow", new TurnSlow(tankDrive));
+        NarwhalDashboard.addAuto("Test", new Test(tankDrive));
     }
 
 	@Override
@@ -106,6 +113,26 @@ public class MainPrebot extends NarwhalRobot {
 					true);		
         }, "MoveTurn", "MoveForwards", "Throttle");
 
+        lm.nameControl(new Button(12), "FullSpeed");
+        lm.addButtonDownListener("FullSpeed", () ->
+		{
+			tankDrive.tankDrive(1, 1);
+        });
+        lm.addButtonUpListener("FullSpeed", () ->
+		{
+			tankDrive.tankDrive(0, 0);
+		});
+
+        lm.nameControl(new Button(11), "HalfSpeed");
+		lm.addButtonDownListener("HalfSpeed", () ->
+		{
+			tankDrive.tankDrive(.25, .25);
+		});
+        lm.addButtonUpListener("HalfSpeed", () ->
+		{
+			tankDrive.tankDrive(0, 0);
+		});
+
         lm.nameControl(new Button(2), "LightOn");
 		lm.addButtonDownListener("LightOn", () -> {
             table.getEntry("ledMode").setNumber(3);
@@ -119,6 +146,7 @@ public class MainPrebot extends NarwhalRobot {
 		lm.nameControl(ControllerExtreme3D.TRIGGER, "LogLimelight");
 		lm.addButtonDownListener("LogLimelight", () -> { 
         });
+
         
         lm.nameControl(new Button(7), "CamMode");
         lm.addButtonDownListener("CamMode", () -> {

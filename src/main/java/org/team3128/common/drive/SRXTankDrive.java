@@ -722,6 +722,7 @@ public class SRXTankDrive implements ITankDrive
 			
 			this.endMode = endMode;
 			this.useScalars = useScalars;
+
 		}
 		
 		/**
@@ -753,6 +754,8 @@ public class SRXTankDrive implements ITankDrive
 			
 			clearEncoders();
 			configureForAuto();
+
+			Log.debug("2-Power", Double.toString(power));
 
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
 			double rightSpeed = (robotMaxSpeed * power * ((useScalars) ? rightSpeedScalar : 1.0));
