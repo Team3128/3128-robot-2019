@@ -1,5 +1,6 @@
 package org.team3128.prebot.main;
 
+import com.kauailabs.navx.frc.AHRS;
 import org.team3128.common.NarwhalRobot;
 import org.team3128.prebot.autonomous.*;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -26,6 +27,8 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 
 
 public class MainPrebot extends NarwhalRobot {
+    
+    AHRS ahrs;
     public TalonSRX rightDriveFront;
     public TalonSRX rightDriveMiddle;
     public TalonSRX rightDriveBack;
@@ -95,7 +98,8 @@ public class MainPrebot extends NarwhalRobot {
         joystick = new Joystick(1);
 		lm = new ListenerManager(joystick);
         addListenerManager(lm);
-        
+        ahrs = new AHRS(SPI.Port.kMXP); 
+
         gyro = new ADXRS450_Gyro();
 		gyro.calibrate();
     }
@@ -105,6 +109,7 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.addAuto("Turn", new Turn(tankDrive));
         NarwhalDashboard.addAuto("Forward", new Forward(tankDrive));
         NarwhalDashboard.addAuto("Test", new Test(tankDrive));
+        NarwhalDashboard.addAuto("Wheel Base Test", new WheelBaseTest(ahrs, tankDrive, 1000, 10, 10));
     }
 
 	@Override
