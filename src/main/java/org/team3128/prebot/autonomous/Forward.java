@@ -8,8 +8,8 @@ import org.team3128.common.drive.SRXTankDrive;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
-public class TurnFast extends CommandGroup {
-    public TurnFast(SRXTankDrive drive) {
-        addSequential(drive.new CmdMoveForward(100, 10000, .9));
+public class Forward extends CommandGroup {
+    public Forward(SRXTankDrive drive) {
+        addSequential(drive.new CmdMoveForward(1000, 100000, .5));
     }
 }

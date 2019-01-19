@@ -74,13 +74,17 @@ public class MainPrebot extends NarwhalRobot {
         rightDriveMiddle.set(ControlMode.Follower, rightDriveFront.getDeviceID());
         leftDriveMiddle.set(ControlMode.Follower, leftDriveFront.getDeviceID());
         rightDriveBack.set(ControlMode.Follower, rightDriveFront.getDeviceID());
-        leftDriveBack.set(ControlMode.Follower, rightDriveFront.getDeviceID());
+        leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
 
         wheelDiameter = 3.68 * Length.in;
         SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelDiameter * Math.PI, 1, 23.70*Length.in, 28.45*Length.in, 400);
         tankDrive = SRXTankDrive.getInstance();
-        tankDrive.setLeftSpeedScalar(0.96038845);
+        //tankDrive.setRightSpeedScalar(0.1);//0.96038845);
         
+        //rightDriveFront.setInverted(true);
+        //rightDriveMiddle.setInverted(true);
+        //rightDriveBack.setInverted(true);
+
         leftDriveFront.setInverted(true);
         leftDriveMiddle.setInverted(true);
         leftDriveBack.setInverted(true);
@@ -98,8 +102,8 @@ public class MainPrebot extends NarwhalRobot {
     
     @Override
     protected void constructAutoPrograms() {
-        NarwhalDashboard.addAuto("Fast", new TurnFast(tankDrive));
-        NarwhalDashboard.addAuto("Slow", new TurnSlow(tankDrive));
+        NarwhalDashboard.addAuto("Turn", new Turn(tankDrive));
+        NarwhalDashboard.addAuto("Forward", new Forward(tankDrive));
         NarwhalDashboard.addAuto("Test", new Test(tankDrive));
     }
 

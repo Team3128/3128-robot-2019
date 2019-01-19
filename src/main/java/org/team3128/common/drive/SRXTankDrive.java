@@ -1058,7 +1058,7 @@ public class SRXTankDrive implements ITankDrive
 		{
 			// the encoder counts are an in-depth calculation, so we don't set
 			// them until after the super constructor
-			super(MoveEndMode.BOTH, 0, 0, power, false, msec);
+			super(MoveEndMode.BOTH, 0, 0, power, true, msec);
 
 			// this formula is explained in the info repository wiki
 			double wheelAngularDist = cmToEncDegrees(turningCircleCircumference * (degs / 360.0));

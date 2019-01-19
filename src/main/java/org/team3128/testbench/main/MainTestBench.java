@@ -130,12 +130,8 @@ public class MainTestBench extends NarwhalRobot {
 
     @Override
     protected void constructAutoPrograms() {
-<<<<<<< HEAD
-        NarwhalDashboard.addAuto("TestBenchTest", new TestBenchTest(drive));
-=======
-        NarwhalDashboard.addAuto("Test", new Test(drive));
+        NarwhalDashboard.addAuto("Test", new TestBenchTest(drive));
         //Log.debug("hehexd", NarwhalDashboard.getSelectedAuto().getName());
->>>>>>> abbcaed96dc783e7336cc8ed0d30b6970e3a5902
     }
 
     @Override
