@@ -15,6 +15,7 @@ import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.listener.controltypes.Button;
 
+import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
