@@ -1031,6 +1031,59 @@ public class SRXTankDrive implements ITankDrive
 			}
 		}
 	}
+	public class CmdFancierArcTurn extends CmdMoveDistance
+	{
+		// it seems like the math is consistently off by about 6%
+		final static double FUDGE_FACTOR = 1.06;
+				
+		/**
+		 * @param radius - The radius that the robot should drive the arc at.
+		 * @param degs - The distance to turn in degrees. Accepts negative values.
+		 * @param msec - The maximum time to run the move (in milliseconds)
+		 */
+		public CmdFancierArcTurn(double radius, float degs, int msec, Direction dir)
+		{
+			this(radius, degs, msec, dir, .5, false);
+		}
+		
+		/**
+		 * @param radius - The radius that the robot should drive the arc at.
+		 * @param degs - The distance to turn in degrees. Accepts negative values.
+		 * @param msec - The maximum time to run the move (in milliseconds)
+		 * @param power - The relative speed to drive the turn at (from 0 to 1)
+		 */
+		public CmdFancierArcTurn(double radius, float degs, int msec, Direction dir, double power)
+		{
+			this(radius, degs, msec, dir, power, false);
+		}
+		
+		/**
+		 * @param radius - The radius that the robot should drive the arc at.
+		 * @param degs - The distance to turn in degrees. Accepts negative values.
+		 * @param msec - The maximum time to run the move (in milliseconds)
+		 * @param power - The relative speed to drive the turn at (from 0 to 1)
+		 * @param smooth - Should the move terminate at speed = 0 (false) or continue to drift (true)
+		 */
+		public CmdFancierArcTurn(double radius, float degs, int msec, Direction dir, double power, boolean smooth)
+		{
+			super(MoveEndMode.BOTH, 0, 0, smooth, power, false, msec);
+
+			// this formula is explained on the info repository wiki
+			double innerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius - 0.5 * wheelBase));
+			double outerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius + 0.5 * wheelBase));
+
+			if (dir == Direction.RIGHT)
+			{
+				rightDist = innerAngularDist;
+				leftDist = outerAngularDist;
+			}
+			else
+			{
+				rightDist = outerAngularDist;
+				leftDist = innerAngularDist;
+			}
+		}
+	}
 
 	/**
 	 * Command to to an arc turn in the specified amount of degrees.
