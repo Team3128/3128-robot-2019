@@ -105,6 +105,7 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.addAuto("Turn", new Turn(tankDrive));
         NarwhalDashboard.addAuto("Forward", new Forward(tankDrive));
         NarwhalDashboard.addAuto("Test", new Test(tankDrive));
+        NarwhalDashboard.addAuto("ForwardCV", new ForwardCV(tankDrive));
     }
 
 	@Override
