@@ -8,7 +8,7 @@ import org.team3128.common.drive.SRXTankDrive;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class WheelBaseTestAuto extends CommandGroup {
-    public WheelBaseTestAuto(SRXTankDrive drive, AHRS ahrs) {
-        addSequential(drive.new WheelBaseTest(ahrs, drive, 2000, 2000, 4000));
+    public WheelBaseTestAuto(AHRS ahrs, SRXTankDrive drive, double duration, double leftSpeed, double rightSpeed) {
+        addSequential(drive.new WheelBaseTest(ahrs, drive, duration, leftSpeed, rightSpeed));
     }
 }
