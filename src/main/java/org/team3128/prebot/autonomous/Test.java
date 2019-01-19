@@ -12,7 +12,7 @@ public class Test extends CommandGroup {
     public Test(SRXTankDrive drive) {
         
         super();
-        final double arc_distance = 2 * Length.ft;
+        final double arc_distance = 8 * Length.ft;
 
         final float angle = 45f;
         final double large_turn_radius = arc_distance * 180 / (angle * Math.PI);
@@ -23,8 +23,11 @@ public class Test extends CommandGroup {
         //addSequential(drive.new CmdMoveForward(small_forward, 10000, false));
 
         //addSequential(drive.new CmdFancyArcTurn(large_turn_radius, angle, 10000, Direction.LEFT, 0.1));
-
-        addSequential(drive.new CmdFancierArcTurn(large_turn_radius, angle, 10000, Direction.LEFT, 0.1));
+        int leftPos1 = drive.getLeftMotors().getSelectedSensorPosition();
+        int rightPos1 = drive.getRightMotors().getSelectedSensorPosition();
+        addSequential(drive.new CmdFancierArcTurn(large_turn_radius, angle, 10000, Direction.LEFT, 1));
+        int leftPos2 = drive.getLeftMotors().getSelectedSensorPosition();
+        int rightPos2 = drive.getRightMotors().getSelectedSensorPosition();
 
         //addSequential(drive.new CmdMoveForward(small_forward, 10000, false));
 
