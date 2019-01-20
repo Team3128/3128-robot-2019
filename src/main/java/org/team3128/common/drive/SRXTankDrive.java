@@ -969,7 +969,8 @@ public class SRXTankDrive implements ITankDrive
 				drive.getLeftMotors().set(ControlMode.Velocity, maxLeftSpeed * i/1000);
 				drive.getRightMotors().set(ControlMode.Velocity, maxRightSpeed * i/1000);
 			}
-	
+			drive.getLeftMotors().setSelectedSensorPosition(0);
+			drive.getRightMotors().setSelectedSensorPosition(0);
 			angleOne = ahrs.getAngle();
 			Log.debug("Angle 1", "" + angleOne);
 		}
@@ -1153,7 +1154,7 @@ public class SRXTankDrive implements ITankDrive
 		{
 			super(MoveEndMode.BOTH, 0, 0, smooth, power, false, msec);
 
-			// this formula is explained on the info repository wiki
+			// this formula is not explained on the info repository wiki
 			double innerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius - 0.5 * wheelBase));
 			double outerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius + 0.5 * wheelBase));
 

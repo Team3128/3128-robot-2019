@@ -1,6 +1,9 @@
 package org.team3128.prebot.main;
 
 import com.kauailabs.navx.frc.AHRS;
+
+
+import edu.wpi.first.wpilibj.SPI;
 import org.team3128.common.NarwhalRobot;
 import org.team3128.prebot.autonomous.*;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -109,8 +112,8 @@ public class MainPrebot extends NarwhalRobot {
     protected void constructAutoPrograms() {
         NarwhalDashboard.addAuto("Turn", new Turn(tankDrive));
         NarwhalDashboard.addAuto("Forward", new Forward(tankDrive));
-        NarwhalDashboard.addAuto("Test", new Test(tankDrive));
-        NarwhalDashboard.addAuto("Wheel Base Test", new WheelBaseTestAuto(ahrs, tankDrive, 1000, 2000, 4000));
+        NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
+        NarwhalDashboard.addAuto("Wheel Base Test", new WheelBaseTestAuto(ahrs, tankDrive, 0.5, 2000, 4000));
     }
 
 	@Override

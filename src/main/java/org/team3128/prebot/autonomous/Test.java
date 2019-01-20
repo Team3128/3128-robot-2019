@@ -14,7 +14,7 @@ public class Test extends CommandGroup {
     public Test(SRXTankDrive drive, AHRS ahrs) {
         
         super();
-        final double arc_distance = 8 * Length.ft;
+        final double arc_distance = 4 * Length.ft;
 
         float angle = 45f;
         final double large_turn_radius = arc_distance * 180 / (angle * Math.PI);
