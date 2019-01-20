@@ -85,8 +85,8 @@ public class MainPrebot extends NarwhalRobot {
         rightDriveBack.set(ControlMode.Follower, rightDriveFront.getDeviceID());
         leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
 
-        wheelDiameter = 3.68 * Length.in;
-        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelDiameter * Math.PI, 1, 17.70*Length.in, 28.45*Length.in, 4200);
+        wheelCirc = 12.85;
+        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1, 43.06, 28.45*Length.in, 4200);
         tankDrive = SRXTankDrive.getInstance();
         tankDrive.setLeftSpeedScalar(0.99038845);
         
@@ -114,9 +114,9 @@ public class MainPrebot extends NarwhalRobot {
     protected void constructAutoPrograms() {
         NarwhalDashboard.addAuto("Turn", new Turn(tankDrive));
         NarwhalDashboard.addAuto("Forward", new Forward(tankDrive));
-        NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
-        NarwhalDashboard.addAuto("Wheel Base Test", new WheelBaseTestAuto(ahrs, tankDrive, 0.5, 500, 1000));
-        // previous speeds that were used were 2000, 4000 (arbitrarily picked)
+        //NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
+        NarwhalDashboard.addAuto("Wheel Base Test", new WheelBaseTestAuto(ahrs, tankDrive, 6, 1000, 2000));
+        // previous speeds that were used were 2000, 4000, respectively L & R(arbitrarily picked)
     }
 
 	@Override

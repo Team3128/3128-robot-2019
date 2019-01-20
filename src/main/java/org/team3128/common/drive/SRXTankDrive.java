@@ -49,6 +49,9 @@ public class SRXTankDrive implements ITankDrive
 {
 	private TalonSRX leftMotors, rightMotors;
 
+	//for wheel base method
+	public double averageWheelBase;
+
 	public TalonSRX getLeftMotors() {
 		return leftMotors;
 	}
@@ -939,8 +942,7 @@ public class SRXTankDrive implements ITankDrive
 		double rightDistance;
 		double angleChange;
 		double leftWheelBase;
-		double rightWheelBase;
-	
+		double rightWheelBase;	
 	
 		public WheelBaseTest(AHRS ahrs, SRXTankDrive drive, double duration, double leftSpeed, double rightSpeed) {
 			super(duration);
@@ -972,7 +974,7 @@ public class SRXTankDrive implements ITankDrive
 			drive.getLeftMotors().setSelectedSensorPosition(0);
 			drive.getRightMotors().setSelectedSensorPosition(0);
 			angleOne = ahrs.getAngle()*(Math.PI/180);
-			Log.debug("Angle 1", "" + angleOne);
+			//Log.debug("Angle 1", "" + angleOne);
 		}
 	
 		@Override
@@ -991,22 +993,31 @@ public class SRXTankDrive implements ITankDrive
 		protected void end() {
 			// record theta 2
 			angleTwo = ahrs.getAngle()*(Math.PI/180);
-			Log.debug("Angle 2", "" + angleTwo);
+			//Log.debug("Angle 2", "" + angleTwo);
 			angleChange = angleTwo - angleOne;
 			// record distances
-			leftDistance = (wheelCircumfrence * drive.getLeftMotors().getSelectedSensorPosition()/4096) * Length.in;
-			rightDistance = (wheelCircumfrence * drive.getRightMotors().getSelectedSensorPosition()/4096) * Length.in;
+			leftDistance = (wheelCircumfrence * drive.getLeftMotors().getSelectedSensorPosition()/4096);
+			rightDistance = (wheelCircumfrence * drive.getRightMotors().getSelectedSensorPosition()/4096);
 	
 			drive.getLeftMotors().set(ControlMode.Velocity, 0);
 			drive.getRightMotors().set(ControlMode.Velocity, 0);
-			Log.debug("Distances", "Left Motor: " + leftDistance + " Right Motor: " + rightDistance);
+			//Log.debug("Distances", "Left Motor: " + leftDistance + " Right Motor: " + rightDistance);
 			// do the math to figure wb
-			leftWheelBase = 2 * (leftDistance/angleChange) - 2 * (leftDistance + rightDistance) / (4 * Math.PI *angleChange);
-			rightWheelBase = -2 * (rightDistance/angleChange) - 2 * (leftDistance + rightDistance) / (4 * Math.PI *angleChange);
-			Log.debug("Wheel Base", "Left side: " +  leftWheelBase + " Right side: " + rightWheelBase);
-	
+			leftWheelBase = 2 * (leftDistance/angleChange) - 2 * (leftDistance + rightDistance) / (2 * angleChange);
+			rightWheelBase = -2 * (rightDistance/angleChange) + 2 * (leftDistance + rightDistance) / (2 * angleChange);
+			
+			averageWheelBase = (leftWheelBase + rightWheelBase)/2;
+
+			//Log.debug("Wheel Base", "Left side: " +  leftWheelBase + " Right side: " + rightWheelBase);
+			
 		}
+
 	}
+
+	public double returnWheelBase() {
+		return averageWheelBase;
+	}
+
 	//tyganend
 	/**
 	 * Command to to an arc turn in the specified amount of degrees.
