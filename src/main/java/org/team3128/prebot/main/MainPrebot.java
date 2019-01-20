@@ -32,7 +32,8 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class MainPrebot extends NarwhalRobot {
     
-    AHRS ahrs;
+    public AHRS ahrs;
+
     public TalonSRX rightDriveFront;
     public TalonSRX rightDriveMiddle;
     public TalonSRX rightDriveBack;
@@ -48,6 +49,7 @@ public class MainPrebot extends NarwhalRobot {
 
     public ADXRS450_Gyro gyro;
 
+    public double wheelCirc;
     public double wheelDiameter;
 
     public double maxLeftSpeed = 0;
@@ -117,7 +119,12 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.addAuto("ForwardCV", new ForwardCV(tankDrive));
 =======
         NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
+<<<<<<< HEAD
         NarwhalDashboard.addAuto("Wheel Base Test", new WheelBaseTestAuto(ahrs, tankDrive, 0.5, 2000, 4000));
+>>>>>>> upstream/master
+=======
+        NarwhalDashboard.addAuto("Wheel Base Test", new WheelBaseTestAuto(ahrs, tankDrive, 0.5, 500, 1000));
+        // previous speeds that were used were 2000, 4000 (arbitrarily picked)
 >>>>>>> upstream/master
     }
 

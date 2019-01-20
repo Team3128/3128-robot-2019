@@ -971,7 +971,7 @@ public class SRXTankDrive implements ITankDrive
 			}
 			drive.getLeftMotors().setSelectedSensorPosition(0);
 			drive.getRightMotors().setSelectedSensorPosition(0);
-			angleOne = ahrs.getAngle();
+			angleOne = ahrs.getAngle()*(Math.PI/180);
 			Log.debug("Angle 1", "" + angleOne);
 		}
 	
@@ -990,12 +990,12 @@ public class SRXTankDrive implements ITankDrive
 		@Override
 		protected void end() {
 			// record theta 2
-			angleTwo = ahrs.getAngle();
+			angleTwo = ahrs.getAngle()*(Math.PI/180);
 			Log.debug("Angle 2", "" + angleTwo);
 			angleChange = angleTwo - angleOne;
 			// record distances
-			leftDistance = drive.getLeftMotors().getSelectedSensorPosition();
-			rightDistance = drive.getRightMotors().getSelectedSensorPosition();
+			leftDistance = (wheelCircumfrence * drive.getLeftMotors().getSelectedSensorPosition()/4096) * Length.in;
+			rightDistance = (wheelCircumfrence * drive.getRightMotors().getSelectedSensorPosition()/4096) * Length.in;
 	
 			drive.getLeftMotors().set(ControlMode.Velocity, 0);
 			drive.getRightMotors().set(ControlMode.Velocity, 0);
