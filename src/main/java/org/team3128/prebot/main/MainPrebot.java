@@ -114,18 +114,10 @@ public class MainPrebot extends NarwhalRobot {
     protected void constructAutoPrograms() {
         NarwhalDashboard.addAuto("Turn", new Turn(tankDrive));
         NarwhalDashboard.addAuto("Forward", new Forward(tankDrive));
-<<<<<<< HEAD
-        NarwhalDashboard.addAuto("Test", new Test(tankDrive));
-        NarwhalDashboard.addAuto("ForwardCV", new ForwardCV(tankDrive));
-=======
         NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
-<<<<<<< HEAD
-        NarwhalDashboard.addAuto("Wheel Base Test", new WheelBaseTestAuto(ahrs, tankDrive, 0.5, 2000, 4000));
->>>>>>> upstream/master
-=======
         NarwhalDashboard.addAuto("Wheel Base Test", new WheelBaseTestAuto(ahrs, tankDrive, 0.5, 500, 1000));
         // previous speeds that were used were 2000, 4000 (arbitrarily picked)
->>>>>>> upstream/master
+
     }
 
 	@Override
