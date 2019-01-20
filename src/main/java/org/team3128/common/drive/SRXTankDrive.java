@@ -21,6 +21,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
+import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Timer;
@@ -925,7 +926,88 @@ public class SRXTankDrive implements ITankDrive
 			// do nothing
 		}
 	}
+	//tygan
+	public class WheelBaseTest extends Command {
 
+		double maxLeftSpeed;
+		double maxRightSpeed;
+		SRXTankDrive drive;
+		AHRS ahrs;
+		double angleOne;
+		double angleTwo;
+		double leftDistance;
+		double rightDistance;
+		double angleChange;
+		double leftWheelBase;
+		double rightWheelBase;
+	
+	
+		public WheelBaseTest(AHRS ahrs, SRXTankDrive drive, double duration, double leftSpeed, double rightSpeed) {
+			super(duration);
+			maxLeftSpeed = leftSpeed;
+			maxRightSpeed = rightSpeed;
+			this.drive = drive;
+			this.ahrs = ahrs;
+		}
+	
+		protected void initialize() {
+			// Acceleration for loop
+	
+			/*
+			for (i from 0 to 1000)
+			leftmotors to maxLeftSpeed * i/ 1000
+	
+			rightmotors mirrors above
+	
+			
+	
+		}
+	
+			record gyro angle theta 1
+			*/
+			for(int i = 0; i <= 1000 ; i++){
+				drive.getLeftMotors().set(ControlMode.Velocity, maxLeftSpeed * i/1000);
+				drive.getRightMotors().set(ControlMode.Velocity, maxRightSpeed * i/1000);
+			}
+			drive.getLeftMotors().setSelectedSensorPosition(0);
+			drive.getRightMotors().setSelectedSensorPosition(0);
+			angleOne = ahrs.getAngle();
+			Log.debug("Angle 1", "" + angleOne);
+		}
+	
+		@Override
+		protected void execute() {
+			// Don't think anything needs to happen here
+			// In theory, for a very large trajectory, the points would
+			// need to be fed in chunks while running.
+		}
+	
+		@Override
+		protected boolean isFinished() {
+			return this.isTimedOut();
+		}
+	
+		@Override
+		protected void end() {
+			// record theta 2
+			angleTwo = ahrs.getAngle();
+			Log.debug("Angle 2", "" + angleTwo);
+			angleChange = angleTwo - angleOne;
+			// record distances
+			leftDistance = drive.getLeftMotors().getSelectedSensorPosition();
+			rightDistance = drive.getRightMotors().getSelectedSensorPosition();
+	
+			drive.getLeftMotors().set(ControlMode.Velocity, 0);
+			drive.getRightMotors().set(ControlMode.Velocity, 0);
+			Log.debug("Distances", "Left Motor: " + leftDistance + " Right Motor: " + rightDistance);
+			// do the math to figure wb
+			leftWheelBase = 2 * (leftDistance/angleChange) - 2 * (leftDistance + rightDistance) / (4 * Math.PI *angleChange);
+			rightWheelBase = -2 * (rightDistance/angleChange) - 2 * (leftDistance + rightDistance) / (4 * Math.PI *angleChange);
+			Log.debug("Wheel Base", "Left side: " +  leftWheelBase + " Right side: " + rightWheelBase);
+	
+		}
+	}
+	//tyganend
 	/**
 	 * Command to to an arc turn in the specified amount of degrees.
 	 * 
@@ -1072,7 +1154,7 @@ public class SRXTankDrive implements ITankDrive
 		{
 			super(MoveEndMode.BOTH, 0, 0, smooth, power, false, msec);
 
-			// this formula is explained on the info repository wiki
+			// this formula is not explained on the info repository wiki
 			double innerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius - 0.5 * wheelBase));
 			double outerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius + 0.5 * wheelBase));
 
