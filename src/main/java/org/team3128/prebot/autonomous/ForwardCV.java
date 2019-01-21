@@ -30,7 +30,7 @@ public class ForwardCV extends CommandGroup {
         }
         valCurrent2 = valCurrent2/2000;
 
-        double d = (25 - 5) / Math.tan(28.0 + valCurrent2);
+        double d = (28.5 - 5) / Math.tan(28.0 + valCurrent2);
 
         addSequential(drive.new CmdMoveForward((d * Length.in), 10000, true));
 
