@@ -42,7 +42,7 @@ public class Test extends CommandGroup {
             int leftPos = drive.getLeftMotors().getSelectedSensorPosition();
             int rightPos = drive.getRightMotors().getSelectedSensorPosition();
             double theta = Double.valueOf(ahrs.getYaw());
-            addSequential(drive.new CmdFancierArcTurn(large_turn_radius, angle, 10000, Direction.LEFT, 1));
+            addSequential(drive.new CmdFancyArcTurn(large_turn_radius, angle, 10000, Direction.LEFT, 1));
             theta = ahrs.getYaw() - theta;
             theta = theta*(Math.PI/180);
             leftPos = drive.getLeftMotors().getSelectedSensorPosition() - leftPos;
