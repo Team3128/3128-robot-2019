@@ -21,6 +21,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
+import com.kauailabs.navx.frc.AHRS;		
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Timer;
@@ -47,6 +48,9 @@ import edu.wpi.first.wpilibj.command.Command;
 public class SRXTankDrive implements ITankDrive
 {
 	private TalonSRX leftMotors, rightMotors;
+
+	//for wheel base method		
+	public double averageWheelBase;		
 
 	public TalonSRX getLeftMotors() {
 		return leftMotors;
@@ -692,12 +696,12 @@ public class SRXTankDrive implements ITankDrive
 			double smooth_multiplier = (smooth) ? 1.05 : 1.00;
 
 			leftMotors.configMotionCruiseVelocity((int) leftSpeed, Constants.CAN_TIMEOUT);
-			leftMotors.configMotionAcceleration((int) (leftSpeed), Constants.CAN_TIMEOUT);
+			leftMotors.configMotionAcceleration((int) (leftSpeed / 2), Constants.CAN_TIMEOUT);
 
 			leftMotors.set(leftMode, smooth_multiplier * leftDist / Angle.CTRE_MAGENC_NU);
 
 			rightMotors.configMotionCruiseVelocity((int) rightSpeed, Constants.CAN_TIMEOUT);
-			rightMotors.configMotionAcceleration((int) (rightSpeed), Constants.CAN_TIMEOUT);
+			rightMotors.configMotionAcceleration((int) (rightSpeed / 2), Constants.CAN_TIMEOUT);
 
 			rightMotors.set(rightMode, smooth_multiplier * rightDist / Angle.CTRE_MAGENC_NU);
 
@@ -864,6 +868,63 @@ public class SRXTankDrive implements ITankDrive
 		}
 	}
 
+	public class CmdDetermineWheelbase extends Command {		
+		double maxLeftSpeed;		
+		double maxRightSpeed;		
+		SRXTankDrive drive;		
+		AHRS ahrs;		
+		double theta0;		
+		double theta1;		
+		double leftDistance;		
+		double rightDistance;		
+		double delTheta;		
+		double leftWheelBase;		
+		double rightWheelBase;			
+		
+		public CmdDetermineWheelbase(AHRS ahrs, SRXTankDrive drive, double duration, double leftSpeed, double rightSpeed) {		
+			super(duration);		
+			maxLeftSpeed = leftSpeed;		
+			maxRightSpeed = rightSpeed;		
+			this.drive = drive;		
+			this.ahrs = ahrs;		
+		}		
+		
+		protected void initialize() {			
+			for(int i = 0; i <= 10000 ; i++){		
+				drive.getLeftMotors().set(ControlMode.Velocity, maxLeftSpeed * i/10000);		
+				drive.getRightMotors().set(ControlMode.Velocity, maxRightSpeed * i/10000);		
+			}		
+			drive.getLeftMotors().setSelectedSensorPosition(0);		
+			drive.getRightMotors().setSelectedSensorPosition(0);		
+			theta0 = ahrs.getAngle()*(Math.PI/180);		
+		}		
+
+		@Override		
+		protected boolean isFinished() {		
+			return this.isTimedOut();		
+		}		
+
+		@Override		
+		protected void end() {		
+			theta1 = ahrs.getAngle()*(Math.PI/180);		
+			delTheta = theta1 - theta0;		
+
+			leftDistance = (wheelCircumfrence * drive.getLeftMotors().getSelectedSensorPosition()/4096);		
+			rightDistance = (wheelCircumfrence * drive.getRightMotors().getSelectedSensorPosition()/4096);		
+			
+			drive.getLeftMotors().set(ControlMode.Velocity, 0);		
+			drive.getRightMotors().set(ControlMode.Velocity, 0);		
+			leftWheelBase = 2 * (leftDistance/delTheta) - 2 * (leftDistance + rightDistance) / (2 * delTheta);		
+			rightWheelBase = -2 * (rightDistance/delTheta) + 2 * (leftDistance + rightDistance) / (2 * delTheta);		
+			
+			averageWheelBase = (leftWheelBase + rightWheelBase)/2;					
+		}		
+	}		
+
+	public double returnWheelBase() {		
+		return averageWheelBase;		
+	}		
+  
 	/**
 	 * Command to turn in an arc with a certain radius for the specified amount
 	 * of degrees.
@@ -911,8 +972,8 @@ public class SRXTankDrive implements ITankDrive
 			super(MoveEndMode.BOTH, 0, 0, smooth, power, false, msec);
 
 			// this formula is explained on the info repository wiki
-			double innerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius - 0.5 * track)) * FUDGE_FACTOR;
-			double outerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius + 0.5 * track)) * FUDGE_FACTOR;
+			double innerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius - 0.5 * wheelBase));
+			double outerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius + 0.5 * wheelBase));
 
 			if (dir == Direction.RIGHT)
 			{
