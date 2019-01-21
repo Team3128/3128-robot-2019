@@ -27,6 +27,8 @@ import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
 
+import java.io.IOException;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
@@ -58,10 +60,26 @@ public class MainTestBench extends NarwhalRobot {
     public SRXTankDrive drive;
     public NetworkTable table;
 
+    public File f;
+    BufferedWriter bw;
+    FIleWriter fw;
+
 	@Override
 	protected void constructHardware()
 	{
 		table = NetworkTableInstance.getDefault().getTable("limelight");
+
+        try {
+            f = new File("/media/sda1/limelightLog.txt");
+            if(!f.exists()) {
+                f.createNewFile();
+            }
+            fw = new FileWriter(f);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        bw = new BufferedWriter(fw);
 
         boi1 = new TalonSRX(1);
         boi2 = new TalonSRX(2);
@@ -108,8 +126,11 @@ public class MainTestBench extends NarwhalRobot {
 		});*/
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "LightBlink");
 		listenerRight.addButtonDownListener("LightBlink", () -> { 
-            table.getEntry("ledMode").setNumber(2);
-            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
+            try {
+                
+            } catch (IOException e) {
+                
+            }
   
         });
         
