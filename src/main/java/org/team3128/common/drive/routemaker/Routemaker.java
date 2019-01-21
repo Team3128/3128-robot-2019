@@ -149,7 +149,8 @@ public class Routemaker {
         y_tp = Odometer.getInstance().getY();
         a_tp = Odometer.getInstance().getAngle();
 
-        spline = new Segment(new Waypoint(x_tp, y_tp, a_tp), waypoints[ref_segment+1], smoothness);
+        spline = new Segment(new Waypoint(x_tp, y_tp, a_tp, spdFrac, spdFrac, spdFrac), waypoints[ref_segment + 1],
+                smoothness);
 
         x_l_tp = x_tp - (wb / 2) * RobotMath.cos(a_tp - 90);
         y_l_tp = y_tp - (wb / 2) * RobotMath.sin(a_tp - 90);
