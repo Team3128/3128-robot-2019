@@ -88,6 +88,7 @@ public class MainTestBench extends NarwhalRobot {
         bw = new BufferedWriter(fw);
         try{
             bw.write("tx,ty,ts,ta,taL,taR,ratio");
+            bw.newLine();
         } catch(IOException e){
             e.printStackTrace();
         }
