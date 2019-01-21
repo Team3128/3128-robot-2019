@@ -50,6 +50,11 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class MainTestBench extends NarwhalRobot {
 
     public TalonSRX boi1, boi2;
@@ -63,7 +68,7 @@ public class MainTestBench extends NarwhalRobot {
 
     public File f;
     BufferedWriter bw;
-    FIleWriter fw;
+    FileWriter fw;
 
 	@Override
 	protected void constructHardware()
@@ -81,7 +86,11 @@ public class MainTestBench extends NarwhalRobot {
         }
 
         bw = new BufferedWriter(fw);
-
+        try{
+            bw.write("tx,ty,ts,ta,taL,taR,ratio");
+        } catch(IOException e){
+            e.printStackTrace();
+        }
         boi1 = new TalonSRX(1);
         boi2 = new TalonSRX(2);
 
@@ -128,9 +137,58 @@ public class MainTestBench extends NarwhalRobot {
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "LightBlink");
 		listenerRight.addButtonDownListener("LightBlink", () -> { 
             try {
-                
+                Log.info("trigger", "trigger triggered");
+                tx = 0.0;
+                ty = 0.0;
+                ts = 0.0;
+                ta = 0.0;
+                taL = 0.0;
+                taR = 0.0;
+                for(int i = 0; i<2000; i++){
+                    tx = tx + table.getEntry("tx").getDouble(0.0);
+                    ty = ty + table.getEntry("ty").getDouble(0.0);
+                    ts = ts + table.getEntry("ts").getDouble(0.0);
+                    ta = ta + table.getEntry("ta").getDouble(0.0);
+                }
+                tx = tx/2000;
+                ty = ty/2000;
+                ts = ts/2000;
+                ta = ta/2000;
+                table.getEntry("pipeline").setNumber(1);
+                for(int i = 0; i<2000; i++){
+                    taL = taL + table.getEntry("ta").getDouble(0.0);
+                }
+                taL = taL/2000;
+                table.getEntry("pipeline").setNumber(2);
+                for(int i = 0; i<2000; i++){
+                    taR = taR + table.getEntry("ta").getDouble(0.0);
+                }
+                taR = taR/2000;
+                table.getEntry("pipeline").setNumber(0);
+                ratio = taL/taR;
+                bw.write(String.valueOf(tx));
+                bw.write(",");
+                bw.write(String.valueOf(ty));
+                bw.write(",");
+                bw.write(String.valueOf(ts));
+                bw.write(",");
+                bw.write(String.valueOf(ta));
+                bw.write(",");
+                bw.write(String.valueOf(taL));
+                bw.write(",");
+                bw.write(String.valueOf(taR));
+                bw.write(",");
+                bw.write(String.valueOf(ratio));
+                bw.newLine();
+                Log.info("tx", String.valueOf(tx));
+                Log.info("ty", String.valueOf(ty));
+                Log.info("ts", String.valueOf(ts));
+                Log.info("ta", String.valueOf(ta));
+                Log.info("taL", String.valueOf(taL));
+                Log.info("taR", String.valueOf(taR));
+                Log.info("ratio", String.valueOf(ratio));
             } catch (IOException e) {
-                
+                e.printStackTrace();
             }
   
         });
@@ -150,42 +208,6 @@ public class MainTestBench extends NarwhalRobot {
         });
         listenerLeft.nameControl(ControllerExtreme3D.TRIGGER, "takeValues");
         listenerLeft.addButtonDownListener("takeValues", () -> {
-            Log.info("trigger", "trigger triggered");
-            tx = 0.0;
-            ty = 0.0;
-            ts = 0.0;
-            ta = 0.0;
-            taL = 0.0;
-            taR = 0.0;
-            for(int i = 0; i<2000; i++){
-                tx = tx + table.getEntry("tx").getDouble(0.0);
-                ty = ty + table.getEntry("ty").getDouble(0.0);
-                ts = ts + table.getEntry("ts").getDouble(0.0);
-                ta = ta + table.getEntry("ta").getDouble(0.0);
-            }
-            tx = tx/2000;
-            ty = ty/2000;
-            ts = ts/2000;
-            ta = ta/2000;
-            table.getEntry("pipeline").setNumber(1);
-            for(int i = 0; i<2000; i++){
-                taL = taL + table.getEntry("ta").getDouble(0.0);
-            }
-            taL = taL/2000;
-            table.getEntry("pipeline").setNumber(2);
-            for(int i = 0; i<2000; i++){
-                taR = taR + table.getEntry("ta").getDouble(0.0);
-            }
-            taR = taR/2000;
-            table.getEntry("pipeline").setNumber(0);
-            ratio = taL/taR;
-            Log.info("tx", String.valueOf(tx));
-            Log.info("ty", String.valueOf(ty));
-            Log.info("ts", String.valueOf(ts));
-            Log.info("ta", String.valueOf(ta));
-            Log.info("taL", String.valueOf(taL));
-            Log.info("taR", String.valueOf(taR));
-            Log.info("ratio", String.valueOf(ratio));
         });
     }
 
