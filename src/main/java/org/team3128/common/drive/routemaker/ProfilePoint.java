@@ -10,16 +10,17 @@ import com.ctre.phoenix.motion.TrajectoryPoint;
  * 
  */
 public class ProfilePoint {
-    // public double x, y;
+    public double x, y;
     public boolean last;
     // public double x_r, y_r;
     // public double x_l, y_l;
     public double leftDistance, rightDistance;
     public double leftSpeed, rightSpeed;
+    public int durationMs;
 
-    public ProfilePoint(/*double x, double y,*/ boolean last, /* double x_l, double y_l, double x_r, double y_r,*/ double leftDistance, double rightDistance, double leftSpeed, double rightSpeed) {
-        // this.x = x;
-        // this.y = y;
+    public ProfilePoint(double x, double y, boolean last, /* double x_l, double y_l, double x_r, double y_r,*/ double leftDistance, double rightDistance, double leftSpeed, double rightSpeed, int durationMs) {
+        this.x = x;
+        this.y = y;
 
         this.last = last;
 
@@ -33,6 +34,8 @@ public class ProfilePoint {
         this.rightDistance = rightDistance;
 
         this.leftSpeed = leftSpeed;
-        this.rightSpeed = rightDistance;
+        this.rightSpeed = rightSpeed;
+
+        this.durationMs = durationMs;
     }
 }
