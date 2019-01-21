@@ -10,6 +10,6 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class Turn extends CommandGroup {
     public Turn(SRXTankDrive drive) {
-        addSequential(drive.new CmdInPlaceTurn(90, .75, 10000, Direction.RIGHT));
+        addSequential(drive.new CmdInPlaceTurn(360, 1.0, 10000, Direction.RIGHT));
     }
 }

@@ -21,7 +21,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
-import com.kauailabs.navx.frc.AHRS;
+import com.kauailabs.navx.frc.AHRS;		
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Timer;
@@ -48,6 +48,9 @@ import edu.wpi.first.wpilibj.command.Command;
 public class SRXTankDrive implements ITankDrive
 {
 	private TalonSRX leftMotors, rightMotors;
+
+	//for wheel base method		
+	public double averageWheelBase;		
 
 	public TalonSRX getLeftMotors() {
 		return leftMotors;
@@ -172,7 +175,7 @@ public class SRXTankDrive implements ITankDrive
 		this.gearRatio = gearRatio;
 		this.robotMaxSpeed = robotFreeSpeed;
 
-		double turningCircleDiameter = Math.sqrt(RobotMath.square(track) + RobotMath.square(wheelBase)); // pythagorean theorem
+		double turningCircleDiameter = wheelBase;
 		
 		turningCircleCircumference = turningCircleDiameter * Math.PI;
 
@@ -257,10 +260,6 @@ public class SRXTankDrive implements ITankDrive
 
 		leftMotors.set(ControlMode.PercentOutput, spdL);
 		rightMotors.set(ControlMode.PercentOutput, spdR);
-		//Log.debug("Teleop",
-		//			"left pos: " + leftMotors.getSelectedSensorPosition(0)
-		//					+ " deg, right pos: " + rightMotors.getSelectedSensorPosition(0));
-
 	}
 
 	/**
@@ -429,134 +428,17 @@ public class SRXTankDrive implements ITankDrive
 		return RobotMath.normalizeAngle((difference / turningCircleCircumference) * Angle.ROTATIONS);
 	}
 
-	public class CmdRealtimeRouteDrive extends CmdMotionProfileMove {
-		private Waypoint[] waypoints;
-		private double power, smoothness;
-
-		private Thread PBFRFA;
-
-		private ADXRS450_Gyro gyro;
-
+	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
 		private MotionProfileStatus leftStatus, rightStatus;
-		private ProfilePoint point;
+		private double timeoutMs;
+		private Waypoint[] waypoints;
+		private double power;
 
-		private double x0, y0, x1, y1;
-
-		private TrajectoryPoint trajPoint = new TrajectoryPoint();
-
-		private boolean done = false;
-
-		private final double accelerationDistance = 2 * Length.ft;
-
-		private double startDist, endDist;
-
-		public CmdRealtimeRouteDrive(ADXRS450_Gyro gyro, double power, double smoothness, double timeoutMs, Waypoint... waypoints) {
+		public CmdStaticRouteDrive(double power, double timeoutMs, Waypoint... waypoints) {
 			super(timeoutMs / 1000.0);
-
-			this.gyro = gyro;
-
-			this.waypoints = waypoints;
 
 			this.power = power;
-			this.smoothness = smoothness;
-
-			trajPoint.profileSlotSelect0 = 0;
-			trajPoint.timeDur = Routemaker.durationMs;
-			trajPoint.zeroPos = false;
-			trajPoint.isLastPoint = false;
-
-			x0 = waypoints[0].x;
-			y0 = waypoints[0].y;
-
-			x1 = waypoints[waypoints.length - 1].x;
-			y1 = waypoints[waypoints.length - 1].y;
-		}
-
-		@Override
-		protected void initialize() {
-			super.initialize();
-
-			leftMotors.changeMotionControlFramePeriod(1);
-			rightMotors.changeMotionControlFramePeriod(1);
-			
-			// Generate the initial path
-			Odometer.initialize(gyro, 0, 0, 0);
-			Routemaker.initialize(power, smoothness, waypoints);
-
-			// Start the motion profile mode
-			leftMotors.set(ControlMode.MotionProfile, 1);
-			rightMotors.set(ControlMode.MotionProfile, 1);
-
-			// Start a thread for handling the PBFRFRA calculations and odometery readings
-			PBFRFA = new Thread(() -> {
-				final double accelFactor = 0.1;
-
-				double lastUpdateTimeMs = 0;
-				double processStartTimeMs = 0;
-
-				double spdFrac = accelFactor;
-				while (true) {
-					Odometer.getInstance().update();
-
-					if (1000.0 * Timer.getFPGATimestamp() - lastUpdateTimeMs > Routemaker.durationMs - 2) {
-						processStartTimeMs = 1000.0 * Timer.getFPGATimestamp();
-						point = Routemaker.getInstance().getNextPoint(spdFrac);
-
-						trajPoint.isLastPoint = point.last;
-
-						trajPoint.position = point.leftDistance;
-						trajPoint.velocity = point.leftSpeed;
-						leftMotors.pushMotionProfileTrajectory(trajPoint);
-
-						trajPoint.position = point.rightDistance;
-						trajPoint.velocity = point.rightSpeed;
-						rightMotors.pushMotionProfileTrajectory(trajPoint);
-
-						leftMotors.processMotionProfileBuffer();
-						rightMotors.processMotionProfileBuffer();
-
-						lastUpdateTimeMs = 1000.0 * Timer.getFPGATimestamp();
-
-						Log.info("CmdRealtimeRouteDrive", "Start-to-stop Time: " + (lastUpdateTimeMs - processStartTimeMs) + "ms.");
-
-						startDist = RobotMath.distance(x0, y0, Odometer.getInstance().getX(), Odometer.getInstance().getY());
-						endDist = RobotMath.distance(x1, y1, Odometer.getInstance().getX(), Odometer.getInstance().getY());
-
-						spdFrac = Math.min(1.0, 0.1 + startDist/accelerationDistance);
-						spdFrac = Math.min(1.0, endDist/accelerationDistance);
-
-						if (trajPoint.isLastPoint) {
-							this.done = true;
-							break;
-						}
-					}
-
-					try {
-						Thread.sleep(1);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-
-				Log.info("CmdRealtimeRouteDrive", "Motion complete.");
-			});
-			PBFRFA.start();
-		}
-
-		@Override
-		protected boolean isFinished() {
-			return this.isTimedOut() || done;
-		}
-	}
-
-	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
-		private List<ProfilePoint> points;
-		private MotionProfileStatus leftStatus, rightStatus;
-
-		public CmdStaticRouteDrive(List<ProfilePoint> points, double timeoutMs) {
-			super(timeoutMs / 1000.0);
-
-			this.points = points;
+			this.waypoints = waypoints;
 		}
 
 		@Override
@@ -565,35 +447,55 @@ public class SRXTankDrive implements ITankDrive
 			
 			leftMotors.changeMotionControlFramePeriod(Routemaker.durationMs / 2);
 			rightMotors.changeMotionControlFramePeriod(Routemaker.durationMs / 2);
-
-			TrajectoryPoint point = new TrajectoryPoint();
-			point.profileSlotSelect0 = 0;
-			point.timeDur = Routemaker.durationMs;
-			point.zeroPos = false;
-			point.isLastPoint = false;
 				
-			for (int i = 0; i < points.size(); i++) {
-				if (i == 0) 
-					point.zeroPos = true;
-				if (i == points.size() - 1)
-					point.isLastPoint = true;
+			Routemaker rm = new Routemaker(power, waypoints);
 
-				point.position = points.get(i).leftDistance;
-				point.velocity = points.get(i).leftSpeed;
-				leftMotors.pushMotionProfileTrajectory(point);
+			double speed;
 
-				point.position = points.get(i).rightDistance;
-				point.velocity = points.get(i).rightSpeed;
-				rightMotors.pushMotionProfileTrajectory(point);
-			}
+			TrajectoryPoint trajPoint = new TrajectoryPoint();
+			trajPoint.profileSlotSelect0 = 0;
+			trajPoint.zeroPos = false;
+			trajPoint.isLastPoint = false;
 
-			new Notifier(() -> {
-				leftMotors.processMotionProfileBuffer();
-				rightMotors.processMotionProfileBuffer();
-			}).startPeriodic(Routemaker.durationSec / 2);
+			ProfilePoint profilePoint;
 
-			leftMotors.set(ControlMode.MotionProfile, 1);
-			rightMotors.set(ControlMode.MotionProfile, 1);
+			boolean first = true;
+
+			do {
+				speed = 1.0;
+				if (rm.s < 0.4) {
+					speed = rm.s / 0.4;
+				}
+				else if (rm.s > 0.6) {
+					speed = (1.0 - rm.s) / 0.4;
+				}
+		
+				profilePoint = rm.getNextPoint(speed);
+
+				if (profilePoint.last)
+					trajPoint.isLastPoint = true;
+
+				trajPoint.position = profilePoint.leftDistance;
+				trajPoint.velocity = profilePoint.leftSpeed;
+				leftMotors.pushMotionProfileTrajectory(trajPoint);
+
+				trajPoint.position = profilePoint.rightDistance;
+				trajPoint.velocity = profilePoint.rightSpeed;
+				rightMotors.pushMotionProfileTrajectory(trajPoint);
+
+				if (first) {
+					new Notifier(() -> {
+						leftMotors.processMotionProfileBuffer();
+						rightMotors.processMotionProfileBuffer();
+					}).startPeriodic(Routemaker.durationSec / 2);
+		
+					leftMotors.set(ControlMode.MotionProfile, 1);
+					rightMotors.set(ControlMode.MotionProfile, 1);
+
+					first = false;
+				}
+
+			} while (!profilePoint.last);
 		}
 
 		@Override
@@ -622,15 +524,10 @@ public class SRXTankDrive implements ITankDrive
 
 			leftMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
 			rightMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
-
-			// Fill and feed
 		}
 
 		@Override
 		protected void execute() {
-			// Don't think anything needs to happen here
-			// In theory, for a very large trajectory, the points would
-			// need to be fed in chunks while running.
 		}
 
 		@Override
@@ -727,7 +624,6 @@ public class SRXTankDrive implements ITankDrive
 			
 			this.endMode = endMode;
 			this.useScalars = useScalars;
-
 		}
 		
 		/**
@@ -759,8 +655,6 @@ public class SRXTankDrive implements ITankDrive
 			
 			clearEncoders();
 			configureForAuto();
-
-			Log.debug("2-Power", Double.toString(power));
 
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
 			double rightSpeed = (robotMaxSpeed * power * ((useScalars) ? rightSpeedScalar : 1.0));
@@ -807,7 +701,7 @@ public class SRXTankDrive implements ITankDrive
 			leftMotors.set(leftMode, smooth_multiplier * leftDist / Angle.CTRE_MAGENC_NU);
 
 			rightMotors.configMotionCruiseVelocity((int) rightSpeed, Constants.CAN_TIMEOUT);
-			rightMotors.configMotionAcceleration((int) (rightSpeed / 2) , Constants.CAN_TIMEOUT);
+			rightMotors.configMotionAcceleration((int) (rightSpeed / 2), Constants.CAN_TIMEOUT);
 
 			rightMotors.set(rightMode, smooth_multiplier * rightDist / Angle.CTRE_MAGENC_NU);
 
@@ -926,88 +820,7 @@ public class SRXTankDrive implements ITankDrive
 			// do nothing
 		}
 	}
-	//tygan
-	public class WheelBaseTest extends Command {
 
-		double maxLeftSpeed;
-		double maxRightSpeed;
-		SRXTankDrive drive;
-		AHRS ahrs;
-		double angleOne;
-		double angleTwo;
-		double leftDistance;
-		double rightDistance;
-		double angleChange;
-		double leftWheelBase;
-		double rightWheelBase;
-	
-	
-		public WheelBaseTest(AHRS ahrs, SRXTankDrive drive, double duration, double leftSpeed, double rightSpeed) {
-			super(duration);
-			maxLeftSpeed = leftSpeed;
-			maxRightSpeed = rightSpeed;
-			this.drive = drive;
-			this.ahrs = ahrs;
-		}
-	
-		protected void initialize() {
-			// Acceleration for loop
-	
-			/*
-			for (i from 0 to 1000)
-			leftmotors to maxLeftSpeed * i/ 1000
-	
-			rightmotors mirrors above
-	
-			
-	
-		}
-	
-			record gyro angle theta 1
-			*/
-			for(int i = 0; i <= 1000 ; i++){
-				drive.getLeftMotors().set(ControlMode.Velocity, maxLeftSpeed * i/1000);
-				drive.getRightMotors().set(ControlMode.Velocity, maxRightSpeed * i/1000);
-			}
-			drive.getLeftMotors().setSelectedSensorPosition(0);
-			drive.getRightMotors().setSelectedSensorPosition(0);
-			angleOne = ahrs.getAngle()*(Math.PI/180);
-			Log.debug("Angle 1", "" + angleOne);
-		}
-	
-		@Override
-		protected void execute() {
-			// Don't think anything needs to happen here
-			// In theory, for a very large trajectory, the points would
-			// need to be fed in chunks while running.
-		}
-	
-		@Override
-		protected boolean isFinished() {
-			return this.isTimedOut();
-		}
-	
-		@Override
-		protected void end() {
-			// record theta 2
-			angleTwo = ahrs.getAngle()*(Math.PI/180);
-			Log.debug("Angle 2", "" + angleTwo);
-			angleChange = angleTwo - angleOne;
-			// record distances
-			leftDistance = (wheelCircumfrence * drive.getLeftMotors().getSelectedSensorPosition()/4096) * Length.in;
-			rightDistance = (wheelCircumfrence * drive.getRightMotors().getSelectedSensorPosition()/4096) * Length.in;
-	
-			drive.getLeftMotors().set(ControlMode.Velocity, 0);
-			drive.getRightMotors().set(ControlMode.Velocity, 0);
-			Log.debug("Distances", "Left Motor: " + leftDistance + " Right Motor: " + rightDistance);
-			// do the math to figure wb
-			leftWheelBase = 2 * (leftDistance/angleChange) - 2 * (leftDistance + rightDistance) / (4 * Math.PI *angleChange);
-			rightWheelBase = -2 * (rightDistance/angleChange) - 2 * (leftDistance + rightDistance) / (4 * Math.PI *angleChange);
-			Log.debug("Wheel Base", "Left side: " +  leftWheelBase + " Right side: " + rightWheelBase);
-	
-		}
-	}
-	//tyganend
 	/**
 	 * Command to to an arc turn in the specified amount of degrees.
 	 * 
@@ -1055,6 +868,63 @@ public class SRXTankDrive implements ITankDrive
 		}
 	}
 
+	public class CmdDetermineWheelbase extends Command {		
+		double maxLeftSpeed;		
+		double maxRightSpeed;		
+		SRXTankDrive drive;		
+		AHRS ahrs;		
+		double theta0;		
+		double theta1;		
+		double leftDistance;		
+		double rightDistance;		
+		double delTheta;		
+		double leftWheelBase;		
+		double rightWheelBase;			
+		
+		public CmdDetermineWheelbase(AHRS ahrs, SRXTankDrive drive, double duration, double leftSpeed, double rightSpeed) {		
+			super(duration);		
+			maxLeftSpeed = leftSpeed;		
+			maxRightSpeed = rightSpeed;		
+			this.drive = drive;		
+			this.ahrs = ahrs;		
+		}		
+		
+		protected void initialize() {			
+			for(int i = 0; i <= 10000 ; i++){		
+				drive.getLeftMotors().set(ControlMode.Velocity, maxLeftSpeed * i/10000);		
+				drive.getRightMotors().set(ControlMode.Velocity, maxRightSpeed * i/10000);		
+			}		
+			drive.getLeftMotors().setSelectedSensorPosition(0);		
+			drive.getRightMotors().setSelectedSensorPosition(0);		
+			theta0 = ahrs.getAngle()*(Math.PI/180);		
+		}		
+
+		@Override		
+		protected boolean isFinished() {		
+			return this.isTimedOut();		
+		}		
+
+		@Override		
+		protected void end() {		
+			theta1 = ahrs.getAngle()*(Math.PI/180);		
+			delTheta = theta1 - theta0;		
+
+			leftDistance = (wheelCircumfrence * drive.getLeftMotors().getSelectedSensorPosition()/4096);		
+			rightDistance = (wheelCircumfrence * drive.getRightMotors().getSelectedSensorPosition()/4096);		
+			
+			drive.getLeftMotors().set(ControlMode.Velocity, 0);		
+			drive.getRightMotors().set(ControlMode.Velocity, 0);		
+			leftWheelBase = 2 * (leftDistance/delTheta) - 2 * (leftDistance + rightDistance) / (2 * delTheta);		
+			rightWheelBase = -2 * (rightDistance/delTheta) + 2 * (leftDistance + rightDistance) / (2 * delTheta);		
+			
+			averageWheelBase = (leftWheelBase + rightWheelBase)/2;					
+		}		
+	}		
+
+	public double returnWheelBase() {		
+		return averageWheelBase;		
+	}		
+  
 	/**
 	 * Command to turn in an arc with a certain radius for the specified amount
 	 * of degrees.
@@ -1102,59 +972,6 @@ public class SRXTankDrive implements ITankDrive
 			super(MoveEndMode.BOTH, 0, 0, smooth, power, false, msec);
 
 			// this formula is explained on the info repository wiki
-			double innerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius - 0.5 * track)) * FUDGE_FACTOR;
-			double outerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius + 0.5 * track)) * FUDGE_FACTOR;
-
-			if (dir == Direction.RIGHT)
-			{
-				rightDist = innerAngularDist;
-				leftDist = outerAngularDist;
-			}
-			else
-			{
-				rightDist = outerAngularDist;
-				leftDist = innerAngularDist;
-			}
-		}
-	}
-	public class CmdFancierArcTurn extends CmdMoveDistance
-	{
-		// it seems like the math is consistently off by about 6%
-		final static double FUDGE_FACTOR = 1.06;
-				
-		/**
-		 * @param radius - The radius that the robot should drive the arc at.
-		 * @param degs - The distance to turn in degrees. Accepts negative values.
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 */
-		public CmdFancierArcTurn(double radius, float degs, int msec, Direction dir)
-		{
-			this(radius, degs, msec, dir, .5, false);
-		}
-		
-		/**
-		 * @param radius - The radius that the robot should drive the arc at.
-		 * @param degs - The distance to turn in degrees. Accepts negative values.
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 * @param power - The relative speed to drive the turn at (from 0 to 1)
-		 */
-		public CmdFancierArcTurn(double radius, float degs, int msec, Direction dir, double power)
-		{
-			this(radius, degs, msec, dir, power, false);
-		}
-		
-		/**
-		 * @param radius - The radius that the robot should drive the arc at.
-		 * @param degs - The distance to turn in degrees. Accepts negative values.
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 * @param power - The relative speed to drive the turn at (from 0 to 1)
-		 * @param smooth - Should the move terminate at speed = 0 (false) or continue to drift (true)
-		 */
-		public CmdFancierArcTurn(double radius, float degs, int msec, Direction dir, double power, boolean smooth)
-		{
-			super(MoveEndMode.BOTH, 0, 0, smooth, power, false, msec);
-
-			// this formula is not explained on the info repository wiki
 			double innerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius - 0.5 * wheelBase));
 			double outerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius + 0.5 * wheelBase));
 
@@ -1197,7 +1014,7 @@ public class SRXTankDrive implements ITankDrive
 		{
 			// the encoder counts are an in-depth calculation, so we don't set
 			// them until after the super constructor
-			super(MoveEndMode.BOTH, 0, 0, power, true, msec);
+			super(MoveEndMode.BOTH, 0, 0, power, false, msec);
 
 			// this formula is explained in the info repository wiki
 			double wheelAngularDist = cmToEncDegrees(turningCircleCircumference * (degs / 360.0));
