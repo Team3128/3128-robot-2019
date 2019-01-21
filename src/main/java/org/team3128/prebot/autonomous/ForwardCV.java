@@ -26,13 +26,13 @@ public class ForwardCV extends CommandGroup {
 
         for(int i = 0; i<2000; i++){
             //Log.info("trigger", "trigger triggered");
-            valCurrent2 = valCurrent2 + table.getEntry("ty").getDouble(0.0);
+        valCurrent2 = table.getEntry("ty").getDouble(0.0);
         }
         valCurrent2 = valCurrent2/2000;
 
-        double d = (25 - 5) / Math.tan(28.0 + valCurrent2);
-
-        addSequential(drive.new CmdMoveForward((d * Length.in), 10000, true));
+        double d = (28.5 - 5) / (Math.tan((28.0 + valCurrent2) * (Math.PI/180)));
+        Log.info("distance calc", String.valueOf(d));
+        addSequential(drive.new CmdMoveForward(-d, 10000, true));
 
         Log.info("auto_tyav", String.valueOf(valCurrent2));
         //NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));

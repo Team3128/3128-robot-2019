@@ -175,7 +175,7 @@ public class SRXTankDrive implements ITankDrive
 		this.gearRatio = gearRatio;
 		this.robotMaxSpeed = robotFreeSpeed;
 
-		double turningCircleDiameter = Math.sqrt(RobotMath.square(track) + RobotMath.square(wheelBase)); // pythagorean theorem
+		double turningCircleDiameter = wheelBase; // pythagorean theorem
 		
 		turningCircleCircumference = turningCircleDiameter * Math.PI;
 
