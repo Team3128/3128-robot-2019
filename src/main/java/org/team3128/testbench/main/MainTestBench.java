@@ -51,6 +51,8 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 import java.io.BufferedWriter;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -68,7 +70,11 @@ public class MainTestBench extends NarwhalRobot {
 
     public File f;
     BufferedWriter bw;
+    BufferedReader br;
     FileWriter fw;
+    FileReader fr;
+    String currentLine;
+    String newLine;
 
 	@Override
 	protected void constructHardware()
@@ -81,11 +87,13 @@ public class MainTestBench extends NarwhalRobot {
                 f.createNewFile();
             }
             fw = new FileWriter(f);
+            fr = new FileReader(f);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         bw = new BufferedWriter(fw);
+        br = new BufferedReader(fr);
         try{
             bw.write("tx,ty,ts,ta,taL,taR,ratio");
             bw.newLine();
@@ -136,7 +144,8 @@ public class MainTestBench extends NarwhalRobot {
 		    table.getEntry("ledMode").setNumber(1);
 		});*/
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "LightBlink");
-		listenerRight.addButtonDownListener("LightBlink", () -> { 
+		listenerRight.addButtonDownListener("LightBlink", () -> {
+            newLine = ""; 
             try {
                 Log.info("trigger", "trigger triggered");
                 tx = 0.0;
@@ -167,7 +176,14 @@ public class MainTestBench extends NarwhalRobot {
                 taR = taR/2000;
                 table.getEntry("pipeline").setNumber(0);
                 ratio = taL/taR;
-                bw.write(String.valueOf(tx));
+                newLine = newLine + String.valueOf(tx) + ",";
+                newLine = newLine + String.valueOf(ty) + ",";
+                newLine = newLine + String.valueOf(ts) + ",";
+                newLine = newLine + String.valueOf(ta) + ",";
+                newLine = newLine + String.valueOf(taL) + ",";
+                newLine = newLine + String.valueOf(taR) + ",";
+                newLine = newLine + String.valueOf(ratio);
+                /*bw.write(String.valueOf(tx));
                 bw.write(",");
                 bw.write(String.valueOf(ty));
                 bw.write(",");
@@ -179,7 +195,8 @@ public class MainTestBench extends NarwhalRobot {
                 bw.write(",");
                 bw.write(String.valueOf(taR));
                 bw.write(",");
-                bw.write(String.valueOf(ratio));
+                bw.write(String.valueOf(ratio));*/
+                bw.write(newLine);
                 bw.newLine();
                 Log.info("tx", String.valueOf(tx));
                 Log.info("ty", String.valueOf(ty));
@@ -191,9 +208,23 @@ public class MainTestBench extends NarwhalRobot {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-  
         });
         
+        listenerRight.nameControl(new Button(9), "deleteLastLine");
+        listenerRight.addButtonDownListener("deleteLastLine", () -> {
+            try {
+                while((currentLine = br.readLine()) != null){
+                    String trimmedLine = currentLine.trim();
+                    if(trimmedLine.equals(newLine)){
+                        currentLine = "";
+                    }
+                    bw.write(currentLine + System.getProperty("line.separator"));
+                }
+            } catch(IOException e){
+                e.printStackTrace();
+            }
+        });
+
         listenerRight.nameControl(new Button(7), "CamMode");
         listenerRight.addButtonDownListener("CamMode", () -> {
             table.getEntry("camMode").setNumber(0);
