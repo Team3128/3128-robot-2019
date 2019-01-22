@@ -95,8 +95,9 @@ public class MainTestBench extends NarwhalRobot {
         bw = new BufferedWriter(fw);
         br = new BufferedReader(fr);
         try{
-            bw.write("tx,ty,ts,ta,taL,taR,ratio");
-            bw.newLine();
+            bw.write("tx,ty,ts,ta,taL,taR,ratio\r\n");
+            //bw.newLine();
+            //bw.close();
         } catch(IOException e){
             e.printStackTrace();
         }
@@ -147,6 +148,8 @@ public class MainTestBench extends NarwhalRobot {
 		listenerRight.addButtonDownListener("LightBlink", () -> {
             newLine = ""; 
             try {
+                //fw = new FileWriter(f, true);
+                //bw = new BufferedWriter(fw);
                 Log.info("trigger", "trigger triggered");
                 tx = 0.0;
                 ty = 0.0;
@@ -164,12 +167,12 @@ public class MainTestBench extends NarwhalRobot {
                 ty = ty/2000;
                 ts = ts/2000;
                 ta = ta/2000;
-                table.getEntry("pipeline").setNumber(1);
+                table.getEntry("pipeline").setString("1");
                 for(int i = 0; i<2000; i++){
                     taL = taL + table.getEntry("ta").getDouble(0.0);
                 }
                 taL = taL/2000;
-                table.getEntry("pipeline").setNumber(2);
+                table.getEntry("pipeline").setString("2");
                 for(int i = 0; i<2000; i++){
                     taR = taR + table.getEntry("ta").getDouble(0.0);
                 }
@@ -196,8 +199,10 @@ public class MainTestBench extends NarwhalRobot {
                 bw.write(String.valueOf(taR));
                 bw.write(",");
                 bw.write(String.valueOf(ratio));*/
-                bw.write(newLine);
-                bw.newLine();
+                bw.write(newLine + "\r\n");
+                //bw.newLine();
+                //bw.close();
+                Log.info("line", newLine);
                 Log.info("tx", String.valueOf(tx));
                 Log.info("ty", String.valueOf(ty));
                 Log.info("ts", String.valueOf(ts));
@@ -208,23 +213,52 @@ public class MainTestBench extends NarwhalRobot {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            /*try {
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }*/
         });
         
         listenerRight.nameControl(new Button(9), "deleteLastLine");
         listenerRight.addButtonDownListener("deleteLastLine", () -> {
             try {
+                bw.close();
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                //fw = new FileWriter(f);
+                //bw = new BufferedWriter(fw);
                 while((currentLine = br.readLine()) != null){
                     String trimmedLine = currentLine.trim();
                     if(trimmedLine.equals(newLine)){
+                        Log.info("here", currentLine);
                         currentLine = "";
                     }
-                    bw.write(currentLine + System.getProperty("line.separator"));
+                    //bw = new BufferedWriter(fw);
+                    //This doesn't work yet, may need to write to a new file when deleting old lines
+                    //bw.write(currentLine + System.getProperty("line.separator"));
+                //bw.close();
                 }
             } catch(IOException e){
                 e.printStackTrace();
             }
+            try {
+                fw = new FileWriter(f, true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            bw = new BufferedWriter(fw);
         });
-
+        listenerRight.nameControl(new Button(10), "closeFile");
+        listenerRight.addButtonDownListener("closeFile", () -> {
+            try {
+                bw.close();
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+        });
         listenerRight.nameControl(new Button(7), "CamMode");
         listenerRight.addButtonDownListener("CamMode", () -> {
             table.getEntry("camMode").setNumber(0);
