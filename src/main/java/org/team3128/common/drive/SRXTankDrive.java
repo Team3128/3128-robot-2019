@@ -430,23 +430,35 @@ public class SRXTankDrive implements ITankDrive
 
 	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
 		private MotionProfileStatus leftStatus, rightStatus;
-		private double timeoutMs;
 		private Waypoint[] waypoints;
 		private double power;
 
+		private Notifier processNotifier;
+
 		public CmdStaticRouteDrive(double power, double timeoutMs, Waypoint... waypoints) {
-			super(timeoutMs / 1000.0);
+			super(timeoutMs);
 
 			this.power = power;
 			this.waypoints = waypoints;
+
+			leftStatus = new MotionProfileStatus();
+			leftStatus.isLast = false;
+			rightStatus = new MotionProfileStatus();
+			rightStatus.isLast = false;
+
+			processNotifier = new Notifier(() -> {
+				System.out.println("Processing");
+				leftMotors.processMotionProfileBuffer();
+				rightMotors.processMotionProfileBuffer();
+			});
 		}
 
 		@Override
 		protected void initialize() {
 			super.initialize();
 			
-			leftMotors.changeMotionControlFramePeriod(Routemaker.durationMs / 2);
-			rightMotors.changeMotionControlFramePeriod(Routemaker.durationMs / 2);
+			leftMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
+			rightMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
 				
 			Routemaker rm = new Routemaker(power, waypoints);
 
@@ -464,17 +476,20 @@ public class SRXTankDrive implements ITankDrive
 			do {
 				speed = 1.0;
 				if (rm.s < 0.4) {
-					speed = rm.s / 0.4;
+					speed = (0.1 + rm.s) / 0.5;
 				}
 				else if (rm.s > 0.6) {
-					speed = (1.0 - rm.s) / 0.4;
+					speed = (1.1 - rm.s) / 0.5;
 				}
 		
 				profilePoint = rm.getNextPoint(speed);
-
+				//System.out.println(profilePoint.x + "," + profilePoint.y + " (" + profilePoint.durationMs + ")");
+				
 				if (profilePoint.last)
 					trajPoint.isLastPoint = true;
 
+				trajPoint.timeDur = profilePoint.durationMs;
+				
 				trajPoint.position = profilePoint.leftDistance;
 				trajPoint.velocity = profilePoint.leftSpeed;
 				leftMotors.pushMotionProfileTrajectory(trajPoint);
@@ -484,10 +499,7 @@ public class SRXTankDrive implements ITankDrive
 				rightMotors.pushMotionProfileTrajectory(trajPoint);
 
 				if (first) {
-					new Notifier(() -> {
-						leftMotors.processMotionProfileBuffer();
-						rightMotors.processMotionProfileBuffer();
-					}).startPeriodic(Routemaker.durationSec / 2);
+					processNotifier.startPeriodic(Routemaker.durationSec / 2);
 		
 					leftMotors.set(ControlMode.MotionProfile, 1);
 					rightMotors.set(ControlMode.MotionProfile, 1);
@@ -503,7 +515,16 @@ public class SRXTankDrive implements ITankDrive
 			leftMotors.getMotionProfileStatus(leftStatus);
 			rightMotors.getMotionProfileStatus(rightStatus);
 
-			return this.isTimedOut() || leftStatus.isLast && rightStatus.isLast;
+			System.out.println(leftStatus.topBufferCnt + " " + leftStatus.btmBufferCnt);
+
+			return super.isFinished() || leftStatus.isLast && rightStatus.isLast;
+		}
+
+		@Override
+		protected synchronized void end() {
+			super.end();
+			processNotifier.close();
+			Log.info("CmdStaticRouteDrive", "Finished.");
 		}
 	}
 

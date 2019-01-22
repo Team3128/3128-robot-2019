@@ -116,7 +116,7 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.addAuto("Turn", new Turn(tankDrive));
         NarwhalDashboard.addAuto("Arc Turn", new arcTest(tankDrive));
         NarwhalDashboard.addAuto("Forward", new Forward(tankDrive));
-        NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
+        //NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
         NarwhalDashboard.addAuto("Wheel Base Test", new WheelBaseTestAuto(ahrs, tankDrive, 6, 1000, 2000));
         NarwhalDashboard.addAuto("Forward CV", new ForwardCV(tankDrive));
         NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
@@ -130,7 +130,7 @@ public class MainPrebot extends NarwhalRobot {
 		lm.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");		
 
         lm.addMultiListener(() -> {
-			tankDrive.arcadeDrive(-0.5 * lm.getAxis("MoveTurn"),
+			tankDrive.arcadeDrive(-0.3 * lm.getAxis("MoveTurn"),
 					lm.getAxis("MoveForwards"),
 					-1 * lm.getAxis("Throttle"),
 					true);		

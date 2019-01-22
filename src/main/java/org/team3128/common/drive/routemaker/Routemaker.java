@@ -157,7 +157,8 @@ public class Routemaker {
         a_tp = a0;
 
         // Generate a new Segment between the target of the previous profile point and the end waypoint of the segment
-        spline = new Segment(new Waypoint(wp_target, x_tp, y_tp, a_tp), waypoints[ref_segment + 1], s);
+        if (s < 0.9)
+            spline = new Segment(new Waypoint(wp_target, x_tp, y_tp, a_tp), waypoints[ref_segment + 1], s);
 
         // Figure out where the left and right wheelcenters ended up after the previous profile point
         x_l_tp = x_tp - (wb / 2) * RobotMath.cos(a_tp - 90);
