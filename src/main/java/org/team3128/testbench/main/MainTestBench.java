@@ -66,7 +66,7 @@ public class MainTestBench extends NarwhalRobot {
     public int lowGearMaxSpeed;
     public SRXTankDrive drive;
     public NetworkTable table;
-    double tx, ty, ta, ts, taL, taR, ratio;
+    double tx, ty, ta, ts, taL, taR, ratio, thoriz, tvert, thorizL, tvertL, thorizR, tvertR;
 
     public File f;
     BufferedWriter bw;
@@ -95,7 +95,7 @@ public class MainTestBench extends NarwhalRobot {
         bw = new BufferedWriter(fw);
         br = new BufferedReader(fr);
         try{
-            bw.write("tx,ty,ts,ta,taL,taR,ratio\r\n");
+            bw.write("tx,ty,ts,ta,taL,taR,ratio,thoriz,tvert,thorizL,tvertL,thorizR,tvertR\r\n");
             //bw.newLine();
             //bw.close();
         } catch(IOException e){
@@ -157,27 +157,43 @@ public class MainTestBench extends NarwhalRobot {
                 ta = 0.0;
                 taL = 0.0;
                 taR = 0.0;
+                thoriz = 0.0;
+                tvert = 0.0;
+                thorizL = 0.0;
+                tvertL = 0.0;
+                thorizR = 0.0;
+                tvertR = 0.0;
                 for(int i = 0; i<2000; i++){
                     tx = tx + table.getEntry("tx").getDouble(0.0);
                     ty = ty + table.getEntry("ty").getDouble(0.0);
                     ts = ts + table.getEntry("ts").getDouble(0.0);
                     ta = ta + table.getEntry("ta").getDouble(0.0);
+                    thoriz = thoriz + table.getEntry("thoriz").getDouble(0.0);
+                    tvert = tvert + table.getEntry("tvert").getDouble(0.0);
                 }
                 tx = tx/2000;
                 ty = ty/2000;
                 ts = ts/2000;
                 ta = ta/2000;
+                thoriz = thoriz/2000;
+                tvert = tvert/2000;
                 table.getEntry("pipeline").setString("1");
                 for(int i = 0; i<2000; i++){
                     taL = taL + table.getEntry("ta").getDouble(0.0);
+                    thorizL = thorizL + table.getEntry("thoriz").getDouble(0.0);
+                    tvertL = tvertL + table.getEntry("tvert").getDouble(0.0);
                 }
                 taL = taL/2000;
+                thorizL = thorizL/2000;
+                tvertL = tvertL/2000;
                 table.getEntry("pipeline").setString("2");
                 for(int i = 0; i<2000; i++){
                     taR = taR + table.getEntry("ta").getDouble(0.0);
+                    thorizR = thorizR + table.getEntry("thoriz").getDouble(0.0);
+                    tvertR = tvertR + table.getEntry("tvert").getDouble(0.0);
                 }
                 taR = taR/2000;
-                table.getEntry("pipeline").setNumber(0);
+                table.getEntry("pipeline").setString("0");
                 ratio = taL/taR;
                 newLine = newLine + String.valueOf(tx) + ",";
                 newLine = newLine + String.valueOf(ty) + ",";
@@ -185,7 +201,13 @@ public class MainTestBench extends NarwhalRobot {
                 newLine = newLine + String.valueOf(ta) + ",";
                 newLine = newLine + String.valueOf(taL) + ",";
                 newLine = newLine + String.valueOf(taR) + ",";
-                newLine = newLine + String.valueOf(ratio);
+                newLine = newLine + String.valueOf(ratio) + ",";
+                newLine = newLine + String.valueOf(thoriz) + ",";
+                newLine = newLine + String.valueOf(tvert) + ",";
+                newLine = newLine + String.valueOf(thorizL) + ",";
+                newLine = newLine + String.valueOf(tvertL) + ",";
+                newLine = newLine + String.valueOf(thorizR) + ",";
+                newLine = newLine + String.valueOf(tvertR);
                 /*bw.write(String.valueOf(tx));
                 bw.write(",");
                 bw.write(String.valueOf(ty));
@@ -210,6 +232,12 @@ public class MainTestBench extends NarwhalRobot {
                 Log.info("taL", String.valueOf(taL));
                 Log.info("taR", String.valueOf(taR));
                 Log.info("ratio", String.valueOf(ratio));
+                Log.info("thoriz", String.valueOf(thoriz));
+                Log.info("tvert", String.valueOf(tvert));
+                Log.info("thorizL", String.valueOf(thorizL));
+                Log.info("tvertL", String.valueOf(tvertL));
+                Log.info("thorizR", String.valueOf(thorizR));
+                Log.info("tvertR", String.valueOf(tvertR));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -258,6 +286,18 @@ public class MainTestBench extends NarwhalRobot {
             } catch(IOException e) {
                 e.printStackTrace();
             }
+        });
+        listenerRight.nameControl(new Button(5), "pipeline_0");
+        listenerRight.addButtonDownListener("pipeline_0", () -> {
+            table.getEntry("pipeline").setString("0");
+        });
+        listenerRight.nameControl(new Button(3), "pipeline_1");
+        listenerRight.addButtonDownListener("pipeline_1", () -> {
+            table.getEntry("pipeline").setString("1");
+        });
+        listenerRight.nameControl(new Button(4), "pipeline_2");
+        listenerRight.addButtonDownListener("pipeline_2", () -> {
+            table.getEntry("pipeline").setString("2");
         });
         listenerRight.nameControl(new Button(7), "CamMode");
         listenerRight.addButtonDownListener("CamMode", () -> {
