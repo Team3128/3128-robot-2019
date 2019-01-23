@@ -289,15 +289,18 @@ public class MainTestBench extends NarwhalRobot {
         });
         listenerRight.nameControl(new Button(5), "pipeline_0");
         listenerRight.addButtonDownListener("pipeline_0", () -> {
-            table.getEntry("pipeline").setString("0");
+            table.getEntry("pipeline").setDouble(0.0);
+            Log.info("pipeline", "0");
         });
         listenerRight.nameControl(new Button(3), "pipeline_1");
         listenerRight.addButtonDownListener("pipeline_1", () -> {
-            table.getEntry("pipeline").setString("1");
+            table.getEntry("pipeline").setDouble(1.0);
+            Log.info("pipeline", "1");
         });
         listenerRight.nameControl(new Button(4), "pipeline_2");
         listenerRight.addButtonDownListener("pipeline_2", () -> {
-            table.getEntry("pipeline").setString("2");
+            table.getEntry("pipeline").setDouble(2.0);
+            Log.info("pipeline", "2");
         });
         listenerRight.nameControl(new Button(7), "CamMode");
         listenerRight.addButtonDownListener("CamMode", () -> {
