@@ -177,7 +177,7 @@ public class MainTestBench extends NarwhalRobot {
                 ta = ta/2000;
                 thoriz = thoriz/2000;
                 tvert = tvert/2000;
-                table.getEntry("pipeline").setString("1");
+                table.getEntry("pipeline").setDouble(1.0);;
                 for(int i = 0; i<2000; i++){
                     taL = taL + table.getEntry("ta").getDouble(0.0);
                     thorizL = thorizL + table.getEntry("thoriz").getDouble(0.0);
@@ -186,14 +186,14 @@ public class MainTestBench extends NarwhalRobot {
                 taL = taL/2000;
                 thorizL = thorizL/2000;
                 tvertL = tvertL/2000;
-                table.getEntry("pipeline").setString("2");
+                table.getEntry("pipeline").setDouble(2.0);;
                 for(int i = 0; i<2000; i++){
                     taR = taR + table.getEntry("ta").getDouble(0.0);
                     thorizR = thorizR + table.getEntry("thoriz").getDouble(0.0);
                     tvertR = tvertR + table.getEntry("tvert").getDouble(0.0);
                 }
                 taR = taR/2000;
-                table.getEntry("pipeline").setString("0");
+                table.getEntry("pipeline").setDouble(0.0);;
                 ratio = taL/taR;
                 newLine = newLine + String.valueOf(tx) + ",";
                 newLine = newLine + String.valueOf(ty) + ",";
