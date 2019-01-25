@@ -3,7 +3,7 @@ package org.team3128.common.autonomous.primitives;
 import edu.wpi.first.wpilibj.command.Command;
 
 /**
- * Bleah.  This command is an utter perversion of the Command system
+ * Bleah. This command is an utter perversion of the Command system
  * But I need it for debugging, so there it is.
  * @author Narwhal
  *

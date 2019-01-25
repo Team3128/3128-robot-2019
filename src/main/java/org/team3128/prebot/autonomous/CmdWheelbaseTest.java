@@ -10,10 +10,10 @@ import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 
-public class Test extends CommandGroup {
-    public Test(SRXTankDrive drive, AHRS ahrs) {
-        
-        super();
+public class CmdWheelbaseTest extends CommandGroup {
+    public CmdWheelbaseTest(AHRS ahrs) {        
+        SRXTankDrive drive = SRXTankDrive.getInstance();
+
         final double arc_distance = 4 * Length.ft;
 
         float angle = 45f;
@@ -42,7 +42,7 @@ public class Test extends CommandGroup {
             int leftPos = drive.getLeftMotors().getSelectedSensorPosition();
             int rightPos = drive.getRightMotors().getSelectedSensorPosition();
             double theta = Double.valueOf(ahrs.getYaw());
-            addSequential(drive.new CmdFancyArcTurn(large_turn_radius, angle, 10000, Direction.LEFT, 1));
+            addSequential(drive.new CmdArcTurn(large_turn_radius, angle, Direction.LEFT, 1, 10000));
             theta = ahrs.getYaw() - theta;
             theta = theta*(Math.PI/180);
             leftPos = drive.getLeftMotors().getSelectedSensorPosition() - leftPos;

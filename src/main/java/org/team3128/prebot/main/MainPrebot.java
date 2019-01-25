@@ -113,12 +113,12 @@ public class MainPrebot extends NarwhalRobot {
     
     @Override
     protected void constructAutoPrograms() {
-        NarwhalDashboard.addAuto("Turn", new Turn(tankDrive));
-        NarwhalDashboard.addAuto("Arc Turn", new arcTest(tankDrive));
-        NarwhalDashboard.addAuto("Forward", new Forward(tankDrive));
+        NarwhalDashboard.addAuto("Turn", new CmdInPlaceTurnTest());
+        NarwhalDashboard.addAuto("Arc Turn", new CmdArcTurnTest());
+        NarwhalDashboard.addAuto("Forward", new CmdDriveForward());
         //NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
-        NarwhalDashboard.addAuto("Wheel Base Test", new WheelBaseTestAuto(ahrs, tankDrive, 6, 1000, 2000));
-        NarwhalDashboard.addAuto("Forward CV", new ForwardCV(tankDrive));
+        NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(6, 1000, 2000));
+        NarwhalDashboard.addAuto("Forward CV", new CmdDriveForwardCVTest());
         NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
         // previous speeds that were used were 2000, 4000 (arbitrarily picked)
     }
@@ -215,7 +215,7 @@ public class MainPrebot extends NarwhalRobot {
 
             double d = (28.5 - 9.5) / Math.tan(28.0 + valCurrent2);
 
-            cmdRunner.addSequential(tankDrive.new CmdMoveForward((d * Length.in), 10000, true));
+            cmdRunner.addSequential(tankDrive.new CmdDriveStraight(d * Length.in, 1.0, 10000));
 
             Log.info("tyav", String.valueOf(valCurrent2));
             NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));

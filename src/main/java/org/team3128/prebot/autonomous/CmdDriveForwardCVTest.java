@@ -13,7 +13,8 @@ public class CmdDriveForwardCVTest extends CommandGroup {
 
     public NetworkTable table;
 
-    public CmdDriveForwardCVTest(SRXTankDrive drive) {
+    public CmdDriveForwardCVTest() {
+        SRXTankDrive drive = SRXTankDrive.getInstance();
 
         double valCurrent2 = 0.0;
 
@@ -27,7 +28,7 @@ public class CmdDriveForwardCVTest extends CommandGroup {
 
         double d = (28.5 - 5) / (Math.tan((28.0 + valCurrent2) * (Math.PI/180)));
         Log.info("distance calc", String.valueOf(d));
-        addSequential(drive.new CmdMoveForward(-d, 10000, true));
+        addSequential(drive.new CmdDriveStraight(-d, 1.0, 10000));
 
         Log.info("auto_tyav", String.valueOf(valCurrent2));
         //NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));
