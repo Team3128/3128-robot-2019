@@ -26,6 +26,7 @@ public class NarwhalDashboard extends WebSocketServer {
     private static HashMap<String, DashButtonCallback> buttons = new HashMap<String, DashButtonCallback>();
 
     private static String selectedAuto = null;
+    private static boolean autosPushed = false;
 
     public NarwhalDashboard(int port) throws UnknownHostException {
         super(new InetSocketAddress(port));
@@ -75,6 +76,13 @@ public class NarwhalDashboard extends WebSocketServer {
      */
     public static void addAuto(String name, CommandGroup program) {
         autoPrograms.put(name, program);
+    }
+
+    /**
+     * Sends new set of autonomous programs to NarwhalDashboard.
+     */
+    public static void pushAutos() {
+        autosPushed = false;
     }
 
     /**
@@ -130,13 +138,17 @@ public class NarwhalDashboard extends WebSocketServer {
                     jsonString = jsonString.substring(0, jsonString.length() - 1);
                 jsonString += "],";
                 
-                jsonString += "\"auto_programs\":[";
-                for (String autoName : autoPrograms.keySet()) {
-                    jsonString += "\"" + autoName +  "\",";
+                if (!autosPushed) {
+                    jsonString += "\"auto_programs\":[";
+                    for (String autoName : autoPrograms.keySet()) {
+                        jsonString += "\"" + autoName +  "\",";
+                    }
+                    if (!autoPrograms.isEmpty())
+                        jsonString = jsonString.substring(0, jsonString.length() - 1);
+                    jsonString += "]";
+
+                    autosPushed = true;
                 }
-                if (!autoPrograms.isEmpty())
-                    jsonString = jsonString.substring(0, jsonString.length() - 1);
-                jsonString += "]";
                 
                 jsonString += "}";
 
