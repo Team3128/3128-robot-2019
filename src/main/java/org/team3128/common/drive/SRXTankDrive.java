@@ -11,9 +11,6 @@ import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.AngularSpeed;
-import org.team3128.common.util.units.Length;
-
-import java.util.List;
 
 import com.ctre.phoenix.motion.MotionProfileStatus;
 import com.ctre.phoenix.motion.TrajectoryPoint;
@@ -22,9 +19,8 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import com.kauailabs.navx.frc.AHRS;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+//import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
 
 /**
@@ -868,7 +864,7 @@ public class SRXTankDrive implements ITankDrive
 		double theta0, theta1;
 		double dTheta;
 
-		double leftWheelBase, rightWheelBase;
+		double leftWheelbase, rightWheelbase;
 
 		Double calculatedWheelbase;
 
@@ -912,10 +908,10 @@ public class SRXTankDrive implements ITankDrive
 
 			stopMovement();
 
-			leftWheelBase = 2 * (leftDistance/dTheta) - 2 * (leftDistance + rightDistance) / (2 * dTheta);
-			rightWheelBase = -2 * (rightDistance/dTheta) + 2 * (leftDistance + rightDistance) / (2 * dTheta);
+			leftWheelbase = 2 * (leftDistance/dTheta) - 2 * (leftDistance + rightDistance) / (2 * dTheta);
+			rightWheelbase = -2 * (rightDistance/dTheta) + 2 * (leftDistance + rightDistance) / (2 * dTheta);
 
-			calculatedWheelbase = (leftWheelBase + rightWheelBase)/2;
+			calculatedWheelbase = (leftWheelbase + rightWheelbase)/2;
 		}
 	}
 }

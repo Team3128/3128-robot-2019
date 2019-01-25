@@ -117,7 +117,7 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.addAuto("Arc Turn", new CmdArcTurnTest());
         NarwhalDashboard.addAuto("Forward", new CmdDriveForward());
         //NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
-        NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(6, 1000, 2000));
+        NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(6000, 1000, 2000));
         NarwhalDashboard.addAuto("Forward CV", new CmdDriveForwardCVTest());
         NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
         // previous speeds that were used were 2000, 4000 (arbitrarily picked)
