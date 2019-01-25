@@ -100,7 +100,7 @@ public class NarwhalDashboard extends WebSocketServer {
 
     /**
      * Starts the NarwhalDashboard server. This opens it up to be able to be
-     * connected to by client devices (the DS Laptop, the table controller, etc)
+     * connected to by client devices (the DS Laptop, a tablet controller, etc)
      * and begins streaming data. 
      */
     public static void startServer() {
@@ -130,13 +130,13 @@ public class NarwhalDashboard extends WebSocketServer {
 
                 jsonString += "\"selected_auto\":\"" + selectedAuto + "\",";
 
-                jsonString += "\"buttons\":[";
-                for (String buttonName : buttons.keySet()) {
-                    jsonString += "\"" + buttonName +  "\",";
-                }
-                if (!buttons.isEmpty())
-                    jsonString = jsonString.substring(0, jsonString.length() - 1);
-                jsonString += "],";
+                // jsonString += "\"buttons\":[";
+                // for (String buttonName : buttons.keySet()) {
+                //     jsonString += "\"" + buttonName +  "\",";
+                // }
+                // if (!buttons.isEmpty())
+                //     jsonString = jsonString.substring(0, jsonString.length() - 1);
+                // jsonString += "],";
                 
                 if (!autosPushed) {
                     jsonString += "\"auto_programs\":[";
