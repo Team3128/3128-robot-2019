@@ -87,7 +87,7 @@ public class MainPrebot extends NarwhalRobot {
 
         wheelCirc = 12.42*Length.in;
         //wheelDiameter = 3.68 * Length.in;
-        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1, 68.107, 28.45*Length.in, 4200);
+        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1, 68.107, 4200);
         tankDrive = SRXTankDrive.getInstance();
         tankDrive.setLeftSpeedScalar(0.99038845);
         

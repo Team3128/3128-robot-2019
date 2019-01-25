@@ -42,7 +42,7 @@ import edu.wpi.first.wpilibj.command.Command;
  * drives straight - Adjust the wheel diameter until the distance is correct to
  * the inch
  *
- * @author Jamie
+ * @author Jamie, Ronak
  *
  */
 public class SRXTankDrive implements ITankDrive
@@ -72,10 +72,11 @@ public class SRXTankDrive implements ITankDrive
 	private double shiftDownSpeed;
 
 	/**
-	 * True if the talons are set in PercentVbus mode for teleop driving, false
-	 * if they are in position PID mode for auto.
+	 * How the drive should stop. Brake if the drive motors should apply power to
+	 * stop the robot (typically set for teleop). Coast if the drive motors
+	 * should not react when power is set to 0 (typically set for auto).
 	 */
-	private boolean configuredForTeleop;
+	private NeutralMode neutralMode;
 
 	/**
 	 * circumference of wheels in cm
@@ -86,16 +87,6 @@ public class SRXTankDrive implements ITankDrive
 	 * horizontal distance between wheels in cm
 	 */
 	public final double wheelBase;
-
-	/**
-	 * distance between front and back wheels
-	 */
-	public final double track;
-
-	/**
-	 * Circumference of the turning circle when in-place turning
-	 */
-	public final double turningCircleCircumference;
 
 	/**
 	 * Ratio between turns of the wheels to turns of the encoder
@@ -137,13 +128,14 @@ public class SRXTankDrive implements ITankDrive
 	}
 
 	/**
-	 * If there is more than one motor per side, configure each additional Talon
-	 * to follow the one with the encoder using Follower mode.
+	 * The "lead" Talon SRX on each drive side is the motor with a connected encoder. 
+	 * Configure each non-leader Talon of both drive sides to follow their respective
+	 * "lead" Talon using Follower mode.
 	 *
 	 * @param leftMotors
-	 *            The "lead" NarwhalSRX on the left side.
+	 *            The "lead" Talon SRX on the left side.
 	 * @param rightMotors
-	 *            The "lead" NarwhalSRX on the right side.
+	 *            The "lead" Talon SRX on the right side.
 	 * @param wheelCircumfrence
 	 *            The circumference of the wheel
 	 * @param gearRatio
@@ -153,28 +145,24 @@ public class SRXTankDrive implements ITankDrive
 	 *            The distance between the front and back wheel on a side
 	 * @param track
 	 *            distance across between left and right wheels
-	 * @param robotFreeSpeed
-	 *            The maxiumum measured speed of the drive motors, in native units
-	 *            per 100ms, of the robot driving on the ground at 100% throttle
+	 * @param robotMaxSpeed
+	 *            The lesser of the maxiumum measured speeds for both drive sides,
+	 *            in native units per 100ms, of the robot driving on the ground at
+	 *            100% throttle
 	 */
-	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, int robotFreeSpeed) {
-		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, gearRatio, wheelBase, track, robotFreeSpeed);
+	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, int robotMaxSpeed) {
+		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, gearRatio, wheelBase, robotMaxSpeed);
 	}
 
-	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, int robotFreeSpeed)
+	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, int robotMaxSpeed)
 	{
 		this.leftMotors = leftMotors;
 		this.rightMotors = rightMotors;
 
 		this.wheelCircumfrence = wheelCircumfrence;
 		this.wheelBase = wheelBase;
-		this.track = track;
 		this.gearRatio = gearRatio;
-		this.robotMaxSpeed = robotFreeSpeed;
-
-		double turningCircleDiameter = wheelBase;
-
-		turningCircleCircumference = turningCircleDiameter * Math.PI;
+		this.robotMaxSpeed = robotMaxSpeed;
 
 		leftSpeedScalar = 1;
 		rightSpeedScalar = 1;
@@ -185,23 +173,23 @@ public class SRXTankDrive implements ITankDrive
 		}
 	}
 
-	private void configureForTeleop()
+	private void setBrakeNeutralMode()
 	{
-		if (!configuredForTeleop)
+		if (neutralMode != NeutralMode.Brake)
 		{
 			leftMotors.setNeutralMode(NeutralMode.Brake);
 			rightMotors.setNeutralMode(NeutralMode.Brake);
 
-			configuredForTeleop = true;
+			neutralMode = NeutralMode.Brake;
 		}
 	}
 
-	private void configureForAuto()
+	private void setCoastNeutralMode()
 	{
 		leftMotors.setNeutralMode(NeutralMode.Coast);
 		rightMotors.setNeutralMode(NeutralMode.Coast);
 
-		configuredForTeleop = false;
+		neutralMode = NeutralMode.Coast;
 	}
 
 	// threshold below which joystick movements are ignored.
@@ -221,7 +209,7 @@ public class SRXTankDrive implements ITankDrive
 	@Override
 	public void arcadeDrive(double joyX, double joyY, double throttle, boolean fullSpeed)
 	{
-		configureForTeleop();
+		setBrakeNeutralMode();
 
 		double spdL, spdR;
 
@@ -287,7 +275,7 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	public void tankDrive(double powL, double powR)
 	{
-		configureForTeleop();
+		setBrakeNeutralMode();
 		leftMotors.set(ControlMode.PercentOutput, powL);
 		rightMotors.set(ControlMode.PercentOutput, powR);
 	}
@@ -301,11 +289,7 @@ public class SRXTankDrive implements ITankDrive
 	@Override
 	public void stopMovement()
 	{
-		// not sure about the best way to do this
-		// we can disable the motors, but then we have to reenable them later
-		// so I do it this way instead
-
-		configureForTeleop();
+		setBrakeNeutralMode();
 		tankDrive(0, 0);
 	}
 
@@ -373,7 +357,7 @@ public class SRXTankDrive implements ITankDrive
 		else
 		{
 			Log.fatal("SRXTankDrive",
-					"There is only one gear. The robot doesn't actually have a gearshift. The code that involves this is probably bad news.");
+					"There is only one gear. The robot doesn't actually have a gearshift.");
 			return false;
 		}
 	}
@@ -382,11 +366,8 @@ public class SRXTankDrive implements ITankDrive
 	{
 		if (gearshift != null)
 		{
-			int rightSpeedNative = rightMotors.getSelectedSensorVelocity(0);
-			int leftSpeedNative = rightMotors.getSelectedSensorVelocity(0);
-
-			double rightSpeed = rightSpeedNative / AngularSpeed.NATIVE_UNITS_PER_100MS;
-			double leftSpeed = leftSpeedNative / AngularSpeed.NATIVE_UNITS_PER_100MS;
+			double rightSpeed = rightMotors.getSelectedSensorVelocity(0) / AngularSpeed.NATIVE_UNITS_PER_100MS;
+			double leftSpeed = leftMotors.getSelectedSensorVelocity(0) / AngularSpeed.NATIVE_UNITS_PER_100MS;
 
 			if (gearshift.isInHighGear() && (rightSpeed < 0 && leftSpeed > 0) || (rightSpeed > 0 && leftSpeed < 0))
 			{
@@ -422,7 +403,7 @@ public class SRXTankDrive implements ITankDrive
 
 		double difference = leftDist - rightDist;
 
-		return RobotMath.normalizeAngle((difference / turningCircleCircumference) * Angle.ROTATIONS);
+		return RobotMath.normalizeAngle((difference / (Math.PI * wheelBase)) * Angle.ROTATIONS);
 	}
 
 	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
@@ -645,7 +626,7 @@ public class SRXTankDrive implements ITankDrive
 			Log.info("CmdMotionMagicMove", "Initializing...");
 
 			clearEncoders();
-			configureForAuto();
+			setCoastNeutralMode();
 
 			// Coast speed measured in nu/100ms
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
@@ -854,7 +835,7 @@ public class SRXTankDrive implements ITankDrive
 			super(MoveEndMode.BOTH, 0, 0, power, false, timeoutMs);
 
 			// this formula is explained in the info repository wiki
-			double wheelAngularDist = cmToEncDegrees(turningCircleCircumference * (angle / 360.0));
+			double wheelAngularDist = cmToEncDegrees((Math.PI * wheelBase) * (angle / 360.0));
 
 			if (dir == Direction.RIGHT)
 			{
