@@ -1,24 +1,19 @@
 package org.team3128.prebot.autonomous;
 
-import org.team3128.common.util.units.Length;
 import org.team3128.common.util.Log;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
-import org.team3128.common.util.enums.Direction;
-
-import org.team3128.common.util.Log;
-
 import org.team3128.common.drive.SRXTankDrive;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
-public class ForwardCV extends CommandGroup {
+public class CmdDriveForwardCVTest extends CommandGroup {
 
     public NetworkTable table;
 
-    public ForwardCV(SRXTankDrive drive) {
+    public CmdDriveForwardCVTest(SRXTankDrive drive) {
 
         double valCurrent2 = 0.0;
 
