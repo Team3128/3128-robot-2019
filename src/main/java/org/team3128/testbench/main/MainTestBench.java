@@ -232,6 +232,9 @@ public class MainTestBench extends NarwhalRobot {
                 newLine = newLine + String.valueOf(tvertL) + ",";
                 newLine = newLine + String.valueOf(thorizR) + ",";
                 newLine = newLine + String.valueOf(tvertR);
+
+
+                counter++;
                 NarwhalDashboard.put("counter", String.valueOf(counter));
                 NarwhalDashboard.put("txav", String.valueOf(tx));
                 NarwhalDashboard.put("tyav", String.valueOf(ty));
@@ -395,6 +398,15 @@ public class MainTestBench extends NarwhalRobot {
     @Override
     protected void autonomousInit() {
         //Log.debug("micko dode", "i t w ro k  se?");
+    }
+
+    @Override
+    protected void updateDashboard() {
+        NarwhalDashboard.put("counter", String.valueOf(counter));
+        NarwhalDashboard.put("txav", String.valueOf(tx));
+        NarwhalDashboard.put("tyav", String.valueOf(ty));
+        NarwhalDashboard.put("tzav", String.valueOf(ts));
+        NarwhalDashboard.put("taav", String.valueOf(ta));
     }
 
     public static void main(String[] args) {
