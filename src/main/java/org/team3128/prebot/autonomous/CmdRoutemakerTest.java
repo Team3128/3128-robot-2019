@@ -1,13 +1,8 @@
 package org.team3128.prebot.autonomous;
 
-import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Length;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.esotericsoftware.minlog.Log;
-
 import org.team3128.common.drive.SRXTankDrive;
-import org.team3128.common.drive.SRXTankDrive.MoveEndMode;
 import org.team3128.common.drive.routemaker.Waypoint;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;

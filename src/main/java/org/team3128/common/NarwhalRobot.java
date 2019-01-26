@@ -370,7 +370,9 @@ public abstract class NarwhalRobot extends RobotBase {
 		Scheduler.getInstance().removeAll(); // get rid of any paused commands
 		
 		NarwhalDashboard.clearAutos();
-		constructAutoPrograms();
+        constructAutoPrograms();
+        
+        NarwhalDashboard.pushAutos();
 	}
 	
 	private void runAutoProgram()
