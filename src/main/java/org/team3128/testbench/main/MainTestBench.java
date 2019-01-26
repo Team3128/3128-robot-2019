@@ -69,10 +69,15 @@ public class MainTestBench extends NarwhalRobot {
     double tx, ty, ta, ts, taL, taR, ratio, thoriz, tvert, thorizL, tvertL, thorizR, tvertR;
 
     public File f;
+    public File ftemp;
     BufferedWriter bw;
     BufferedReader br;
     FileWriter fw;
     FileReader fr;
+    FileWriter fwtemp;
+    FileReader frtemp;
+    BufferedReader brtemp;
+    BufferedWriter bwtemp;
     String currentLine;
     String newLine;
 
@@ -295,16 +300,29 @@ public class MainTestBench extends NarwhalRobot {
             try {
                 //fw = new FileWriter(f);
                 //bw = new BufferedWriter(fw);
+                ftemp = new File("/media/sda1/limelightLog_temp.csv");
+                if(!ftemp.exists()) {
+                    ftemp.createNewFile();
+                }
+                fwtemp = new FileWriter(ftemp);
+                frtemp = new FileReader(ftemp);
+                bwtemp = new BufferedWriter(fwtemp);
+                brtemp = new BufferedReader(frtemp);
+                
                 while((currentLine = br.readLine()) != null){
                     String trimmedLine = currentLine.trim();
                     if(trimmedLine.equals(newLine)){
                         Log.info("here", currentLine);
                         currentLine = "";
                     }
+                    bwtemp.write(currentLine);
                     //bw = new BufferedWriter(fw);
                     //This doesn't work yet, may need to write to a new file when deleting old lines
                     //bw.write(currentLine + System.getProperty("line.separator"));
                 //bw.close();
+                }
+                if(ftemp.delete()){
+                    System.out.println("Files swapped");
                 }
             } catch(IOException e){
                 e.printStackTrace();
