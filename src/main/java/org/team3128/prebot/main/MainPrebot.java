@@ -8,6 +8,7 @@ import org.team3128.common.NarwhalRobot;
 import org.team3128.prebot.autonomous.*;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.util.Constants;
@@ -18,6 +19,7 @@ import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.listener.controltypes.Button;
+
 
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
@@ -108,7 +110,10 @@ public class MainPrebot extends NarwhalRobot {
         ahrs = new AHRS(SPI.Port.kMXP); 
 
         gyro = new ADXRS450_Gyro();
-		gyro.calibrate();
+        gyro.calibrate();
+        
+        leftDriveFront.config_kP(0, 0.038);
+        rightDriveFront.config_kP(3, 0.038);
     }
     
     @Override
