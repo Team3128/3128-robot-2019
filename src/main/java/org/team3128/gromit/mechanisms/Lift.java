@@ -311,6 +311,7 @@ public class Lift
 			return isTimedOut() || Math.abs(forkliftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
 		}
 	}
+}
 /*
 	public class CmdRunIntake extends Command
 	{

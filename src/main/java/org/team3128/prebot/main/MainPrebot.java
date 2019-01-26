@@ -2,14 +2,16 @@ package org.team3128.prebot.main;
 
 import com.kauailabs.navx.frc.AHRS;
 
-
 import edu.wpi.first.wpilibj.SPI;
 import org.team3128.common.NarwhalRobot;
 import org.team3128.prebot.autonomous.*;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
+import com.ctre.phoenix.motorcontrol.can.BasePIDSetConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.TalonSRXPIDSetConfiguration;
+
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.units.Length;
@@ -66,6 +68,8 @@ public class MainPrebot extends NarwhalRobot {
 
     public CommandGroup cmdRunner;
 
+    public TalonSRXPIDSetConfiguration pid;
+
 	@Override
 	protected void constructHardware()
 	{
@@ -111,10 +115,14 @@ public class MainPrebot extends NarwhalRobot {
 
         gyro = new ADXRS450_Gyro();
         gyro.calibrate();
-        
+
         leftDriveFront.config_kP(0, 0.038);
         rightDriveFront.config_kP(0, 0.038);
-        
+
+        leftDriveFront.config_kF(0, 0.222);
+        rightDriveFront.config_kF(0, 0.222);
+
+        //leftDriveFront.getPIDConfigs(pid);
     }
     
     @Override
