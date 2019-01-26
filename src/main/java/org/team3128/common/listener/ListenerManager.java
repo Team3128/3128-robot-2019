@@ -120,7 +120,7 @@ public class ListenerManager
 	 */
 	public void nameControl(Control control, String name)
 	{
-		if(controlNames.containsKey(control))
+		if(controlNames.containsValue(control))
 		{
 			throw new IllegalArgumentException("This control already has a name!");
 		}
