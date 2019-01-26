@@ -66,8 +66,17 @@ public class MainTestBench extends NarwhalRobot {
     public int lowGearMaxSpeed;
     public SRXTankDrive drive;
     public NetworkTable table;
-    double tx, ty, ta, ts, taL, taR, ratio, thoriz, tvert, thorizL, tvertL, thorizR, tvertR;
+    public double tx, ty, ts, ta, thoriz, tvert, tshort, tlong; //variables for big bounding box(dual target)
+    public double tyL, taL, thorizL, tvertL, tshortL, tlongL; //variables for LEFT small bounding box(single target)
+    public double tyR, taR, thorizR, tvertR, tshortR, tlongR; //variables for RIGHT small bounding box(single target)
 
+    public double d, d0, d1, theta, theta0, theta1, deltax, deltay, ratio;
+
+    final double camAngle = 26;
+    final double camHeight = 6.15;
+    final double hatchHeight = 28.5;
+
+    final double w = 12;
     public File f;
     public File ftemp;
     BufferedWriter bw;
@@ -170,21 +179,30 @@ public class MainTestBench extends NarwhalRobot {
 		listenerRight.addButtonDownListener("LightBlink", () -> {
             newLine = ""; 
             try {
-                //fw = new FileWriter(f, true);
-                //bw = new BufferedWriter(fw);
                 Log.info("trigger", "trigger triggered");
                 tx = 0.0;
                 ty = 0.0;
                 ts = 0.0;
                 ta = 0.0;
-                taL = 0.0;
-                taR = 0.0;
                 thoriz = 0.0;
                 tvert = 0.0;
+                tshort = 0.0;
+                tlong = 0.0;
+
                 thorizL = 0.0;
                 tvertL = 0.0;
+                tyL = 0.0;
+                taL = 0.0;
+                tshortL = 0.0;
+                tlongL = 0.0;
+
                 thorizR = 0.0;
                 tvertR = 0.0;
+                tyR = 0.0;
+                taR = 0.0;
+                tshortR = 0.0;
+                tlongR = 0.0;
+
                 for(int i = 0; i<2000; i++){
                     tx = tx + table.getEntry("tx").getDouble(0.0);
                     ty = ty + table.getEntry("ty").getDouble(0.0);
@@ -233,6 +251,7 @@ public class MainTestBench extends NarwhalRobot {
                 newLine = newLine + String.valueOf(thorizR) + ",";
                 newLine = newLine + String.valueOf(tvertR);
 
+                doMath();
 
                 counter++;
                 NarwhalDashboard.put("counter", String.valueOf(counter));
@@ -407,10 +426,24 @@ public class MainTestBench extends NarwhalRobot {
         NarwhalDashboard.put("tyav", String.valueOf(ty));
         NarwhalDashboard.put("tzav", String.valueOf(ts));
         NarwhalDashboard.put("taav", String.valueOf(ta));
+
     }
 
     public static void main(String[] args) {
         RobotBase.startRobot(MainTestBench::new);
     }
 
+    public void doMath(){
+        theta0 = tx - 0.5*(59.6*thoriz/320);//possibly change to tlong/tshort based on how well this works
+        theta1 = tx + 0.5*(59.6*thoriz/320);
+
+        d = (hatchHeight-camHeight)/Math.tan((Math.PI/180)*(ty+camAngle));
+        d0 = (hatchHeight-camHeight)/Math.tan((Math.PI/180)*((tyR)+camAngle));
+        d1 = (hatchHeight-camHeight)/Math.tan((Math.PI/180)*((tyL)+camAngle));
+
+        deltax = d*Math.sin((Math.PI/180)*tx);
+        deltay = d*Math.cos((Math.PI/180)*tx);
+
+        theta = Math.asin((d1*Math.sin((180/Math.PI)*theta1) - d0*Math.sin((180/Math.PI)*theta0))/w);
+    }
 }
