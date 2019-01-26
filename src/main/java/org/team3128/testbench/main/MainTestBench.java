@@ -76,6 +76,10 @@ public class MainTestBench extends NarwhalRobot {
     String currentLine;
     String newLine;
 
+
+    private int errorCase = 0;
+    private int counter = 0;
+
 	@Override
 	protected void constructHardware()
 	{
@@ -89,18 +93,27 @@ public class MainTestBench extends NarwhalRobot {
             fw = new FileWriter(f);
             fr = new FileReader(f);
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            errorCase = 1;
+            Log.info("ERROR", "------------------------------------------------");
+            Log.info("ERROR", "Limelight Log File not found or not connected!");
         }
 
-        bw = new BufferedWriter(fw);
-        br = new BufferedReader(fr);
-        try{
-            bw.write("tx,ty,ts,ta,taL,taR,ratio,thoriz,tvert,thorizL,tvertL,thorizR,tvertR\r\n");
-            //bw.newLine();
-            //bw.close();
-        } catch(IOException e){
-            e.printStackTrace();
+        if (errorCase == 0) {
+            bw = new BufferedWriter(fw);
+            br = new BufferedReader(fr);
+            try{
+                bw.write("tx,ty,ts,ta,taL,taR,ratio,thoriz,tvert,thorizL,tvertL,thorizR,tvertR\r\n");
+                //bw.newLine();
+                //bw.close();
+            } catch(IOException e){
+                e.printStackTrace();
+            }
+        } else {
+            Log.info("ERROR", "File capabilities offline as no file was found!");
+            Log.info("ERROR", "------------------------------------------------");
         }
+        NarwhalDashboard.put("counter", String.valueOf(counter));
         boi1 = new TalonSRX(1);
         boi2 = new TalonSRX(2);
 
@@ -143,7 +156,12 @@ public class MainTestBench extends NarwhalRobot {
         /*listenerRight.nameControl(new Button(2), "LightOff");
 		listenerRight.addButtonUpListener("LightOff", () -> {
 		    table.getEntry("ledMode").setNumber(1);
-		});*/
+        });*/
+        listenerRight.nameControl(new Button(12), "ResetCounter");
+        listenerRight.addButtonDownListener("ResetCounter", () -> {
+            counter = 0;
+        });
+
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "LightBlink");
 		listenerRight.addButtonDownListener("LightBlink", () -> {
             newLine = ""; 
@@ -210,7 +228,23 @@ public class MainTestBench extends NarwhalRobot {
                 newLine = newLine + String.valueOf(tvertL) + ",";
                 newLine = newLine + String.valueOf(thorizR) + ",";
                 newLine = newLine + String.valueOf(tvertR);
-                /*bw.write(String.valueOf(tx));
+                NarwhalDashboard.put("counter", String.valueOf(counter));
+                NarwhalDashboard.put("txav", String.valueOf(tx));
+                NarwhalDashboard.put("tyav", String.valueOf(ty));
+                NarwhalDashboard.put("tzav", String.valueOf(ts));
+                NarwhalDashboard.put("taav", String.valueOf(ta));
+                /*NarwhalDashboard.put("ratio", String.valueOf(valCurrent3));
+                NarwhalDashboard.put("thoriz", String.valueOf(valCurrent4));
+                NarwhalDashboard.put("txav", String.valueOf(valCurrent1));
+                NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));
+                NarwhalDashboard.put("tzav", String.valueOf(valCurrent3));
+                NarwhalDashboard.put("taav", String.valueOf(valCurrent4));
+                NarwhalDashboard.put("txav", String.valueOf(valCurrent1));
+                NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));
+                NarwhalDashboard.put("tzav", String.valueOf(valCurrent3));
+                NarwhalDashboard.put("taav", String.valueOf(valCurrent4));
+                NarwhalDashboard.put("asdfadsf", String.valueOf(asdgasdg));
+                bw.write(String.valueOf(tx));
                 bw.write(",");
                 bw.write(String.valueOf(ty));
                 bw.write(",");
@@ -240,6 +274,8 @@ public class MainTestBench extends NarwhalRobot {
                 Log.info("tvertL", String.valueOf(tvertL));
                 Log.info("thorizR", String.valueOf(thorizR));
                 Log.info("tvertR", String.valueOf(tvertR));
+                Log.info("INFO", "Successfully Calculated and stored Data!");
+                Log.info("INFO", "Counter: " + counter);
             } catch (IOException e) {
                 e.printStackTrace();
             }
