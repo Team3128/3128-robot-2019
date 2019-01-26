@@ -113,7 +113,8 @@ public class MainPrebot extends NarwhalRobot {
         gyro.calibrate();
         
         leftDriveFront.config_kP(0, 0.038);
-        rightDriveFront.config_kP(3, 0.038);
+        rightDriveFront.config_kP(0, 0.038);
+        
     }
     
     @Override
