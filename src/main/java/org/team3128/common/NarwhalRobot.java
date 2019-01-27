@@ -303,6 +303,7 @@ public abstract class NarwhalRobot extends RobotBase {
             }
             
             HAL.observeUserProgramTeleop();
+            Scheduler.getInstance().run();
             tickListenerManagers();
             teleopPeriodic();
             m_watchdog.addEpoch("teleopPeriodic()");
