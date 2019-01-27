@@ -250,6 +250,8 @@ public abstract class NarwhalRobot extends RobotBase {
                 disabledInit();
                 m_watchdog.addEpoch("disabledInit()");
 
+                Scheduler.getInstance().removeAll();
+
                 if (m_lastMode == Mode.kAutonomous) {
                     Log.info("NarwhalRobot", "Re-constructing autonomous sequences");
                     setupAutoChooser();
@@ -293,6 +295,8 @@ public abstract class NarwhalRobot extends RobotBase {
 
                 LiveWindow.setEnabled(false);
                 Shuffleboard.disableActuatorWidgets();
+
+                Scheduler.getInstance().removeAll();
 
                 zeroOutListeners();
                 teleopInit();
