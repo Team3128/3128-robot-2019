@@ -1,11 +1,14 @@
 package org.team3128.common.util.limelight;
 
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+
 import org.team3128.common.util.Log;
 
 /**
  * 
- * @author Adham, Mason
+ * @author Adham Elarabawy, Mason Holst, Jude Lifset
  *
  */
 public class Limelight
@@ -14,10 +17,10 @@ public class Limelight
     public double d, d0, d1, theta, theta0, theta1, deltax, deltay, ratio; //derived values
     public double currentAv;
     public String[] valIds = {"tx", "ty", "ts", "ta", "thor", "tvert", "tshort", "tlong"};
-    public static final double screenWidth = 320;
-    public static final double screenHeight = 240;
-    public static final double horizFOV = 59.6;
-    public static final double vertFOV = 45.7;
+    public final double screenWidth = 320;
+    public final double screenHeight = 240;
+    public final double horizFOV = 59.6;
+    public final double vertFOV = 45.7;
     public double camAngle;
     public double camHeight;
     public double hatchHeight;
@@ -25,14 +28,30 @@ public class Limelight
 
     public double[] calculatedVals = new double[4];
     public double[] resultVals = new double[8];
-    public static NetworkTable table;
+    public NetworkTableInstance defInst;
+    public NetworkTable table;
+    public NetworkTable calcValsTable;
+    public NetworkTableEntry nd, nd0, nd1, ntheta, ntheta0, ntheta1, ndeltax, ndeltay;
     
-    public Limelight(NetworkTable passedTable, double passedAngle, double passedCamHeight, double passedHatchHeight, double passedW){
-        table = passedTable;
+    public Limelight(double passedAngle, double passedCamHeight, double passedHatchHeight, double passedW){
+        //passed vals
         camAngle = passedAngle;
         camHeight = passedCamHeight;
         hatchHeight = passedHatchHeight;
         passedW = w;
+
+        //setting up networktables
+        defInst = NetworkTableInstance.getDefault();
+        table = defInst.getTable("limelight");
+        calcValsTable = defInst.getTable("calculatedLimelight");
+        nd = calcValsTable.getEntry("d");
+        nd0 = calcValsTable.getEntry("d0");
+        nd1 = calcValsTable.getEntry("d1");
+        ntheta = calcValsTable.getEntry("theta");
+        ntheta0 = calcValsTable.getEntry("theta0");
+        ntheta1 = calcValsTable.getEntry("theta1");
+        ndeltax = calcValsTable.getEntry("deltax");
+        ndeltay = calcValsTable.getEntry("deltay");
     }
 
     public double[] getValues(int loopNumber){
@@ -84,6 +103,16 @@ public class Limelight
         calculatedVals[1] = deltay;
         calculatedVals[2] = theta;
         calculatedVals[3] = d;
+
+        nd.setString(String.valueOf(d));
+        nd0.setString(String.valueOf(d0));
+        nd1.setString(String.valueOf(d1));
+        ntheta.setString(String.valueOf(theta));
+        ntheta0.setString(String.valueOf(theta0));
+        ntheta1.setString(String.valueOf(theta1));
+        ndeltax.setString(String.valueOf(deltax));
+        ndeltay.setString(String.valueOf(deltay));
+
         return calculatedVals;
     }
     public void ledOn(){

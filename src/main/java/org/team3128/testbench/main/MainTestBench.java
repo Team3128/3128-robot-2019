@@ -68,6 +68,7 @@ public class MainTestBench extends NarwhalRobot {
     public SRXTankDrive drive;
     public NetworkTable table;
 
+
     public File f;
     public File ftemp;
     BufferedWriter bw;
@@ -99,10 +100,9 @@ public class MainTestBench extends NarwhalRobot {
 	@Override
 	protected void constructHardware()
 	{
-        table = NetworkTableInstance.getDefault().getTable("limelight");
-        limelight = new Limelight(table, camAngle, camHeight, hatchHeight, w);
-
-
+        limelight = new Limelight(camAngle, camHeight, hatchHeight, w);
+        
+        
         try {
             f = new File("/media/sda1/limelightLog.csv");
             if(!f.exists()) {
@@ -201,6 +201,7 @@ public class MainTestBench extends NarwhalRobot {
                 newLine = newLine + String.valueOf(calculatedVals[2]) + ",";
                 newLine = newLine + String.valueOf(calculatedVals[3]) + ",";
 
+                
                 counter++;
                 bw.write(newLine + "\r\n");
                 Log.info("line", newLine);
