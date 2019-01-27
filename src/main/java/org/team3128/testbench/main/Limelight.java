@@ -4,6 +4,12 @@ import java.util.ArrayList;
 
 public class Limelight {
 
+    public HashMap<String, Double> values = new HashMap<String, Double>();
+
+    public Hashmap<String, Double> getVals() {
+        return values;
+    }
+
     public HashMap<String, Double> tx, ty, ts, ta, thoriz, tvert, tshort, tlong; //variables for big bounding box(dual target)
     public HashMap<String, Double> tyL, taL, thorizL, tvertL, tshortL, tlongL; //variables for LEFT small bounding box(single target)
     public HashMap<String, Double> tyR, taR, thorizR, tvertR, tshortR, tlongR; //variables for RIGHT small bounding box(single target)
@@ -29,10 +35,10 @@ public class Limelight {
     final double camHeight = 6.15;
     final double hatchHeight = 28.5;
 
-    public ArrayList<HashMap> dualTargets = new ArrayList<HashMap>();
-    public ArrayList<HashMap> leftTargets = new ArrayList<HashMap>();
-    public ArrayList<HashMap> rightTargets = new ArrayList<HashMap>();
-    public ArrayList<HashMap> finalValues = new ArrayList<HashMap>();
+    public ArrayList<HashMap<String, Double>> dualTargets = new ArrayList<HashMap<String, Double>>();
+    public ArrayList<HashMap<String, Double>> leftTargets = new ArrayList<HashMap<String, Double>>();
+    public ArrayList<HashMap<String, Double>> rightTargets = new ArrayList<HashMap<String, Double>>();
+    public ArrayList<HashMap<String, Double>> finalValues = new ArrayList<HashMap<String, Double>>();
     
     public void fillArray(ArrayList array, String name) {
         int i = 0;
@@ -120,12 +126,15 @@ public class Limelight {
     }
 
     public void averageValuesArray(ArrayList a, int returnCount, NetworkTable table, int cnt) {
-        //ArrayList<Double> values = new ArrayList<Double>();
-        for (int i = 0; i < cnt, i++) {
+        for (int i = 0; i < cnt; i++) {
             for(int d = 0; d < returnCount; d++) {
                 a[i].put(getName(a[i]), getValue(a[i]) + table.getEntry(getName(a[i])).getDouble(0.0));
             }
             a[i].put(getName(a[i]), getValue(a[i]) / returnCount);
+            if (values.containsKey(getName(a[i]))) {
+                values.remove(getName(a[i]));
+            }
+            values.put(getName(a[i]), getValue(a[i]));
         }
     }
 
@@ -133,6 +142,7 @@ public class Limelight {
         newLine = ""; 
         try {
             Log.info("LIMELIGHT", "Initialized Limelight Data Record");
+            fillAllArray();
             setArrayValues(dualTargets, 0.0);
             setArrayValues(rightTargets, 0.0);
             setArrayValues(leftTargets, 0.0);
