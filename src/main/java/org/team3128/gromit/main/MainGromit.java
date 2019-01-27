@@ -115,9 +115,6 @@ public class MainGromit extends NarwhalRobot{
 	    Misc(general)
 	    public PowerDistributionPanel powerDistPanel;
 
-	    public long startTimeMillis = 0;
-
-        
         */
 
         /*
