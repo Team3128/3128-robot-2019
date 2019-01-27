@@ -7,6 +7,7 @@ import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.util.units.Length;
+import org.team3128.common.util.limelight.Limelight;
 import org.team3128.testbench.autonomous.*;
 
 import edu.wpi.first.wpilibj.Joystick;
@@ -67,10 +68,10 @@ public class MainTestBench extends NarwhalRobot {
     public SRXTankDrive drive;
     public NetworkTable table;
     public double tx, ty, ts, ta, thoriz, tvert, tshort, tlong; //variables for big bounding box(dual target)
-    public double tyL, taL, thorizL, tvertL, tshortL, tlongL; //variables for LEFT small bounding box(single target)
-    public double tyR, taR, thorizR, tvertR, tshortR, tlongR; //variables for RIGHT small bounding box(single target)
+    public double txL, tyL, taL, thorizL, tvertL, tshortL, tlongL; //variables for LEFT small bounding box(single target)
+    public double txR, tyR, taR, thorizR, tvertR, tshortR, tlongR; //variables for RIGHT small bounding box(single target)
 
-    public double d, d0, d1, theta, theta0, theta1, deltax, deltay, ratio;
+    public double d, d0, d1, theta, theta0, theta1, deltax, deltay, ratio; //derived values                 
 
     final double camAngle = 26;
     final double camHeight = 6.15;
@@ -117,7 +118,8 @@ public class MainTestBench extends NarwhalRobot {
             bw = new BufferedWriter(fw);
             br = new BufferedReader(fr);
             try{
-                bw.write("tx,ty,ts,ta,taL,taR,ratio,thoriz,tvert,thorizL,tvertL,thorizR,tvertR\r\n");
+                bw.write("tx,ty,ts,ta,thoriz,tvert,tshort,tlong,txL,tyL,taL,thorizL,tvertL,tshortL,tlongL,txR,tyR,taR,thorizR,tvertR,tshortR,tlongR,ratio\r\n");
+                //bw.write("tx,ty,ts,ta,taL,taR,ratio,thoriz,tvert,thorizL,tvertL,thorizR,tvertR\r\n");
                 //bw.newLine();
                 //bw.close();
             } catch(IOException e){
@@ -189,17 +191,19 @@ public class MainTestBench extends NarwhalRobot {
                 tshort = 0.0;
                 tlong = 0.0;
 
-                thorizL = 0.0;
-                tvertL = 0.0;
+                txL = 0.0;
                 tyL = 0.0;
                 taL = 0.0;
+                thorizL = 0.0;
+                tvertL = 0.0;
                 tshortL = 0.0;
                 tlongL = 0.0;
 
-                thorizR = 0.0;
-                tvertR = 0.0;
+                txR = 0.0;
                 tyR = 0.0;
                 taR = 0.0;
+                thorizR = 0.0;
+                tvertR = 0.0;
                 tshortR = 0.0;
                 tlongR = 0.0;
 
@@ -208,8 +212,10 @@ public class MainTestBench extends NarwhalRobot {
                     ty = ty + table.getEntry("ty").getDouble(0.0);
                     ts = ts + table.getEntry("ts").getDouble(0.0);
                     ta = ta + table.getEntry("ta").getDouble(0.0);
-                    thoriz = thoriz + table.getEntry("tshort").getDouble(0.0);
-                    tvert = tvert + table.getEntry("tlong").getDouble(0.0);
+                    thoriz = thoriz + table.getEntry("thoriz").getDouble(0.0);
+                    tvert = tvert + table.getEntry("tvert").getDouble(0.0);
+                    tshort = tshort + table.getEntry("tshort").getDouble(0.0);
+                    tlong = tlong + table.getEntry("tlong").getDouble(0.0);
                 }
                 tx = tx/2000;
                 ty = ty/2000;
@@ -217,39 +223,67 @@ public class MainTestBench extends NarwhalRobot {
                 ta = ta/2000;
                 thoriz = thoriz/2000;
                 tvert = tvert/2000;
+                tshort = tshort/2000;
+                tlong = tlong/2000;
                 table.getEntry("pipeline").setDouble(1.0);
                 for(int i = 0; i<2000; i++){
+                    txL = txL + table.getEntry("tx").getDouble(0.0);
+                    tyL = tyL + table.getEntry("ty").getDouble(0.0);
                     taL = taL + table.getEntry("ta").getDouble(0.0);
-                    thorizL = thorizL + table.getEntry("tshort").getDouble(0.0);
-                    tvertL = tvertL + table.getEntry("tlong").getDouble(0.0);
+                    thorizL = thorizL + table.getEntry("thoriz").getDouble(0.0);
+                    tvertL = tvertL + table.getEntry("tvert").getDouble(0.0);
+                    tshortL = tshortL + table.getEntry("tshort").getDouble(0.0);
+                    tlongL = tlongL + table.getEntry("tlong").getDouble(0.0);
                 }
+                txL = txL/2000;
+                tyL = tyL/2000;
                 taL = taL/2000;
                 thorizL = thorizL/2000;
                 tvertL = tvertL/2000;
+                tshortL = tshortL/2000;
+                tlongL = tlongL/2000;
                 table.getEntry("pipeline").setDouble(2.0);
                 for(int i = 0; i<2000; i++){
+                    txR = txR + table.getEntry("tx").getDouble(0.0);
+                    tyR = tyR + table.getEntry("ty").getDouble(0.0);
                     taR = taR + table.getEntry("ta").getDouble(0.0);
-                    thorizR = thorizR + table.getEntry("tshort").getDouble(0.0);
-                    tvertR = tvertR + table.getEntry("tlong").getDouble(0.0);
+                    thorizR = thorizR + table.getEntry("thoriz").getDouble(0.0);
+                    tvertR = tvertR + table.getEntry("tvert").getDouble(0.0);
+                    tshortR = tshortR + table.getEntry("tshort").getDouble(0.0);
+                    tlongR = tlongR + table.getEntry("tlong").getDouble(0.0);
                 }
+                txR = txR/2000;
+                tyR = tyR/2000;
                 taR = taR/2000;
                 thorizR = thorizR/2000;
                 tvertR = tvertR/2000;
+                tshortR = tshortR/2000;
+                tlongR = tlongR/2000;
                 table.getEntry("pipeline").setDouble(0.0);
                 ratio = taL/taR;
                 newLine = newLine + String.valueOf(tx) + ",";
                 newLine = newLine + String.valueOf(ty) + ",";
                 newLine = newLine + String.valueOf(ts) + ",";
                 newLine = newLine + String.valueOf(ta) + ",";
-                newLine = newLine + String.valueOf(taL) + ",";
-                newLine = newLine + String.valueOf(taR) + ",";
-                newLine = newLine + String.valueOf(ratio) + ",";
                 newLine = newLine + String.valueOf(thoriz) + ",";
                 newLine = newLine + String.valueOf(tvert) + ",";
+                newLine = newLine + String.valueOf(tshort) + ",";
+                newLine = newLine + String.valueOf(tlong) + ",";
+                newLine = newLine + String.valueOf(txL) + ",";
+                newLine = newLine + String.valueOf(tyL) + ",";
+                newLine = newLine + String.valueOf(taL) + ",";
                 newLine = newLine + String.valueOf(thorizL) + ",";
                 newLine = newLine + String.valueOf(tvertL) + ",";
+                newLine = newLine + String.valueOf(tshortL) + ",";
+                newLine = newLine + String.valueOf(tlongL) + ",";
+                newLine = newLine + String.valueOf(txR) + ",";
+                newLine = newLine + String.valueOf(tyR) + ",";
+                newLine = newLine + String.valueOf(taR) + ",";
                 newLine = newLine + String.valueOf(thorizR) + ",";
-                newLine = newLine + String.valueOf(tvertR);
+                newLine = newLine + String.valueOf(tvertR) + ",";
+                newLine = newLine + String.valueOf(tshortR) + ",";
+                newLine = newLine + String.valueOf(tlongR) + ",";
+                newLine = newLine + String.valueOf(ratio);
 
                 doMath();
 
@@ -343,18 +377,23 @@ public class MainTestBench extends NarwhalRobot {
                     //bw.write(currentLine + System.getProperty("line.separator"));
                 //bw.close();
                 }
-                if(ftemp.delete()){
+                if(f.delete()){
                     System.out.println("Files swapped");
                 }
+                f = new File("/media/sda1/limelightLog_temp.csv");
+                boolean success = ftemp.renameTo(f);
+                if (!success) {
+                    Log.debug("fileswap", "temp file was not renamed properly because of reasons");
+                }
+                fw = new FileWriter(f, true);
+                fr = new FileReader(f);
+                bw = new BufferedWriter(fw);
+                br = new BufferedReader(fr);
+                fwtemp.close();
+                //frtemp.close();
             } catch(IOException e){
                 e.printStackTrace();
             }
-            try {
-                fw = new FileWriter(f, true);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            bw = new BufferedWriter(fw);
         });
         listenerRight.nameControl(new Button(10), "closeFile");
         listenerRight.addButtonDownListener("closeFile", () -> {
@@ -421,11 +460,8 @@ public class MainTestBench extends NarwhalRobot {
 
     @Override
     protected void updateDashboard() {
-        NarwhalDashboard.put("counter", String.valueOf(counter));
-        NarwhalDashboard.put("txav", String.valueOf(tx));
-        NarwhalDashboard.put("tyav", String.valueOf(ty));
-        NarwhalDashboard.put("tzav", String.valueOf(ts));
-        NarwhalDashboard.put("taav", String.valueOf(ta));
+        Log.info("ts", String.valueOf(table.getEntry("ts").getDouble(0.0)));
+        NarwhalDashboard.put("ts", String.valueOf(table.getEntry("ts").getDouble(0.0)));
 
     }
 
@@ -434,16 +470,21 @@ public class MainTestBench extends NarwhalRobot {
     }
 
     public void doMath(){
-        theta0 = tx - 0.5*(59.6*thoriz/320);//possibly change to tlong/tshort based on how well this works
-        theta1 = tx + 0.5*(59.6*thoriz/320);
+        theta0 = (tx - (Limelight.horizFOV*thoriz)/(2*Limelight.screenWidth))*Math.PI/180; 
+        theta1 = (tx + (Limelight.horizFOV*thoriz)/(2*Limelight.screenWidth))*Math.PI/180;
+        tx = tx*Math.PI/180;
 
-        d = (hatchHeight-camHeight)/Math.tan((Math.PI/180)*(ty+camAngle));
-        d0 = (hatchHeight-camHeight)/Math.tan((Math.PI/180)*((tyR)+camAngle));
-        d1 = (hatchHeight-camHeight)/Math.tan((Math.PI/180)*((tyL)+camAngle));
+        d = (hatchHeight-camHeight)/Math.tan((Math.PI/180)*(ty+camAngle)); 
+        d0 = ((2*d*Math.cos(tx-theta0)-Math.sqrt(Math.pow((-2*d*Math.cos(tx-theta0)),2)-(4*d*d)+(w*w))))/2;
+        d1 = ((2*d*Math.cos(tx-theta1)+Math.sqrt(Math.pow((-2*d*Math.cos(tx-theta1)),2)-(4*d*d)+(w*w))))/2;
 
-        deltax = d*Math.sin((Math.PI/180)*tx);
-        deltay = d*Math.cos((Math.PI/180)*tx);
+        deltax = d*Math.sin(tx);
+        deltay = d*Math.cos(tx);
 
-        theta = Math.asin((d1*Math.sin((180/Math.PI)*theta1) - d0*Math.sin((180/Math.PI)*theta0))/w);
+        theta = Math.asin((d1*Math.cos(theta1) - d0*Math.cos(theta0))/w);
+
+        Log.info("thetaCalc", String.valueOf(theta));
+        Log.info("dxCalc", String.valueOf(deltax));
+        Log.info("dyCalc", String.valueOf(deltay));
     }
 }
