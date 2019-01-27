@@ -14,8 +14,8 @@ public class OptimusPrime{
 
     private RobotState(LiftState liftState, FourBarState fourBarState)
 		{
-            this.targetLiftState = liftState;
-            this.targetFourBarState = fourBarState;
+                  this.targetLiftState = liftState;
+                  this.targetFourBarState = fourBarState;
 		}
 }
 /*
