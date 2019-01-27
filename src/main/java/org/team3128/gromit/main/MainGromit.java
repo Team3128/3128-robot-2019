@@ -315,12 +315,12 @@ public class MainGromit extends NarwhalRobot{
 		});
 		
 		//		listenerLeft.nameControl(new Button(9), "FullDrive");
-//		listenerLeft.addButtonDownListener("FullDrive", () -> {
-//			drive.arcadeDrive(-1.0, 0, 1.0, true);
-//		});
-//		listenerLeft.addButtonUpListener("FullDrive", () -> {
-//			drive.arcadeDrive(0, 0, 1.0, true);
-//		});
+		listenerLeft.addButtonDownListener("FullDrive", () -> {
+			drive.arcadeDrive(-1.0, 0, 1.0, true);
+		});
+		listenerLeft.addButtonUpListener("FullDrive", () -> {
+			drive.arcadeDrive(0, 0, 1.0, true);
+		});
         */
     }
 
