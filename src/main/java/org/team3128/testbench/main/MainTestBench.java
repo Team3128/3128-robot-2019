@@ -67,17 +67,7 @@ public class MainTestBench extends NarwhalRobot {
     public int lowGearMaxSpeed;
     public SRXTankDrive drive;
     public NetworkTable table;
-    public double tx, ty, ts, ta, thoriz, tvert, tshort, tlong; //variables for big bounding box(dual target)
-    public double txL, tyL, taL, thorizL, tvertL, tshortL, tlongL; //variables for LEFT small bounding box(single target)
-    public double txR, tyR, taR, thorizR, tvertR, tshortR, tlongR; //variables for RIGHT small bounding box(single target)
 
-    public double d, d0, d1, theta, theta0, theta1, deltax, deltay, ratio; //derived values                 
-
-    final double camAngle = 26;
-    final double camHeight = 6.15;
-    final double hatchHeight = 28.5;
-
-    final double w = 12;
     public File f;
     public File ftemp;
     BufferedWriter bw;
@@ -91,14 +81,27 @@ public class MainTestBench extends NarwhalRobot {
     String currentLine;
     String newLine;
 
-
     private int errorCase = 0;
     private int counter = 0;
+
+    public double camAngle = 26;
+    public double camHeight = 6.15;
+    public double hatchHeight = 28.5;
+    public double w = 14.5;
+
+    public int ledToggle = 0;
+
+    Limelight limelight;
+
+    public double[] limelightVals;
+    public double[] calculatedVals;
 
 	@Override
 	protected void constructHardware()
 	{
-		table = NetworkTableInstance.getDefault().getTable("limelight");
+        table = NetworkTableInstance.getDefault().getTable("limelight");
+        limelight = new Limelight(table, camAngle, camHeight, hatchHeight, w);
+
 
         try {
             f = new File("/media/sda1/limelightLog.csv");
@@ -118,10 +121,7 @@ public class MainTestBench extends NarwhalRobot {
             bw = new BufferedWriter(fw);
             br = new BufferedReader(fr);
             try{
-                bw.write("tx,ty,ts,ta,thoriz,tvert,tshort,tlong,txL,tyL,taL,thorizL,tvertL,tshortL,tlongL,txR,tyR,taR,thorizR,tvertR,tshortR,tlongR,ratio\r\n");
-                //bw.write("tx,ty,ts,ta,taL,taR,ratio,thoriz,tvert,thorizL,tvertL,thorizR,tvertR\r\n");
-                //bw.newLine();
-                //bw.close();
+                bw.write("tx,ty,ts,ta,thoriz,tvert,tshort,tlong,deltax,deltay,theta,calculatedDist\r\n");
             } catch(IOException e){
                 e.printStackTrace();
             }
@@ -164,9 +164,13 @@ public class MainTestBench extends NarwhalRobot {
         
         listenerRight.nameControl(new Button(2), "LightOn");
 		listenerRight.addButtonDownListener("LightOn", () -> {
-            table.getEntry("ledMode").setNumber(3);
-            Log.debug("Limelight Latency", String.valueOf(table.getEntry("tl").getDouble(0.0)));
-  
+            if(ledToggle == 0){
+                limelight.ledOn();
+                ledToggle = 1;
+            } else {
+                limelight.ledOff();
+                ledToggle = 0;
+            }
         });
         /*listenerRight.nameControl(new Button(2), "LightOff");
 		listenerRight.addButtonUpListener("LightOff", () -> {
@@ -177,173 +181,34 @@ public class MainTestBench extends NarwhalRobot {
             counter = 0;
         });
 
-		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "LightBlink");
-		listenerRight.addButtonDownListener("LightBlink", () -> {
+		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "limelightVals");
+		listenerRight.addButtonDownListener("limelightVals", () -> {
             newLine = ""; 
             try {
+                limelightVals = limelight.getValues(1000);
+                calculatedVals = limelight.doMath();
                 Log.info("trigger", "trigger triggered");
-                tx = 0.0;
-                ty = 0.0;
-                ts = 0.0;
-                ta = 0.0;
-                thoriz = 0.0;
-                tvert = 0.0;
-                tshort = 0.0;
-                tlong = 0.0;
-
-                txL = 0.0;
-                tyL = 0.0;
-                taL = 0.0;
-                thorizL = 0.0;
-                tvertL = 0.0;
-                tshortL = 0.0;
-                tlongL = 0.0;
-
-                txR = 0.0;
-                tyR = 0.0;
-                taR = 0.0;
-                thorizR = 0.0;
-                tvertR = 0.0;
-                tshortR = 0.0;
-                tlongR = 0.0;
-
-                for(int i = 0; i<2000; i++){
-                    tx = tx + table.getEntry("tx").getDouble(0.0);
-                    ty = ty + table.getEntry("ty").getDouble(0.0);
-                    ts = ts + table.getEntry("ts").getDouble(0.0);
-                    ta = ta + table.getEntry("ta").getDouble(0.0);
-                    thoriz = thoriz + table.getEntry("thoriz").getDouble(0.0);
-                    tvert = tvert + table.getEntry("tvert").getDouble(0.0);
-                    tshort = tshort + table.getEntry("tshort").getDouble(0.0);
-                    tlong = tlong + table.getEntry("tlong").getDouble(0.0);
-                }
-                tx = tx/2000;
-                ty = ty/2000;
-                ts = ts/2000;
-                ta = ta/2000;
-                thoriz = thoriz/2000;
-                tvert = tvert/2000;
-                tshort = tshort/2000;
-                tlong = tlong/2000;
-                table.getEntry("pipeline").setDouble(1.0);
-                for(int i = 0; i<2000; i++){
-                    txL = txL + table.getEntry("tx").getDouble(0.0);
-                    tyL = tyL + table.getEntry("ty").getDouble(0.0);
-                    taL = taL + table.getEntry("ta").getDouble(0.0);
-                    thorizL = thorizL + table.getEntry("thoriz").getDouble(0.0);
-                    tvertL = tvertL + table.getEntry("tvert").getDouble(0.0);
-                    tshortL = tshortL + table.getEntry("tshort").getDouble(0.0);
-                    tlongL = tlongL + table.getEntry("tlong").getDouble(0.0);
-                }
-                txL = txL/2000;
-                tyL = tyL/2000;
-                taL = taL/2000;
-                thorizL = thorizL/2000;
-                tvertL = tvertL/2000;
-                tshortL = tshortL/2000;
-                tlongL = tlongL/2000;
-                table.getEntry("pipeline").setDouble(2.0);
-                for(int i = 0; i<2000; i++){
-                    txR = txR + table.getEntry("tx").getDouble(0.0);
-                    tyR = tyR + table.getEntry("ty").getDouble(0.0);
-                    taR = taR + table.getEntry("ta").getDouble(0.0);
-                    thorizR = thorizR + table.getEntry("thoriz").getDouble(0.0);
-                    tvertR = tvertR + table.getEntry("tvert").getDouble(0.0);
-                    tshortR = tshortR + table.getEntry("tshort").getDouble(0.0);
-                    tlongR = tlongR + table.getEntry("tlong").getDouble(0.0);
-                }
-                txR = txR/2000;
-                tyR = tyR/2000;
-                taR = taR/2000;
-                thorizR = thorizR/2000;
-                tvertR = tvertR/2000;
-                tshortR = tshortR/2000;
-                tlongR = tlongR/2000;
-                table.getEntry("pipeline").setDouble(0.0);
-                ratio = taL/taR;
-                newLine = newLine + String.valueOf(tx) + ",";
-                newLine = newLine + String.valueOf(ty) + ",";
-                newLine = newLine + String.valueOf(ts) + ",";
-                newLine = newLine + String.valueOf(ta) + ",";
-                newLine = newLine + String.valueOf(thoriz) + ",";
-                newLine = newLine + String.valueOf(tvert) + ",";
-                newLine = newLine + String.valueOf(tshort) + ",";
-                newLine = newLine + String.valueOf(tlong) + ",";
-                newLine = newLine + String.valueOf(txL) + ",";
-                newLine = newLine + String.valueOf(tyL) + ",";
-                newLine = newLine + String.valueOf(taL) + ",";
-                newLine = newLine + String.valueOf(thorizL) + ",";
-                newLine = newLine + String.valueOf(tvertL) + ",";
-                newLine = newLine + String.valueOf(tshortL) + ",";
-                newLine = newLine + String.valueOf(tlongL) + ",";
-                newLine = newLine + String.valueOf(txR) + ",";
-                newLine = newLine + String.valueOf(tyR) + ",";
-                newLine = newLine + String.valueOf(taR) + ",";
-                newLine = newLine + String.valueOf(thorizR) + ",";
-                newLine = newLine + String.valueOf(tvertR) + ",";
-                newLine = newLine + String.valueOf(tshortR) + ",";
-                newLine = newLine + String.valueOf(tlongR) + ",";
-                newLine = newLine + String.valueOf(ratio);
-
-                doMath();
+                newLine = newLine + String.valueOf(limelightVals[0]) + ",";
+                newLine = newLine + String.valueOf(limelightVals[1]) + ",";
+                newLine = newLine + String.valueOf(limelightVals[2]) + ",";
+                newLine = newLine + String.valueOf(limelightVals[3]) + ",";
+                newLine = newLine + String.valueOf(limelightVals[4]) + ",";
+                newLine = newLine + String.valueOf(limelightVals[5]) + ",";
+                newLine = newLine + String.valueOf(limelightVals[6]) + ",";
+                newLine = newLine + String.valueOf(limelightVals[7]) + ",";
+                newLine = newLine + String.valueOf(calculatedVals[0]) + ",";
+                newLine = newLine + String.valueOf(calculatedVals[1]) + ",";
+                newLine = newLine + String.valueOf(calculatedVals[2]) + ",";
+                newLine = newLine + String.valueOf(calculatedVals[3]) + ",";
 
                 counter++;
-                NarwhalDashboard.put("counter", String.valueOf(counter));
-                NarwhalDashboard.put("txav", String.valueOf(tx));
-                NarwhalDashboard.put("tyav", String.valueOf(ty));
-                NarwhalDashboard.put("tzav", String.valueOf(ts));
-                NarwhalDashboard.put("taav", String.valueOf(ta));
-                /*NarwhalDashboard.put("ratio", String.valueOf(valCurrent3));
-                NarwhalDashboard.put("thoriz", String.valueOf(valCurrent4));
-                NarwhalDashboard.put("txav", String.valueOf(valCurrent1));
-                NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));
-                NarwhalDashboard.put("tzav", String.valueOf(valCurrent3));
-                NarwhalDashboard.put("taav", String.valueOf(valCurrent4));
-                NarwhalDashboard.put("txav", String.valueOf(valCurrent1));
-                NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));
-                NarwhalDashboard.put("tzav", String.valueOf(valCurrent3));
-                NarwhalDashboard.put("taav", String.valueOf(valCurrent4));
-                NarwhalDashboard.put("asdfadsf", String.valueOf(asdgasdg));
-                bw.write(String.valueOf(tx));
-                bw.write(",");
-                bw.write(String.valueOf(ty));
-                bw.write(",");
-                bw.write(String.valueOf(ts));
-                bw.write(",");
-                bw.write(String.valueOf(ta));
-                bw.write(",");
-                bw.write(String.valueOf(taL));
-                bw.write(",");
-                bw.write(String.valueOf(taR));
-                bw.write(",");
-                bw.write(String.valueOf(ratio));*/
                 bw.write(newLine + "\r\n");
-                //bw.newLine();
-                //bw.close();
                 Log.info("line", newLine);
-                Log.info("tx", String.valueOf(tx));
-                Log.info("ty", String.valueOf(ty));
-                Log.info("ts", String.valueOf(ts));
-                Log.info("ta", String.valueOf(ta));
-                Log.info("taL", String.valueOf(taL));
-                Log.info("taR", String.valueOf(taR));
-                Log.info("ratio", String.valueOf(ratio));
-                Log.info("thoriz", String.valueOf(thoriz));
-                Log.info("tvert", String.valueOf(tvert));
-                Log.info("thorizL", String.valueOf(thorizL));
-                Log.info("tvertL", String.valueOf(tvertL));
-                Log.info("thorizR", String.valueOf(thorizR));
-                Log.info("tvertR", String.valueOf(tvertR));
                 Log.info("INFO", "Successfully Calculated and stored Data!");
                 Log.info("INFO", "Counter: " + counter);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            /*try {
-                bw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }*/
         });
         
         listenerRight.nameControl(new Button(9), "deleteLastLine");
@@ -460,31 +325,11 @@ public class MainTestBench extends NarwhalRobot {
 
     @Override
     protected void updateDashboard() {
-        Log.info("ts", String.valueOf(table.getEntry("ts").getDouble(0.0)));
         NarwhalDashboard.put("ts", String.valueOf(table.getEntry("ts").getDouble(0.0)));
 
     }
 
     public static void main(String[] args) {
         RobotBase.startRobot(MainTestBench::new);
-    }
-
-    public void doMath(){
-        theta0 = (tx - (Limelight.horizFOV*thoriz)/(2*Limelight.screenWidth))*Math.PI/180; 
-        theta1 = (tx + (Limelight.horizFOV*thoriz)/(2*Limelight.screenWidth))*Math.PI/180;
-        tx = tx*Math.PI/180;
-
-        d = (hatchHeight-camHeight)/Math.tan((Math.PI/180)*(ty+camAngle)); 
-        d0 = ((2*d*Math.cos(tx-theta0)-Math.sqrt(Math.pow((-2*d*Math.cos(tx-theta0)),2)-(4*d*d)+(w*w))))/2;
-        d1 = ((2*d*Math.cos(tx-theta1)+Math.sqrt(Math.pow((-2*d*Math.cos(tx-theta1)),2)-(4*d*d)+(w*w))))/2;
-
-        deltax = d*Math.sin(tx);
-        deltay = d*Math.cos(tx);
-
-        theta = Math.asin((d1*Math.cos(theta1) - d0*Math.cos(theta0))/w);
-
-        Log.info("thetaCalc", String.valueOf(theta));
-        Log.info("dxCalc", String.valueOf(deltax));
-        Log.info("dyCalc", String.valueOf(deltay));
     }
 }
