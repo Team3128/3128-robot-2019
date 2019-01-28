@@ -49,21 +49,23 @@ public class MainGromit extends NarwhalRobot{
 	public Joystick Joystick;
     public ListenerManager listener;
 
-    
-    final PowerDistributionPanel powerDistPanel;
+    /*
+	// Misc(general)
+	public PowerDistributionPanel powerDistPanel;
 
-    final long startTimeMillis = 0;
-    
-    DriverStation ds;
-    RobotController rc;
+	public long startTimeMillis = 0;
+	
+	public DriverStation ds;
+	public RobotController rc;
 
-    double forkliftHeight = 0;
-    double linearSpeed = 0;
+	public double forkliftHeight = 0;
+	public double linearSpeed = 0;
 
-    final double lowGearRatio = 8 + 1.0 / 3;
-    final double highGearRatio = 3 + 2.0/3;
+	public final double lowGearRatio = 8 + 1.0/3;
+	public final double highGearRatio = 3 + 2.0/3;
 
-    final double speedMult;
+	public double speedMult;
+    */
 
     /*
     public ADXRS450_Gyro gyro;
@@ -79,9 +81,6 @@ public class MainGromit extends NarwhalRobot{
 	public Compressor compressor;
 
 	 public int limitSiwtchLocation, forkliftMaxVelocity;
-
-	 Misc(general)
-	 public PowerDistributionPanel powerDistPanel;
     */
 
     /* Forklift and intake
@@ -201,6 +200,28 @@ public class MainGromit extends NarwhalRobot{
 			drive.arcadeDrive(x, y, t, true);
         }, "MoveForwards", "MoveTurn", "Throttle");
         
+        listener.nameControl(new Button(11), "Forward");
+        listener.addButtonDownListener("Forward", () -> 
+        {
+            leftDriveFront.set(ControlMode.PercentOutput, 100);  
+            rightDriveFront.set(ControlMode.PercentOutput, 100);
+        });
+        listener.addButtonUpListener("Forward", () ->
+        {
+            leftDriveFront.set(ControlMode.PercentOutput, 0);
+            rightDriveFront.set(ControlMode.PercentOutput, 0);
+        });
+        listener.nameControl(new Button(12), "Backward");
+        listener.addButtonDownListener("Backward", () ->
+        {
+            leftDriveFront.set(ControlMode.PercentOutput, -100);
+            rightDriveFront.set(ControlMode.PercentOutput, -100);
+        });
+        listener.addButtonUpListener("Backward", () ->
+        {
+            leftDriveFront.set(ControlMode.PercentOutput, 0);
+            rightDriveFront.set(ControlMode.PercentOutput, 0);
+        });
 
         /*
 
