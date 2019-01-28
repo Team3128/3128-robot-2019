@@ -10,6 +10,12 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.command.Command;
 
+/**
+ * Control system for the mechanism controlling mechanisms 
+ * 
+ * @author Chris, Jude, Tygan
+ * 
+ */
 
 public class FourBar
 {
@@ -21,14 +27,56 @@ public class FourBar
     //    LOW_DROP_OFF(40.0), same as hatch pickup 
         HIGH_DROP_OFF(120.0);
 
-        public double targetAngle;
+		public double targetAngle;
 
         private FourBarState(double angle){
             this.targetAngle = angle;
-        }
-    }
+		}
+	}
+	
+	public enum FourBarControlMode
+	{
+		PERCENT(2, "Percent Output"),
+		POSITION_UP(0, "Position (Up)"),
+		POSITION_DOWN(1, "Position (Down)");
 
-    TalonSRX fourBarMotor;
+		private int pidSlot;
+		private String name;
+
+		private FourBarControlMode(int pidSlot, String name)
+		{
+			this.pidSlot = pidSlot;
+			this.name = name;
+		}
+
+		public int getPIDSlot()
+		{
+			return pidSlot;
+		}
+
+		public String getName()
+		{
+			return name;
+		}
+
+	}
+
+	public void setControlMode(FourBarControlMode mode)
+	{
+		if (mode != controlMode)
+		{
+			controlMode = mode;
+			Log.debug("setControlMode", "Setting to " + mode.name());
+			fourBarMotor.selectProfileSlot(mode.getPIDSlot(), 0);
+			System.out.println(mode.getPIDSlot());
+		}
+	}
+
+	TalonSRX fourBarMotor;
+	public FourBarControlMode controlMode;
+	FourBarState state;
+	int limitSwitchLocation;
+	private double desiredAngle;
 
     public void setState(FourBarState fourBarState)
 	{
@@ -36,19 +84,26 @@ public class FourBar
 		{
 			if (fourBarState.targetAngle < state.targetAngle)
 			{
-				setControlMode(FourBarControlMode.ANGLE_DOWN);
+				setControlMode(FourBarControlMode.POSITION_DOWN);
 			}
 			else
 			{
-				setControlMode(FourBarControlMode.ANGLE_UP);
+				setControlMode(FourBarControlMode.POSITION_UP);
 			}
 			state = fourBarState;
-			Log.info("FourBar", "Going to " + state.targetHeight + " degrees.");
+			Log.info("FourBar", "Going to " + state.targetAngle + " degrees.");
 			fourBarMotor.set(ControlMode.MotionMagic, state.targetAngle * ratio);
 		}
     }
     
-    public class CmdZeroFourBar extends Command {
+	public void powerControl(double joystick)
+	{
+		setControlMode(FourBarControlMode.PERCENT);
+		
+		desiredAngle = joystick;
+	}
+	
+	public class CmdZeroFourBar extends Command {
 		private boolean done = false;
 
 		public CmdZeroFourBar() {
@@ -73,7 +128,7 @@ public class FourBar
 	{
 		FourBarState angleState;
 
-		public CmdSetLiftPosition(fourBarState angleState)
+		public CmdSetLiftPosition(FourBarState angleState)
 		{
 			super(3);
 			this.angleState = angleState;
@@ -109,7 +164,7 @@ public class FourBar
 		@Override
 		protected boolean isFinished()
 		{
-			return isTimedOut() || Math.abs(fourBarMotor.getSelectedSensorPosition(0) - (int)(fourBarState.targetAngle * ratio)) < 300;
+			return isTimedOut() || Math.abs(fourBarMotor.getSelectedSensorPosition(0) - (int)(angleState.targetAngle * ratio)) < 300;
 		}
 	}
 
