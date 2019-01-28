@@ -69,6 +69,8 @@ public class MainGromit extends NarwhalRobot{
 
     AHRS ahrs;
     AnalogInput ai = new AnalogInput(0);
+    public ADXRS450_Gyro gyro;
+
 
     public double wheelCirc;
     public double gearRatio;
@@ -105,8 +107,6 @@ public class MainGromit extends NarwhalRobot{
     */
 
     /*
-    public ADXRS450_Gyro gyro;
-
 	public TwoSpeedGearshift gearshift;
 	public Piston gearshiftPiston, climberPiston, climberLockPiston;
 	
@@ -153,10 +153,10 @@ public class MainGromit extends NarwhalRobot{
 
         ahrs = new AHRS(SPI.Port.kMXP); 
         ahrs.reset();
-
-        /*
         gyro = new ADXRS450_Gyro();
-		
+
+
+        /*		
 		shiftUpSpeed = 5.0 * Length.ft * 60 / wheelCirc;
 		shiftDownSpeed = 4.0 * Length.ft * 60 / wheelCirc;
 		
