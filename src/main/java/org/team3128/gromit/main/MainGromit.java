@@ -46,11 +46,44 @@ public class MainGromit extends NarwhalRobot{
     public TalonSRX rightDriveFront;
     public TalonSRX rightDriveBack;
 
-
+	public Joystick Joystick;
     public ListenerManager listener;
 
-	public Joystick Joystick;
     
+    final PowerDistributionPanel powerDistPanel;
+
+    final long startTimeMillis = 0;
+    
+    DriverStation ds;
+    RobotController rc;
+
+    double forkliftHeight = 0;
+    double linearSpeed = 0;
+
+    final double lowGearRatio = 8 + 1.0 / 3;
+    final double highGearRatio = 3 + 2.0/3;
+
+    final double speedMult;
+
+    /*
+    public ADXRS450_Gyro gyro;
+
+	public TwoSpeedGearshift gearshift;
+	public Piston gearshiftPiston, climberPiston, climberLockPiston;
+	
+	public double shiftUpSpeed, shiftDownSpeed;
+
+	public int lowGearMaxSpeed;
+
+	// Pneumatics
+	public Compressor compressor;
+
+	 public int limitSiwtchLocation, forkliftMaxVelocity;
+
+	 Misc(general)
+	 public PowerDistributionPanel powerDistPanel;
+    */
+
     /* Forklift and intake
     public Forklift forklift;
 	public TalonSRX forkliftMotorLeader, forkliftMotorFollower;
@@ -82,39 +115,14 @@ public class MainGromit extends NarwhalRobot{
         SRXTankDrive.initialize(leftDriveFront, rightDriveFront, wheelCirc, gearRatio, wheelBase, track, robotFreeSpeed);
         drive = SRXTankDrive.getInstance();
 
-        final PowerDistributionPanel powerDistPanel;
-
-        final long startTimeMillis = 0;
-        
-        DriverStation ds;
-        RobotController rc;
-    
-        double forkliftHeight = 0;
-        double linearSpeed = 0;
-    
-        final double lowGearRatio = 8 + 1.0 / 3;
-        final double highGearRatio = 3 + 2.0/3;
-    
-        final double speedMult;
-        
         /*
-        public ADXRS450_Gyro gyro;
-
-	    public TwoSpeedGearshift gearshift;
-	    public Piston gearshiftPiston, climberPiston, climberLockPiston;
-	
-	    public double shiftUpSpeed, shiftDownSpeed;
-
-	    public int lowGearMaxSpeed;
-
-	    // Pneumatics
-	    public Compressor compressor;
-
-	    public int limitSiwtchLocation, forkliftMaxVelocity;
-
-	    Misc(general)
-	    public PowerDistributionPanel powerDistPanel;
-
+        gyro = new ADXRS450_Gyro();
+		
+		shiftUpSpeed = 5.0 * Length.ft * 60 / wheelCirc;
+		shiftDownSpeed = 4.0 * Length.ft * 60 / wheelCirc;
+		
+		gearshift = new TwoSpeedGearshift(false, gearshiftPiston);
+		drive.addShifter(gearshift, shiftUpSpeed, shiftDownSpeed);
         */
 
         /*
@@ -145,6 +153,11 @@ public class MainGromit extends NarwhalRobot{
         Joystick = new Joystick(0);
 		listener = new ListenerManager(Joystick);
         addListenerManager(listener);
+        /*
+        ds = DriverStation.getInstance();
+
+        speedMult = wheelCirc / 409.6 / 100.0;
+        */
         
         /* Dashboard stuff
         NarwhalDashboard.addButton("rezero", (boolean down) -> {
