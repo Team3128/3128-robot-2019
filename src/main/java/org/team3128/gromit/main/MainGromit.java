@@ -36,11 +36,8 @@ import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Timer;
 
-
 import org.team3128.common.util.RobotMath;
-
 import edu.wpi.first.wpilibj.AnalogInput;
-
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -48,7 +45,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class MainGromit extends NarwhalRobot{
 
-    AHRS ahrs;
+    public AHRS ahrs;
     AnalogInput ai = new AnalogInput(0);
     public ADXRS450_Gyro gyro;
 
