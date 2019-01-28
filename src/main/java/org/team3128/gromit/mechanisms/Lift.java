@@ -3,6 +3,7 @@ package org.team3128.gromit.mechanisms;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.units.Length;
+import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 
 //import org.team3128.gromit.mechanisms.Intake.IntakeState;
 
@@ -134,8 +135,8 @@ public class Lift
 
 	public static void initialize(LiftState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch,
 	int limitSwitchLocation, int LiftMaxVelocity) {
-        instance = new Lift();
-		//instance = new Lift(state, liftMotor, softStopLimitSwitch, limitSwitchLocation, LiftMaxVelocity);
+        //instance = new Lift();
+		instance = new Lift(state, liftMotor, softStopLimitSwitch, limitSwitchLocation, LiftMaxVelocity);
 	}
 
 	public Lift(LiftState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch,
@@ -324,10 +325,10 @@ public class Lift
 
 	public class CmdRunLiftIntake extends Command
 	{
-		LiftIntakeState state;
 		boolean timesOut;
+		LiftIntakeState state;
 
-		public CmdRunLiftIntake(IntakeState state)
+		public CmdRunLiftIntake(LiftIntakeState state)
 		{
 			super(0.5);
 
@@ -347,7 +348,7 @@ public class Lift
 		@Override
 		protected void initialize()
 		{
-			liftIntake.setState(state);
+			liftIntake.setState(state); //error will be resolved once LiftIntake Mechanism is created
 		}
 
 
@@ -358,7 +359,7 @@ public class Lift
 		@Override
 		protected void end() {
 
-			if (timesOut) intake.setState(IntakeState.STOPPED);
+			if (timesOut) liftIntake.setState(LiftIntakeState.STOPPED); //error will be resolved once LiftIntake Mechanism is created
 		}
 
 		@Override

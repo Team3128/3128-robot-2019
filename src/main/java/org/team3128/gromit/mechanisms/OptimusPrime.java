@@ -1,10 +1,13 @@
 package org.team3128.gromit.mechanisms;
 
 import org.team3128.gromit.mechanisms.Lift.LiftState;
+import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 
+import edu.wpi.first.wpilibj.command.Command;
 import org.team3128.gromit.mechanisms.LiftIntake;
 
-import org.team3128.gromit.mechanisms.FourBar.FourBarState;;
+import org.team3128.gromit.mechanisms.FourBar.FourBarState;
+import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;;
 
 /**
  * Control system for the mechanism controlling mechanisms 
@@ -55,18 +58,17 @@ public class OptimusPrime{
 		protected void initialize()
 		{
       Thread ballIntake = new Thread(()->{
-        lift.setState(RobotState.liftState.BALL_INTAKE_LOW);
-        groundIntake.setState(true, 0.0);
-        fourBar.setState(RobotState.fourBarState.BALL_INTAKE);
-        groundIntake.setState(true, 1.0);
-        lift.liftIntake.setState(1.0);
-        groundIntake.setState(true, 0.0);
-        lift.setState(RobotState.liftState.BALL_INTAKE_HIGH);
-        groundIntake.setState(false, 0.0);
-			  Log.debug("CmdIntakeBall", "Changing state to " + heightState.name());
+        lift.setState(LiftState.BALL_INTAKE_LOW);
+        groundIntake.setState(GroundIntakeState.DEPLOYED);
+        fourBar.setState(FourBarState.BALL_INTAKE);
+        groundIntake.setState(GroundIntakeState.DEPLOYED_INTAKE);
+        groundIntake.setState(GroundIntakeState.DEPLOYED);
+        lift.liftIntake.setState(LiftIntakeState.BALL_INTAKE);
+        lift.setState(LiftState.BALL_INTAKE_HIGH);
+        groundIntake.setState(GroundIntakeState.RETRACTED);  
       });
-			//Log.debug("CmdIntakeBall", "Target: " + LiftMotor.getClosedLoopTarget(0));
-		}
+      ballIntake.start();
+    }
 
 
 		@Override
@@ -78,24 +80,18 @@ public class OptimusPrime{
 		protected void end() {
       lift.powerControl(0);
       fourBar.powerControl(0);
-			Log.debug("CmdSetLiftPosition", "Lift at desired height of " + heightState.targetHeight);
 		}
 
 		@Override
 		protected void interrupted()
 		{
-			Log.debug("OptimusPrime", "Ending, was interrupted.");
 			end();
 		}
 
-		@Override
-		protected boolean isFinished()
-		{
-			return isTimedOut() || Math.abs(LiftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
-		}
+    @Override
+    protected boolean isFinished() {
+      return isTimedOut();
+      //return isTimedOut() || Math.abs(LiftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
+    }
 	}
 }
-/*
-so depending on driver input, the state of the robot should change to a 'goal state'.
-This class will set the state of each mechanism and make sure that there is no collision 
-*/
