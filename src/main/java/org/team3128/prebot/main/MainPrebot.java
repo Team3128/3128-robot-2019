@@ -1,10 +1,17 @@
 package org.team3128.prebot.main;
 
+import com.kauailabs.navx.frc.AHRS;
+
+import edu.wpi.first.wpilibj.SPI;
 import org.team3128.common.NarwhalRobot;
-import org.team3128.prebot.autonomous.TestTurn;
+import org.team3128.prebot.autonomous.*;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
+import com.ctre.phoenix.motorcontrol.can.BasePIDSetConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.TalonSRXPIDSetConfiguration;
+
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.units.Length;
@@ -15,9 +22,12 @@ import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.listener.controltypes.Button;
 
+
+import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -25,6 +35,9 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 
 
 public class MainPrebot extends NarwhalRobot {
+    
+    public AHRS ahrs;
+
     public TalonSRX rightDriveFront;
     public TalonSRX rightDriveMiddle;
     public TalonSRX rightDriveBack;
@@ -40,7 +53,13 @@ public class MainPrebot extends NarwhalRobot {
 
     public ADXRS450_Gyro gyro;
 
+    public double wheelCirc;
     public double wheelDiameter;
+    public double wheelBase;
+    public int robotFreeSpeed;
+    public double PID_kF;
+    public double PID_kP;
+    public double speedScalar;
 
     public double maxLeftSpeed = 0;
     public double maxRightSpeed = 0;
@@ -53,6 +72,8 @@ public class MainPrebot extends NarwhalRobot {
     public double valCurrent4 = 0.0;
 
     public CommandGroup cmdRunner;
+
+    //public TalonSRXPIDSetConfiguration pid;
 
 	@Override
 	protected void constructHardware()
@@ -73,27 +94,57 @@ public class MainPrebot extends NarwhalRobot {
         rightDriveMiddle.set(ControlMode.Follower, rightDriveFront.getDeviceID());
         leftDriveMiddle.set(ControlMode.Follower, leftDriveFront.getDeviceID());
         rightDriveBack.set(ControlMode.Follower, rightDriveFront.getDeviceID());
-        leftDriveBack.set(ControlMode.Follower, rightDriveFront.getDeviceID());
+        leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
 
-        wheelDiameter = 3.68 * Length.in;
-        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelDiameter * Math.PI, 1, 23.70*Length.in, 28.45*Length.in, 400);
+        wheelCirc = 12.42*Length.in;
+        wheelBase = 68.107;
+        robotFreeSpeed = 4200;
+        //wheelDiameter = 3.68 * Length.in;
+        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1, wheelBase, robotFreeSpeed);
         tankDrive = SRXTankDrive.getInstance();
+        speedScalar = 0.99038845;
+        tankDrive.setLeftSpeedScalar(speedScalar);
+        
+        //rightDriveFront.setInverted(true);
+        //rightDriveMiddle.setInverted(true);
+        //rightDriveBack.setInverted(true);
 
         leftDriveFront.setInverted(true);
         leftDriveMiddle.setInverted(true);
         leftDriveBack.setInverted(true);
+
+        leftDriveFront.setSensorPhase(true);
+        rightDriveFront.setSensorPhase(true);
         
         joystick = new Joystick(1);
 		lm = new ListenerManager(joystick);
         addListenerManager(lm);
-        
+        ahrs = new AHRS(SPI.Port.kMXP); 
+
         gyro = new ADXRS450_Gyro();
-		gyro.calibrate();
+        gyro.calibrate();
+
+        PID_kP = 0.038;
+        leftDriveFront.config_kP(0, PID_kP);
+        rightDriveFront.config_kP(0, PID_kP);
+
+        PID_kF = 0.222;
+        leftDriveFront.config_kF(0, PID_kF);
+        rightDriveFront.config_kF(0, PID_kF);
+
+        //leftDriveFront.getPIDConfigs(pid);
     }
     
     @Override
     protected void constructAutoPrograms() {
-        NarwhalDashboard.addAuto("Turn", new TestTurn(tankDrive));
+        NarwhalDashboard.addAuto("Turn", new CmdInPlaceTurnTest());
+        NarwhalDashboard.addAuto("Arc Turn", new CmdArcTurnTest());
+        NarwhalDashboard.addAuto("Forward", new CmdDriveForward());
+        //NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
+        NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(6000, 1000, 2000));
+        NarwhalDashboard.addAuto("Forward CV", new CmdDriveForwardCVTest());
+        NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
+        // previous speeds that were used were 2000, 4000 (arbitrarily picked)
     }
 
 	@Override
@@ -103,11 +154,31 @@ public class MainPrebot extends NarwhalRobot {
 		lm.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");		
 
         lm.addMultiListener(() -> {
-			tankDrive.arcadeDrive(-0.5 * lm.getAxis("MoveTurn"),
+			tankDrive.arcadeDrive(-0.3 * lm.getAxis("MoveTurn"),
 					lm.getAxis("MoveForwards"),
 					-1 * lm.getAxis("Throttle"),
 					true);		
         }, "MoveTurn", "MoveForwards", "Throttle");
+
+        lm.nameControl(new Button(12), "FullSpeed");
+        lm.addButtonDownListener("FullSpeed", () ->
+		{
+			tankDrive.tankDrive(1, 1);
+        });
+        lm.addButtonUpListener("FullSpeed", () ->
+		{
+			tankDrive.tankDrive(0, 0);
+		});
+
+        lm.nameControl(new Button(11), "HalfSpeed");
+		lm.addButtonDownListener("HalfSpeed", () ->
+		{
+			tankDrive.tankDrive(.25, .25);
+		});
+        lm.addButtonUpListener("HalfSpeed", () ->
+		{
+			tankDrive.tankDrive(0, 0);
+		});
 
         lm.nameControl(new Button(2), "LightOn");
 		lm.addButtonDownListener("LightOn", () -> {
@@ -122,6 +193,7 @@ public class MainPrebot extends NarwhalRobot {
 		lm.nameControl(ControllerExtreme3D.TRIGGER, "LogLimelight");
 		lm.addButtonDownListener("LogLimelight", () -> { 
         });
+
         
         lm.nameControl(new Button(7), "CamMode");
         lm.addButtonDownListener("CamMode", () -> {
@@ -167,7 +239,7 @@ public class MainPrebot extends NarwhalRobot {
 
             double d = (28.5 - 9.5) / Math.tan(28.0 + valCurrent2);
 
-            cmdRunner.addSequential(tankDrive.new CmdMoveForward((d * Length.in), 10000, true));
+            cmdRunner.addSequential(tankDrive.new CmdDriveStraight(d * Length.in, 1.0, 10000));
 
             Log.info("tyav", String.valueOf(valCurrent2));
             NarwhalDashboard.put("tyav", String.valueOf(valCurrent2));
@@ -194,7 +266,7 @@ public class MainPrebot extends NarwhalRobot {
 
         SmartDashboard.putNumber("Max Left Speed", maxLeftSpeed);
         SmartDashboard.putNumber("Max Right Speed", maxRightSpeed);
-		
+        		
     }
     public static void main(String... args) {
         RobotBase.startRobot(MainPrebot::new);

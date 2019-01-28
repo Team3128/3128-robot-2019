@@ -250,6 +250,8 @@ public abstract class NarwhalRobot extends RobotBase {
                 disabledInit();
                 m_watchdog.addEpoch("disabledInit()");
 
+                Scheduler.getInstance().removeAll();
+
                 if (m_lastMode == Mode.kAutonomous) {
                     Log.info("NarwhalRobot", "Re-constructing autonomous sequences");
                     setupAutoChooser();
@@ -294,6 +296,8 @@ public abstract class NarwhalRobot extends RobotBase {
                 LiveWindow.setEnabled(false);
                 Shuffleboard.disableActuatorWidgets();
 
+                Scheduler.getInstance().removeAll();
+
                 zeroOutListeners();
                 teleopInit();
                 recountAllControls();
@@ -303,6 +307,7 @@ public abstract class NarwhalRobot extends RobotBase {
             }
             
             HAL.observeUserProgramTeleop();
+            Scheduler.getInstance().run();
             tickListenerManagers();
             teleopPeriodic();
             m_watchdog.addEpoch("teleopPeriodic()");
@@ -370,7 +375,9 @@ public abstract class NarwhalRobot extends RobotBase {
 		Scheduler.getInstance().removeAll(); // get rid of any paused commands
 		
 		NarwhalDashboard.clearAutos();
-		constructAutoPrograms();
+        constructAutoPrograms();
+        
+        NarwhalDashboard.pushAutos();
 	}
 	
 	private void runAutoProgram()
