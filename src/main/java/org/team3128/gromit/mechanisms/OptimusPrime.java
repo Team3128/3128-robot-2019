@@ -2,7 +2,7 @@ package org.team3128.gromit.mechanisms;
 
 import org.team3128.gromit.mechanisms.Lift.LiftState;
 
-import main.java.org.team3128.gromit.mechanisms.LiftIntake;
+import org.team3128.gromit.mechanisms.LiftIntake;
 
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;;
 
