@@ -1,6 +1,7 @@
 package org.team3128.gromit.mechanisms;
 
 import org.team3128.gromit.mechanisms.Lift.LiftState;
+import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 
 import edu.wpi.first.wpilibj.command.Command;
 import org.team3128.gromit.mechanisms.LiftIntake;
@@ -58,10 +59,12 @@ public class OptimusPrime{
 		{
       Thread ballIntake = new Thread(()->{
         lift.setState(LiftState.BALL_INTAKE_LOW);
-        groundIntake.setState(GroundIntakeState.DEPLOYED);  
+        groundIntake.setState(GroundIntakeState.DEPLOYED);
         fourBar.setState(FourBarState.BALL_INTAKE);
-        groundIntake.setState(GroundIntakeState.DEPLOYED_INTAKE);  
-        lift.setState(LiftState.BALL_INTAKE_HIGH); 
+        groundIntake.setState(GroundIntakeState.DEPLOYED_INTAKE);
+        groundIntake.setState(GroundIntakeState.DEPLOYED);
+        lift.liftIntake.setState(LiftIntakeState.BALL_INTAKE);
+        lift.setState(LiftState.BALL_INTAKE_HIGH);
         groundIntake.setState(GroundIntakeState.RETRACTED);  
       });
       ballIntake.start();

@@ -17,7 +17,7 @@ public class GroundIntake {
 	{
 		DEPLOYED(0, true, "Deployed"),
 		DEPLOYED_INTAKE(-1.0, false, "Deployed and Intake"),
-		RETRACTED(1.0, true, "Retract");
+		RETRACTED(0.0, true, "Retract");
 		private double rollerPower;
 		private boolean isClosed;
 		private String name;
@@ -42,15 +42,17 @@ public class GroundIntake {
     VictorSPX intakeMotors;
 	//private DigitalInput limSwitch;
 	private GroundIntakeState state, newState;
-	private Piston piston;
+    private Piston leftPiston;
+    private Piston rightPiston;
 	private double invertMultiplier;
 
 	//constructor
-	public GroundIntake(VictorSPX intakeMotors, GroundIntakeState state, Piston piston, boolean inverted) {
+	public GroundIntake(VictorSPX intakeMotors, GroundIntakeState state, Piston leftPiston, Piston rightPiston, boolean inverted) {
 		this.intakeMotors = intakeMotors;
 		//this.limSwitch = limSwitch;
 		this.state = state;
-		this.piston = piston;		
+        this.leftPiston = leftPiston;
+        this.rightPiston = rightPiston;		
 		
 		this.invertMultiplier = (inverted) ? -1 : 1;
 		
@@ -63,10 +65,12 @@ public class GroundIntake {
 			this.newState = newState;
 			
 			if(newState.getPistonPosition()) {
-				piston.setPistonOn();
+                leftPiston.setPistonOn();
+                rightPiston.setPistonOn();
 			}
 			else {
-				piston.setPistonOff();
+                leftPiston.setPistonOff();
+				rightPiston.setPistonOff();
 			}
 			
 			Thread intakeThread = new Thread(() -> {

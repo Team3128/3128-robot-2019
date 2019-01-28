@@ -16,8 +16,10 @@ public class LiftIntake {
     public enum LiftIntakeState
 	{
 		STOPPED(0, true, "Stopped"),
-		INTAKE(-1.0, false, "Intake"),
-		OUTTAKE(1.0, true, "Outtake");
+		BALL_INTAKE(-1.0, true, "Ball intake"),
+        BALL_OUTTAKE(1.0, true, "Ball outtake"),
+        HATCH_INTAKE(0.0, false, "Hatch intake");
+
 		private double rollerPower;
 		private boolean isClosed;
 		private String name;
@@ -54,7 +56,7 @@ public class LiftIntake {
 		
 		this.invertMultiplier = (inverted) ? -1 : 1;
 		
-		this.state = LiftIntakeState.OUTTAKE;
+		this.state = LiftIntakeState.BALL_OUTTAKE;
 		setState(LiftIntakeState.STOPPED);
 	}
 	
@@ -70,7 +72,7 @@ public class LiftIntake {
 			}
 			
 			Thread intakeThread = new Thread(() -> {
-				if (this.state.equals(LiftIntakeState.INTAKE) && this.newState.equals(LiftIntakeState.STOPPED)) {
+				if (this.state.equals(LiftIntakeState.BALL_INTAKE) && this.newState.equals(LiftIntakeState.STOPPED)) {
 					try
 					{
 						Thread.sleep(1000);
