@@ -12,6 +12,12 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.command.Command;
 
+/**
+ * Control system for the lift mechanism 
+ * 
+ * @author Chris, Jude, Tygan
+ * 
+ */
 
 public class Lift
 {
@@ -34,15 +40,15 @@ public class Lift
 		these need to be deifined better
 		*/
 		GROUND(0 * Length.ft),
-		BALL_INTAKE(1.5 * Length.ft),
+		BALL_INTAKE_LOW(1.5 * Length.ft), //first raise for ball intake
+		BALL_INTAKE_HIGH(2.5 * Length.ft), //second raise for ball intake
 		BOT_BALL(3 * Length.ft),
 		MID_BALL(59 * Length.in),
         TOP_BALL(64 * Length.in),
-        BOT_DISC(0 * Length.ft),
-        MID_DISC(0 * Length.ft),
-        TOP_DISC(0 * Length.ft),
-        CARGO_SHIP(0 * Length.ft),
-        DROP_BALL(0 * Length.ft);
+        BOT_HATCH(0 * Length.ft), //same for rocket and cargo and loading station
+        MID_HATCH(0 * Length.ft),
+        TOP_HATCH(0 * Length.ft),
+        CARGO_BALL(0 * Length.ft);
 
 		public double targetHeight;
 
@@ -85,20 +91,20 @@ public class Lift
 		{
 			controlMode = mode;
 			Log.debug("setControlMode", "Setting to " + mode.name());
-			forkliftMotor.selectProfileSlot(mode.getPIDSlot(), 0);
+			liftMotor.selectProfileSlot(mode.getPIDSlot(), 0);
 			System.out.println(mode.getPIDSlot());
 		}
 	}
 
-	//Intake intake;
-	TalonSRX forkliftMotor;
+	LiftIntake liftIntake;
+	TalonSRX liftMotor;
 	DigitalInput softStopLimitSwitch;
 	Thread depositCubeThread, depositingRollerThread;
 
 	public LiftControlMode controlMode;
 	public LiftState state;
 
-	int limitSwitchLocation, forkliftMaxVelocity;
+	int limitSwitchLocation, LiftMaxVelocity;
 
 	public double brakePower = 0.15;
 	public double brakeHeight = 0.5 * Length.ft;
@@ -122,57 +128,57 @@ public class Lift
 			return instance;
 		}
 
-		Log.fatal("Forklift", "Attempted to get instance before initializtion! Call initialize(...) first.");
+		Log.fatal("Lift", "Attempted to get instance before initializtion! Call initialize(...) first.");
 		return null;
 	}
 
-	public static void initialize(LiftState state, TalonSRX forkliftMotor, DigitalInput softStopLimitSwitch,
-	int limitSwitchLocation, int forkliftMaxVelocity) {
+	public static void initialize(LiftState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch,
+	int limitSwitchLocation, int LiftMaxVelocity) {
         instance = new Lift();
-		//instance = new Lift(state, forkliftMotor, softStopLimitSwitch, limitSwitchLocation, forkliftMaxVelocity);
+		//instance = new Lift(state, liftMotor, softStopLimitSwitch, limitSwitchLocation, LiftMaxVelocity);
 	}
 
-	private void Forklift(LiftState state, TalonSRX forkliftMotor, DigitalInput softStopLimitSwitch,
-			int limitSwitchLocation, int forkliftMaxVelocity)
+	public Lift(LiftState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch,
+			int limitSwitchLocation, int LiftMaxVelocity)
 	{
 		//this.intake = Intake.getInstance();
-		this.forkliftMotor = forkliftMotor;
+		this.liftMotor = liftMotor;
 		this.softStopLimitSwitch = softStopLimitSwitch;
 		this.limitSwitchLocation = limitSwitchLocation;
 		this.state = state;
 
 		controlMode = LiftControlMode.PERCENT;
 
-		forkliftMotor.configMotionCruiseVelocity(2000, Constants.CAN_TIMEOUT);
-		forkliftMotor.configMotionAcceleration(4000, Constants.CAN_TIMEOUT);
+		liftMotor.configMotionCruiseVelocity(2000, Constants.CAN_TIMEOUT);
+		liftMotor.configMotionAcceleration(4000, Constants.CAN_TIMEOUT);
 
-		forkliftMotor.selectProfileSlot(0, 0);
+		liftMotor.selectProfileSlot(0, 0);
 
-		forkliftMotor.configOpenloopRamp(0.2, Constants.CAN_TIMEOUT);
+		liftMotor.configOpenloopRamp(0.2, Constants.CAN_TIMEOUT);
 
 		depositingRollerThread = new Thread(() ->
 		{
 			while (true)
 			{
-				if (this.getForkliftSwitch())
+				if (this.getLiftSwitch())
 				{
-					this.forkliftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
+					this.liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
 				}
 
 				if (this.disabled)
 				{
-					this.forkliftMotor.set(ControlMode.PercentOutput, 0);
+					this.liftMotor.set(ControlMode.PercentOutput, 0);
 				}
 				else {
 					double target = 0;
 
-					this.canRaise = this.forkliftMotor.getSelectedSensorPosition(0) < this.maxHeight;
-					this.canLower = this.forkliftMotor.getSelectedSensorPosition(0) > 100;
+					this.canRaise = this.liftMotor.getSelectedSensorPosition(0) < this.maxHeight;
+					this.canLower = this.liftMotor.getSelectedSensorPosition(0) > 100;
 
 					if (this.controlMode == LiftControlMode.PERCENT) {
 						if (this.override) {
 							target = this.desiredTarget;
-							this.forkliftMotor.set(ControlMode.PercentOutput, target);
+							this.liftMotor.set(ControlMode.PercentOutput, target);
 
 						}
 						else {
@@ -184,12 +190,12 @@ public class Lift
 							}
 
 							if ((Math.abs(target) < 0.1
-									&& this.forkliftMotor.getSelectedSensorPosition(0) / ratio >= this.brakeHeight)) {
+									&& this.liftMotor.getSelectedSensorPosition(0) / ratio >= this.brakeHeight)) {
 								target = this.brakePower;
 							}
 
 							if (Math.abs(target - this.setPoint) > 0.0001) {
-								this.forkliftMotor.set(ControlMode.PercentOutput, target);
+								this.liftMotor.set(ControlMode.PercentOutput, target);
 
 								this.setPoint = target;
 							}
@@ -200,7 +206,7 @@ public class Lift
 				}
 
 
-				this.currentPosition = forkliftMotor.getSelectedSensorPosition(0) / ratio;
+				this.currentPosition = liftMotor.getSelectedSensorPosition(0) / ratio;
 				double targetHeight = this.state.targetHeight;
 
 				this.error = Math.abs(currentPosition - targetHeight);
@@ -220,11 +226,11 @@ public class Lift
 		depositingRollerThread.start();
 	}
 
-	public void setState(LiftState forkliftState)
+	public void setState(LiftState liftState)
 	{
-		if (state != forkliftState)
+		if (state != liftState)
 		{
-			if (forkliftState.targetHeight < state.targetHeight)
+			if (liftState.targetHeight < state.targetHeight)
 			{
 				setControlMode(LiftControlMode.POSITION_DOWN);
 			}
@@ -232,9 +238,9 @@ public class Lift
 			{
 				setControlMode(LiftControlMode.POSITION_UP);
 			}
-			state = forkliftState;
-			Log.info("Forklift and Intake", "Going to " + state.targetHeight + " inches.");
-			forkliftMotor.set(ControlMode.MotionMagic, state.targetHeight * ratio);
+			state = liftState;
+			Log.info("Lift and Intake", "Going to " + state.targetHeight + " inches.");
+			liftMotor.set(ControlMode.MotionMagic, state.targetHeight * ratio);
 		}
 	}
 
@@ -245,21 +251,21 @@ public class Lift
 		desiredTarget = joystick;
 	}
 
-	public boolean getForkliftSwitch()
+	public boolean getLiftSwitch()
 	{
 		return !softStopLimitSwitch.get();
 	}
 
-	public class CmdZeroForklift extends Command {
+	public class CmdZeroLift extends Command {
 		private boolean done = false;
 
-		public CmdZeroForklift() {
+		public CmdZeroLift() {
 			super(0.5);
 		}
 
 		@Override
 		protected void initialize() {
-			forkliftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
+			liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
 			state = LiftState.GROUND;
 
 			done = true;
@@ -272,11 +278,11 @@ public class Lift
 		}
 	}
 
-	public class CmdSetForkliftPosition extends Command
+	public class CmdSetLiftPosition extends Command
 	{
 		LiftState heightState;
 
-		public CmdSetForkliftPosition(LiftState heightState)
+		public CmdSetLiftPosition(LiftState heightState)
 		{
 			super(3);
 			this.heightState = heightState;
@@ -286,43 +292,42 @@ public class Lift
 		protected void initialize()
 		{
 			setState(heightState);
-			Log.debug("CmdSetForkliftPosition", "Changing state to " + heightState.name());
-			Log.debug("CmdSetForkliftPosition", "Target: " + forkliftMotor.getClosedLoopTarget(0));
+			Log.debug("CmdSetLiftPosition", "Changing state to " + heightState.name());
+			Log.debug("CmdSetLiftPosition", "Target: " + liftMotor.getClosedLoopTarget(0));
 		}
 
 
 		@Override
 		protected void execute() {
-			Log.debug("CmdSetForkliftPosition", "Error: " + (forkliftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)));
+			Log.debug("CmdSetLiftPosition", "Error: " + (liftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)));
 		}
 
 		@Override
 		protected void end() {
 			powerControl(0);
-			Log.debug("CmdSetForkliftPosition", "Forklift at desired height of " + heightState.targetHeight);
+			Log.debug("CmdSetLiftPosition", "Lift at desired height of " + heightState.targetHeight);
 		}
 
 		@Override
 		protected void interrupted()
 		{
-			Log.debug("Forklift and Intake", "Ending, was interrupted.");
+			Log.debug("Lift and Intake", "Ending, was interrupted.");
 			end();
 		}
 
 		@Override
 		protected boolean isFinished()
 		{
-			return isTimedOut() || Math.abs(forkliftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
+			return isTimedOut() || Math.abs(liftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
 		}
 	}
-}
-/*
-	public class CmdRunIntake extends Command
+
+	public class CmdRunLiftIntake extends Command
 	{
-		IntakeState state;
+		LiftIntakeState state;
 		boolean timesOut;
 
-		public CmdRunIntake(IntakeState state)
+		public CmdRunLiftIntake(IntakeState state)
 		{
 			super(0.5);
 
@@ -331,7 +336,7 @@ public class Lift
 			this.state = state;
 		}
 
-		public CmdRunIntake(IntakeState state, int msec) {
+		public CmdRunLiftIntake(LiftIntakeState state, int msec) {
 			super(msec / 1000.0);
 
 			timesOut = true;
@@ -342,7 +347,7 @@ public class Lift
 		@Override
 		protected void initialize()
 		{
-			intake.setState(state);
+			liftIntake.setState(state);
 		}
 
 
@@ -369,4 +374,4 @@ public class Lift
 			return isTimedOut();
 		}
 	}
-}*/
+}
