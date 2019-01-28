@@ -34,7 +34,7 @@ public class Limelight
         camAngle = passedAngle;
         camHeight = passedCamHeight;
         hatchHeight = passedHatchHeight;
-        passedW = w;
+        w = passedW;
         debugMode = passedDebugMode;
 
         //setting up networktables
@@ -72,32 +72,37 @@ public class Limelight
     }
     public CalculatedData doMath(LimelightData inData) {
         CalculatedData outData = new CalculatedData();
-        double targetArcAngle = inData.boxWidth() * LimelightConstants.horizFOV/(LimelightConstants.screenWidth);
+        double targetArcAngle = inData.boxWidth() * LimelightConstants.horizFOV/LimelightConstants.screenWidth;
 
         outData.theta0 = inData.tx() - targetArcAngle / 2; 
         outData.theta1 = inData.tx() + targetArcAngle / 2;
 
-        outData.d = (hatchHeight - camHeight) / RobotMath.tan(inData.ty() + camAngle);
+        outData.dY = (hatchHeight - camHeight) / RobotMath.tan(inData.ty() + camAngle);
+        outData.dX = outData.dY / RobotMath.tan(90 - inData.tx());
+
+        outData.d = outData.dY / RobotMath.cos(inData.tx());
 
         //d0 = ((2*d*Math.cos(tx-theta0)-Math.sqrt(Math.pow((-2*d*Math.cos(tx-theta0)),2)-(4*d*d)+(w*w))))/2;
         //d1 = ((2*d*Math.cos(tx-theta1)+Math.sqrt(Math.pow((-2*d*Math.cos(tx-theta1)),2)-(4*d*d)+(w*w))))/2;
 
-        outData.d0 = (2 * outData.d * Math.cos(inData.tx() - outData.theta0) - Math.sqrt(RobotMath.square(w) - 4 * RobotMath.square(outData.d) * RobotMath.square(RobotMath.sin(inData.tx() - outData.theta0)))) / 2;
-        outData.d1 = (2 * outData.d * Math.cos(outData.theta1 - inData.tx()) - Math.sqrt(RobotMath.square(w) - 4 * RobotMath.square(outData.d) * RobotMath.square(RobotMath.sin(outData.theta1 - inData.tx())))) / 2;
+        Log.info("elkghiweurg", w + "");
+        Log.info("Limelight", "inroot = " + (RobotMath.square(w) - RobotMath.square(2 * outData.d * RobotMath.sin(inData.tx() - outData.theta0))));
 
-        outData.dX = outData.d * RobotMath.sin(inData.tx());
-        outData.dY = outData.d * RobotMath.cos(inData.tx());
+        outData.d0 = (2 * outData.d * RobotMath.cos(inData.tx() - outData.theta0) - Math.sqrt(RobotMath.square(w) - 4 * RobotMath.square(outData.d) * RobotMath.square(RobotMath.sin(inData.tx() - outData.theta0)))) / 2;
+        outData.d1 = (2 * outData.d * RobotMath.cos(outData.theta1 - inData.tx()) + Math.sqrt(RobotMath.square(w) - 4 * RobotMath.square(outData.d) * RobotMath.square(RobotMath.sin(outData.theta1 - inData.tx())))) / 2;
+
+        outData.dX = outData.dY * RobotMath.sin(inData.tx());
 
         outData.theta = RobotMath.asin((outData.d1*RobotMath.cos(outData.theta1) - outData.d0*RobotMath.cos(outData.theta0))/w);
 
-        // nd.setString(String.valueOf(d));
-        // nd0.setString(String.valueOf(d0));
-        // nd1.setString(String.valueOf(d1));
-        // ntheta.setString(String.valueOf(theta));
-        // ntheta0.setString(String.valueOf(theta0));
-        // ntheta1.setString(String.valueOf(theta1));
-        // ndeltax.setString(String.valueOf(deltax));
-        // ndeltay.setString(String.valueOf(deltay));
+        nd.setString(("" + outData.d));
+        nd0.setString(("" + outData.d0));
+        nd1.setString(("" + outData.d1));
+        ntheta.setString(("" + outData.theta));
+        ntheta0.setString(("" + outData.theta0));
+        ntheta1.setString(("" + outData.theta1));
+        ndeltax.setString(("" + outData.dX));
+        ndeltay.setString(("" + outData.dY));
 
         return outData;
     }

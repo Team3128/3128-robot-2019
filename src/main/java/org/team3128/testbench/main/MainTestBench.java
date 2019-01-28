@@ -87,8 +87,8 @@ public class MainTestBench extends NarwhalRobot {
     private int errorCase = 0;
     private int counter = 0;
 
-    public double camAngle = 26;
-    public double camHeight = 6.15;
+    public double camAngle = 24.5;
+    public double camHeight = 10.25;
     public double hatchHeight = 28.5;
     public double w = 14.5;
 
@@ -155,6 +155,7 @@ public class MainTestBench extends NarwhalRobot {
         listenerRight.nameControl(new Button(12), "ResetCounter");
         listenerRight.addButtonDownListener("ResetCounter", () -> {
             System.out.print(newLine);
+            newLine = "";
         });
 
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "limelightVals");
@@ -182,6 +183,8 @@ public class MainTestBench extends NarwhalRobot {
             newLine += calcData.theta1 + ",";
             newLine += calcData.d0 + ",";
             newLine += calcData.d1 + ",";
+
+            Log.info("MainTestBench", "Datums recorded.");
             
             counter++;
             newLine += "\n";
@@ -220,9 +223,6 @@ public class MainTestBench extends NarwhalRobot {
         listenerRight.addButtonDownListener("DriveMode", () -> {
             table.getEntry("camMode").setNumber(1);
   
-        });
-        listenerLeft.nameControl(ControllerExtreme3D.TRIGGER, "takeValues");
-        listenerLeft.addButtonDownListener("takeValues", () -> {
         });
     }
 
