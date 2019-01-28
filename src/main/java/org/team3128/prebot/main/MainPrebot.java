@@ -55,6 +55,11 @@ public class MainPrebot extends NarwhalRobot {
 
     public double wheelCirc;
     public double wheelDiameter;
+    public double wheelBase;
+    public int robotFreeSpeed;
+    public double PID_kF;
+    public double PID_kP;
+    public double speedScalar;
 
     public double maxLeftSpeed = 0;
     public double maxRightSpeed = 0;
@@ -68,7 +73,7 @@ public class MainPrebot extends NarwhalRobot {
 
     public CommandGroup cmdRunner;
 
-    public TalonSRXPIDSetConfiguration pid;
+    //public TalonSRXPIDSetConfiguration pid;
 
 	@Override
 	protected void constructHardware()
@@ -92,10 +97,13 @@ public class MainPrebot extends NarwhalRobot {
         leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
 
         wheelCirc = 12.42*Length.in;
+        wheelBase = 68.107;
+        robotFreeSpeed = 4200;
         //wheelDiameter = 3.68 * Length.in;
-        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1, 68.107, 4200);
+        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1, wheelBase, robotFreeSpeed);
         tankDrive = SRXTankDrive.getInstance();
-        tankDrive.setLeftSpeedScalar(0.99038845);
+        speedScalar = 0.99038845;
+        tankDrive.setLeftSpeedScalar(speedScalar);
         
         //rightDriveFront.setInverted(true);
         //rightDriveMiddle.setInverted(true);
@@ -116,11 +124,13 @@ public class MainPrebot extends NarwhalRobot {
         gyro = new ADXRS450_Gyro();
         gyro.calibrate();
 
-        leftDriveFront.config_kP(0, 0.038);
-        rightDriveFront.config_kP(0, 0.038);
+        PID_kP = 0.038;
+        leftDriveFront.config_kP(0, PID_kP);
+        rightDriveFront.config_kP(0, PID_kP);
 
-        leftDriveFront.config_kF(0, 0.222);
-        rightDriveFront.config_kF(0, 0.222);
+        PID_kF = 0.222;
+        leftDriveFront.config_kF(0, PID_kF);
+        rightDriveFront.config_kF(0, PID_kF);
 
         //leftDriveFront.getPIDConfigs(pid);
     }
@@ -256,7 +266,7 @@ public class MainPrebot extends NarwhalRobot {
 
         SmartDashboard.putNumber("Max Left Speed", maxLeftSpeed);
         SmartDashboard.putNumber("Max Right Speed", maxRightSpeed);
-		
+        		
     }
     public static void main(String... args) {
         RobotBase.startRobot(MainPrebot::new);
