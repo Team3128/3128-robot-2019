@@ -3,6 +3,7 @@ package org.team3128.gromit.mechanisms;
 import org.team3128.gromit.mechanisms.Lift.LiftState;
 
 import edu.wpi.first.wpilibj.command.Command;
+import org.team3128.gromit.mechanisms.LiftIntake;
 
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;
 import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;;
