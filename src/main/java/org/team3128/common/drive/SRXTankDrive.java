@@ -8,6 +8,7 @@ import org.team3128.common.util.Assert;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
+import org.team3128.common.util.Wheelbase;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.AngularSpeed;
@@ -19,6 +20,8 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import com.kauailabs.navx.frc.AHRS;
+import edu.wpi.first.wpilibj.SPI;
+
 //import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.command.Command;
@@ -866,7 +869,7 @@ public class SRXTankDrive implements ITankDrive
 
 		double leftWheelbase, rightWheelbase;
 
-		Double calculatedWheelbase;
+		Wheelbase calculatedWheelbase;
 
 		/**
 		 * @param durationMs - The amount of time for which the robot should coast.
@@ -874,11 +877,15 @@ public class SRXTankDrive implements ITankDrive
 		 * @param rightSpeed - The coast velocity of the right drive wheels.
 		 * @param calculatedWheelbase - The Double wrapper object that the finished command should stick the calculated wheelbase in.
 		 */
-		public CmdDetermineWheelbase(double durationMs, double leftSpeed, double rightSpeed, Double calculatedWheelbase) {
-			super(durationMs);
+		public CmdDetermineWheelbase(double durationMs, double leftSpeed, double rightSpeed, Wheelbase calculatedWheelbase) {
+			super(durationMs / 1000.0);
+
+			ahrs = new AHRS(SPI.Port.kMXP);
 
 			this.leftSpeed = leftSpeed;
 			this.rightSpeed = rightSpeed;
+
+			this.calculatedWheelbase = calculatedWheelbase;
 		}
 
 		protected void initialize() {
@@ -911,7 +918,7 @@ public class SRXTankDrive implements ITankDrive
 			leftWheelbase = 2 * (leftDistance/dTheta) - 2 * (leftDistance + rightDistance) / (2 * dTheta);
 			rightWheelbase = -2 * (rightDistance/dTheta) + 2 * (leftDistance + rightDistance) / (2 * dTheta);
 
-			calculatedWheelbase = (leftWheelbase + rightWheelbase)/2;
+			calculatedWheelbase.value = (leftWheelbase + rightWheelbase)/2;
 		}
 	}
 }

@@ -102,8 +102,8 @@ public class MainPrebot extends NarwhalRobot {
         //wheelDiameter = 3.68 * Length.in;
         SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1, wheelBase, robotFreeSpeed);
         tankDrive = SRXTankDrive.getInstance();
-        speedScalar = 0.99038845;
-        tankDrive.setLeftSpeedScalar(speedScalar);
+        speedScalar = 0.99319568;
+        tankDrive.setRightSpeedScalar(speedScalar);
         
         //rightDriveFront.setInverted(true);
         //rightDriveMiddle.setInverted(true);
@@ -113,8 +113,8 @@ public class MainPrebot extends NarwhalRobot {
         leftDriveMiddle.setInverted(true);
         leftDriveBack.setInverted(true);
 
-        leftDriveFront.setSensorPhase(true);
-        rightDriveFront.setSensorPhase(true);
+        leftDriveFront.setSensorPhase(false);
+        rightDriveFront.setSensorPhase(false);
         
         joystick = new Joystick(1);
 		lm = new ListenerManager(joystick);
@@ -128,7 +128,7 @@ public class MainPrebot extends NarwhalRobot {
         leftDriveFront.config_kP(0, PID_kP);
         rightDriveFront.config_kP(0, PID_kP);
 
-        PID_kF = 0.222;
+        PID_kF = 0.253;
         leftDriveFront.config_kF(0, PID_kF);
         rightDriveFront.config_kF(0, PID_kF);
 
@@ -141,7 +141,7 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.addAuto("Arc Turn", new CmdArcTurnTest());
         NarwhalDashboard.addAuto("Forward", new CmdDriveForward());
         //NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
-        NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(6000, 1000, 2000));
+        NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(2000, 1000, 2000));
         NarwhalDashboard.addAuto("Forward CV", new CmdDriveForwardCVTest());
         NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
         // previous speeds that were used were 2000, 4000 (arbitrarily picked)
@@ -170,15 +170,6 @@ public class MainPrebot extends NarwhalRobot {
 			tankDrive.tankDrive(0, 0);
 		});
 
-        lm.nameControl(new Button(11), "HalfSpeed");
-		lm.addButtonDownListener("HalfSpeed", () ->
-		{
-			tankDrive.tankDrive(.25, .25);
-		});
-        lm.addButtonUpListener("HalfSpeed", () ->
-		{
-			tankDrive.tankDrive(0, 0);
-		});
 
         lm.nameControl(new Button(2), "LightOn");
 		lm.addButtonDownListener("LightOn", () -> {
