@@ -13,6 +13,9 @@ import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.AngularSpeed;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ctre.phoenix.motion.MotionProfileStatus;
 import com.ctre.phoenix.motion.TrajectoryPoint;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -871,6 +874,9 @@ public class SRXTankDrive implements ITankDrive
 
 		Wheelbase calculatedWheelbase;
 
+		double leftSquareErrorSum, rightSquareErrorSum;
+		int errorSampleCount;
+
 		/**
 		 * @param durationMs - The amount of time for which the robot should coast.
 		 * @param leftSpeed - The coast velocity of the left drive wheels.
@@ -889,6 +895,11 @@ public class SRXTankDrive implements ITankDrive
 		}
 
 		protected void initialize() {
+			leftSquareErrorSum = 0;
+			rightSquareErrorSum = 0;
+
+			errorSampleCount = 0;
+
 			for(int i = 0; i <= 10000 ; i++) {
 				getLeftMotors().set(ControlMode.Velocity, leftSpeed * i/10000);
 				getRightMotors().set(ControlMode.Velocity, rightSpeed * i/10000);
@@ -898,6 +909,14 @@ public class SRXTankDrive implements ITankDrive
 			getRightMotors().setSelectedSensorPosition(0);
 
 			theta0 = ahrs.getAngle()*(Math.PI/180);
+		}
+
+		@Override
+		protected void execute() {
+			leftSquareErrorSum += RobotMath.square(leftSpeed - leftMotors.getSelectedSensorVelocity());
+			rightSquareErrorSum += RobotMath.square(rightSpeed - rightMotors.getSelectedSensorVelocity());
+
+			errorSampleCount += 1;
 		}
 
 		@Override
@@ -918,7 +937,10 @@ public class SRXTankDrive implements ITankDrive
 			leftWheelbase = 2 * (leftDistance/dTheta) - 2 * (leftDistance + rightDistance) / (2 * dTheta);
 			rightWheelbase = -2 * (rightDistance/dTheta) + 2 * (leftDistance + rightDistance) / (2 * dTheta);
 
-			calculatedWheelbase.value = (leftWheelbase + rightWheelbase)/2;
+			calculatedWheelbase.wheelbase = (leftWheelbase + rightWheelbase)/2;
+
+			calculatedWheelbase.leftVelocityError = Math.sqrt(leftSquareErrorSum / errorSampleCount);
+			calculatedWheelbase.rightVelocityError = Math.sqrt(rightSquareErrorSum / errorSampleCount);
 		}
 	}
 }

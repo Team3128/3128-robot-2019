@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.esotericsoftware.minlog.Log;
 
+import org.team3128.common.autonomous.primitives.CmdDelay;
 import org.team3128.common.autonomous.primitives.CmdLambda;
 import org.team3128.common.autonomous.primitives.CmdLog;
 import org.team3128.common.drive.SRXTankDrive;
@@ -18,10 +19,11 @@ public class CmdCallibrateWheelbase extends CommandGroup {
         int numSamples = 5;
 
         for (int i = 0; i < numSamples; i++) {
-            Wheelbase wb = new Wheelbase(-1);
+            Wheelbase wb = new Wheelbase();
 
             addSequential(SRXTankDrive.getInstance().new CmdDetermineWheelbase(duration, leftSpeed, rightSpeed, wb));
-            addSequential(new CmdLog("" + wb.value));
+            addSequential(new CmdDelay(0.5));
+            addSequential(new CmdLog("" + wb.wheelbase));
 
             calculatedWheelbases.add(wb);
 
@@ -31,7 +33,7 @@ public class CmdCallibrateWheelbase extends CommandGroup {
             double averageWheelbase = 0;
 
             for (Wheelbase wheelbase : calculatedWheelbases) {
-                averageWheelbase += wheelbase.value;
+                averageWheelbase += wheelbase.wheelbase;
             }
             averageWheelbase /= numSamples;
 
