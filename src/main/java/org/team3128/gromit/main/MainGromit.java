@@ -24,6 +24,7 @@ import org.team3128.gromit.mechanisms.FourBar.FourBarState;
 import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;
 import org.team3128.gromit.mechanisms.Lift.LiftState;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
+import org.team3128.gromit.mechanisms.OptimusPrime.CmdIntakeBall;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
@@ -108,6 +109,7 @@ public class MainGromit extends NarwhalRobot{
 
 	//Optimus Prime!!
 	public OptimusPrime optimusPrime;
+	public CmdIntakeBall cmdIntakeBall;
 
 	//Controls
 	public Joystick leftJoystick;
@@ -254,6 +256,31 @@ public class MainGromit extends NarwhalRobot{
 			default:
 				groundIntake.setState(GroundIntakeState.RETRACTED);
 			}
+		});
+
+		listenerRight.nameControl(new Button(7), "BallIntake");
+		listenerRight.addButtonDownListener("BallIntake", () -> {
+			cmdIntakeBall.start();
+		});
+
+		listenerLeft.nameControl(new Button(7), "ZeroForklift");
+		listenerLeft.addButtonDownListener("ZeroForklift", () ->
+		{
+			liftMotorLeader.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+		});
+
+		listenerRight.nameControl(new Button(11), "StartCompressor");
+		listenerRight.addButtonDownListener("StartCompressor", () ->
+		{
+			compressor.start();
+			Log.info("MainGuido", "Starting Compressor");
+
+		});
+
+		listenerRight.nameControl(new Button(12), "StopCompressor");
+		listenerRight.addButtonDownListener("StopCompressor", () ->
+		{
+			compressor.stop();
 		});
 	}
 	

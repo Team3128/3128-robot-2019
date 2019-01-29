@@ -98,5 +98,53 @@ public class OptimusPrime{
       return isTimedOut();
       //return isTimedOut() || Math.abs(LiftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
     }
+
+    public class CmdIntakeBall extends Command 
+  {
+    
+		public CmdIntakeBall()
+		{
+			super(10);
+		}
+
+		@Override
+		protected void initialize()
+		{
+      Thread ballIntake = new Thread(()->{
+        lift.setState(LiftState.BALL_INTAKE_LOW);
+        groundIntake.setState(GroundIntakeState.DEPLOYED);
+        fourBar.setState(FourBarState.BALL_INTAKE);
+        groundIntake.setState(GroundIntakeState.DEPLOYED_INTAKE);
+        groundIntake.setState(GroundIntakeState.DEPLOYED);
+        lift.liftIntake.setState(LiftIntakeState.BALL_INTAKE);
+        lift.setState(LiftState.BALL_INTAKE_HIGH);
+        groundIntake.setState(GroundIntakeState.RETRACTED);  
+      });
+      ballIntake.start();
+    }
+
+
+		@Override
+		protected void execute() {
+			//Log.debug("CmdSetLiftPosition", "Error: " + (LiftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)));
+		}
+
+		@Override
+		protected void end() {
+      lift.powerControl(0);
+      fourBar.powerControl(0);
+		}
+
+		@Override
+		protected void interrupted()
+		{
+			end();
+		}
+
+    @Override
+    protected boolean isFinished() {
+      return isTimedOut();
+      //return isTimedOut() || Math.abs(LiftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
+    }
 	}
 }
