@@ -88,8 +88,8 @@ public class Limelight
         Log.info("elkghiweurg", w + "");
         Log.info("Limelight", "inroot = " + (RobotMath.square(w) - RobotMath.square(2 * outData.d * RobotMath.sin(inData.tx() - outData.theta0))));
 
-        outData.d0 = (2 * outData.d * RobotMath.cos(inData.tx() - outData.theta0) - Math.sqrt(RobotMath.square(w) - 4 * RobotMath.square(outData.d) * RobotMath.square(RobotMath.sin(inData.tx() - outData.theta0)))) / 2;
-        outData.d1 = (2 * outData.d * RobotMath.cos(outData.theta1 - inData.tx()) + Math.sqrt(RobotMath.square(w) - 4 * RobotMath.square(outData.d) * RobotMath.square(RobotMath.sin(outData.theta1 - inData.tx())))) / 2;
+        outData.d0 = outData.d * RobotMath.cos(inData.tx() - outData.theta0) - 0.5 * Math.sqrt(RobotMath.square(w) - RobotMath.square(2 * outData.d * RobotMath.sin(inData.tx() - outData.theta0)));
+        outData.d1 = outData.d * RobotMath.cos(outData.theta1 - inData.tx()) + 0.5 * Math.sqrt(RobotMath.square(w) - RobotMath.square(2 * outData.d * RobotMath.sin(outData.theta1 - inData.tx())));
 
         outData.dX = outData.dY * RobotMath.sin(inData.tx());
 
