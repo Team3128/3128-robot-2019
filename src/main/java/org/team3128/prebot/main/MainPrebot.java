@@ -14,9 +14,11 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRXPIDSetConfiguration;
 
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.util.Constants;
+import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
+import org.team3128.common.util.Wheelbase;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
@@ -72,6 +74,8 @@ public class MainPrebot extends NarwhalRobot {
     public double valCurrent4 = 0.0;
 
     public CommandGroup cmdRunner;
+
+    public Wheelbase wheelbase;
 
     //public TalonSRXPIDSetConfiguration pid;
 
@@ -136,8 +140,35 @@ public class MainPrebot extends NarwhalRobot {
 
         NarwhalDashboard.addButton("resetEncoders", (boolean down) -> {
             if (down) {
-                this.tankDrive.getLeftMotors().setSelectedSensorPosition(0);
-                this.tankDrive.getRightMotors().setSelectedSensorPosition(0);
+                tankDrive.getLeftMotors().setSelectedSensorPosition(0);
+                tankDrive.getRightMotors().setSelectedSensorPosition(0);
+            }
+            else {
+
+            }
+        });
+        NarwhalDashboard.addButton("resetMaxSpeed", (boolean down) -> {
+            if (down) {
+                maxLeftSpeed = 0;
+                maxRightSpeed = 0;
+            }
+            else {
+
+            }
+        });
+
+        wheelbase = new Wheelbase();
+        NarwhalDashboard.addButton("wheelbase", (boolean down) -> {
+            if (down) {
+                new CmdCallibrateWheelbase(ahrs, 10, 1000, 1500, wheelbase);
+            }
+            else {
+
+            }
+        });
+        NarwhalDashboard.addButton("pidCalDrive", (boolean down) -> {
+            if (down) {
+                new CmdDriveForward().start();
             }
             else {
 
@@ -151,7 +182,7 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.addAuto("Arc Turn", new CmdArcTurnTest());
         NarwhalDashboard.addAuto("Forward", new CmdDriveForward());
         //NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
-        NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(2000, 1000, 2000));
+        NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(ahrs, 10, 1000, 1500, wheelbase));
         NarwhalDashboard.addAuto("Forward CV", new CmdDriveForwardCVTest());
         NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
         // previous speeds that were used were 2000, 4000 (arbitrarily picked)
@@ -257,6 +288,16 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.put("ta", table.getEntry("ta").getDouble(0.0));
         NarwhalDashboard.put("ts", table.getEntry("ts").getDouble(0.0));
         NarwhalDashboard.put("tl", table.getEntry("tl").getDouble(0.0));
+
+        NarwhalDashboard.put("wheelCirc", this.getWheelCirc());
+        NarwhalDashboard.put("leftKf", this.getLeftKf());
+        NarwhalDashboard.put("rightKf", this.getRightKf());
+        NarwhalDashboard.put("leftSpeedScalar", this.getLeftSpeedScalar());
+        NarwhalDashboard.put("rightSpeedScalar", this.getRightSpeedScalar());
+        NarwhalDashboard.put("wheelBase", wheelbase.wheelbase);
+        NarwhalDashboard.put("leftVelocityError", wheelbase.leftVelocityError);
+        NarwhalDashboard.put("rightVelocityError", wheelbase.rightVelocityError);
+
         SmartDashboard.putNumber("Gyro Angle", RobotMath.normalizeAngle(gyro.getAngle()));
 
 		SmartDashboard.putNumber("Left Speed (nu/100ms)", leftDriveFront.getSelectedSensorVelocity(0));
@@ -269,6 +310,33 @@ public class MainPrebot extends NarwhalRobot {
         SmartDashboard.putNumber("Max Right Speed", maxRightSpeed);
         		
     }
+
+    public double getWheelCirc() {
+        return 100 / leftDriveFront.getSelectedSensorPosition() * Angle.CTRE_MAGENC_NU;
+    }
+    public double getLeftKf() {
+        return 1023 / maxLeftSpeed;
+    }
+    public double getRightKf() {
+        return 1023 / maxRightSpeed;
+    }
+    public double getLeftSpeedScalar() {
+        if (maxLeftSpeed < maxRightSpeed) {
+            return maxLeftSpeed/maxRightSpeed;
+        }
+        else {
+            return 1.0;
+        }
+    }
+    public double getRightSpeedScalar() {
+        if (maxRightSpeed < maxLeftSpeed) {
+            return maxRightSpeed/maxLeftSpeed;
+        }
+        else {
+            return 1.0;
+        }
+    }
+
     public static void main(String... args) {
         RobotBase.startRobot(MainPrebot::new);
     }
