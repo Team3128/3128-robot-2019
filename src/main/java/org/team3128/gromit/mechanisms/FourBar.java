@@ -3,6 +3,7 @@ package org.team3128.gromit.mechanisms;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.units.Length;
+import org.team3128.common.util.units.Angle;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
@@ -10,8 +11,9 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.command.Command;
 
+
 /**
- * Control system for the mechanism controlling mechanisms 
+ * Control system for the four bar
  * 
  * @author Chris, Jude, Tygan
  * 
@@ -22,10 +24,10 @@ public class FourBar
     public final double ratio = 19100.0 / (76 * Length.in); //to be calculated, convert angle to native units
 
     public enum FourBarState{
-        BALL_INTAKE(0.0), 
-        HATCH_PICKUP(10.0),
+        BALL_INTAKE(0.0 * Angle.DEGREES), 
+        HATCH_PICKUP(10.0 * Angle.DEGREES),
     //    LOW_DROP_OFF(40.0), same as hatch pickup 
-        HIGH_DROP_OFF(120.0);
+        HIGH_DROP_OFF(120.0 * Angle.DEGREES);
 
 		public double targetAngle;
 
@@ -77,6 +79,15 @@ public class FourBar
 	FourBarState state;
 	int limitSwitchLocation;
 	private double desiredAngle;
+	
+	//constructor
+	public FourBar(TalonSRX fourBarMotor, FourBarState state) {
+		this.fourBarMotor = fourBarMotor;
+		this.state = state;
+				
+		this.state = FourBarState.HATCH_PICKUP;
+		setState(FourBarState.HATCH_PICKUP);
+	}
 
     public void setState(FourBarState fourBarState)
 	{

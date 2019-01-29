@@ -437,6 +437,9 @@ public class SRXTankDrive implements ITankDrive
 		protected void initialize() {
 			super.initialize();
 
+			leftMotors.selectProfileSlot(0, 0);
+			rightMotors.selectProfileSlot(0, 0);
+
 			leftMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
 			rightMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
 
@@ -629,6 +632,9 @@ public class SRXTankDrive implements ITankDrive
 
 			clearEncoders();
 			setCoastNeutralMode();
+
+			leftMotors.selectProfileSlot(0, 0);
+			rightMotors.selectProfileSlot(0, 0);
 
 			// Coast speed measured in nu/100ms
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
@@ -883,10 +889,10 @@ public class SRXTankDrive implements ITankDrive
 		 * @param rightSpeed - The coast velocity of the right drive wheels.
 		 * @param calculatedWheelbase - The Double wrapper object that the finished command should stick the calculated wheelbase in.
 		 */
-		public CmdDetermineWheelbase(double durationMs, double leftSpeed, double rightSpeed, Wheelbase calculatedWheelbase) {
+		public CmdDetermineWheelbase(AHRS ahrs, double durationMs, double leftSpeed, double rightSpeed, Wheelbase calculatedWheelbase) {
 			super(durationMs / 1000.0);
 
-			ahrs = new AHRS(SPI.Port.kMXP);
+			this.ahrs = ahrs;
 
 			this.leftSpeed = leftSpeed;
 			this.rightSpeed = rightSpeed;
@@ -895,6 +901,9 @@ public class SRXTankDrive implements ITankDrive
 		}
 
 		protected void initialize() {
+			leftMotors.selectProfileSlot(1, 0);
+			rightMotors.selectProfileSlot(1, 0);
+
 			leftSquareErrorSum = 0;
 			rightSquareErrorSum = 0;
 

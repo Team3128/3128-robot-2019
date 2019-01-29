@@ -15,6 +15,16 @@ import org.team3128.common.util.Log;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
+import org.team3128.gromit.mechanisms.FourBar;
+import org.team3128.gromit.mechanisms.GroundIntake;
+import org.team3128.gromit.mechanisms.Lift;
+import org.team3128.gromit.mechanisms.LiftIntake;
+import org.team3128.gromit.mechanisms.OptimusPrime;
+import org.team3128.gromit.mechanisms.FourBar.FourBarState;
+import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;
+import org.team3128.gromit.mechanisms.Lift.LiftState;
+import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
+import org.team3128.gromit.mechanisms.OptimusPrime.CmdIntakeBall;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
@@ -35,6 +45,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Victor;
 
 import org.team3128.common.util.RobotMath;
 import edu.wpi.first.wpilibj.AnalogInput;
@@ -47,26 +58,70 @@ public class MainGromit extends NarwhalRobot{
 
     public AHRS ahrs;
     AnalogInput ai = new AnalogInput(0);
-    public ADXRS450_Gyro gyro;
-
+	public ADXRS450_Gyro gyro;
+	
+	//Drive Train
+	public TwoSpeedGearshift gearshift;
+	public Piston gearshiftPiston;
 
     public double wheelCirc;
     public double gearRatio;
     public double wheelBase;
     public double track;
     public int robotFreeSpeed;
-    public SRXTankDrive drive;
+	public SRXTankDrive drive;
+
+	public double shiftUpSpeed, shiftDownSpeed;
     
     //Motors 
-    public TalonSRX leftDriveFront;
-    public TalonSRX leftDriveBack;
-    public TalonSRX rightDriveFront;
-    public TalonSRX rightDriveBack;
+	public TalonSRX leftDriveLeader;
+	public VictorSPX leftDriveFollower;
+	public TalonSRX rightDriveLeader;
+	public VictorSPX rightDriveFollower;
 
-	public Joystick Joystick;
-    public ListenerManager listener;
+	// Pneumatics
+	public Compressor compressor;
 
-    /*
+	//Four-Bar
+	public FourBar fourBar;
+	public FourBarState fourBarState;
+	public TalonSRX fourBarMotor;
+
+	//Ground Intake
+	public GroundIntake groundIntake;
+	public GroundIntakeState groundIntakeState;
+	public VictorSPX groundIntakeMotor;
+	public Piston leftGroundIntakePiston, rightGroundIntakePiston;
+
+	//Lift
+	public Lift lift;
+	public LiftState liftState;
+	public TalonSRX liftMotorLeader;
+	public VictorSPX liftMotorFollower;
+	public DigitalInput softStopLimitSwitch;
+	public int limitSwitchLocation, liftMaxVelocity;
+
+	//Lift Intake
+	public LiftIntake liftIntake;
+	public LiftIntakeState liftIntakeState;
+	public VictorSPX liftIntakeMotorLeader, liftIntakeMotorFollower;
+	public Piston liftPiston;
+
+	//Optimus Prime!!
+	public OptimusPrime optimusPrime;
+	public CmdIntakeBall cmdIntakeBall;
+
+	//Controls
+	public Joystick leftJoystick;
+	public Joystick rightJoystick;
+	public ListenerManager listenerLeft;
+	public ListenerManager listenerRight;
+
+	//PID
+    public double PID_kF;
+    public double PID_kP;
+    public double speedScalar;
+
 	// Misc(general)
 	public PowerDistributionPanel powerDistPanel;
 
@@ -75,179 +130,114 @@ public class MainGromit extends NarwhalRobot{
 	public DriverStation ds;
 	public RobotController rc;
 
-	public double forkliftHeight = 0;
-	public double linearSpeed = 0;
-
-	public final double lowGearRatio = 8 + 1.0/3;
-	public final double highGearRatio = 3 + 2.0/3;
-
-	public double speedMult;
-    */
-
-    /*
-	public TwoSpeedGearshift gearshift;
-	public Piston gearshiftPiston, climberPiston, climberLockPiston;
-	
-	public double shiftUpSpeed, shiftDownSpeed;
-
-	public int lowGearMaxSpeed;
-
-	// Pneumatics
-	public Compressor compressor;
-
-	 public int limitSiwtchLocation, forkliftMaxVelocity;
-    */
-
-    /* Forklift and intake
-    public Forklift forklift;
-	public TalonSRX forkliftMotorLeader, forkliftMotorFollower;
-    DigitalInput forkliftSoftStopLimitSwitch;
-    
-    Intake intake;
-	IntakeState intakeState;
-	Piston intakePiston;
-	public VictorSPX intakeMotorLeader, intakeMotorFollower;
-	DigitalInput intakeLimitSwitch;
-	
-    boolean intakeInverted;
-    
-    */
-
     @Override
     protected void constructHardware() {
-        leftDriveFront = new TalonSRX(0);
-        leftDriveBack = new TalonSRX(0);
-        rightDriveFront = new TalonSRX(0);
-        rightDriveBack = new TalonSRX(0);
+		leftDriveLeader = new TalonSRX(0);
+		leftDriveFollower = new VictorSPX(1);
+		rightDriveLeader = new TalonSRX(2);
+		leftDriveFollower = new VictorSPX(3);
 
-		leftDriveFront.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
-        rightDriveFront.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
 
-        leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
-        rightDriveBack.set(ControlMode.Follower, rightDriveFront.getDeviceID());
+		leftDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
+        rightDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
 
-        SRXTankDrive.initialize(leftDriveFront, rightDriveFront, wheelCirc, gearRatio, wheelBase, robotFreeSpeed);
+        leftDriveFollower.set(ControlMode.Follower, leftDriveLeader.getDeviceID());
+		rightDriveFollower.set(ControlMode.Follower, rightDriveLeader.getDeviceID());
+
+		wheelCirc = 12.42*Length.in;
+        wheelBase = 68.107;
+        robotFreeSpeed = 4200;
+        SRXTankDrive.initialize(rightDriveLeader, leftDriveLeader, wheelCirc, 1, wheelBase, robotFreeSpeed);
         drive = SRXTankDrive.getInstance();
+        speedScalar = 1;
+		drive.setLeftSpeedScalar(speedScalar);
+		
+		shiftUpSpeed = 5.0 * Length.ft * 60 / wheelCirc;
+		shiftDownSpeed = 4.0 * Length.ft * 60 / wheelCirc;
+		gearshift = new TwoSpeedGearshift(false, gearshiftPiston);
+		drive.addShifter(gearshift, shiftUpSpeed, shiftDownSpeed);
 
+		compressor = new Compressor();
+
+		//create four-bar
+		fourBarState = FourBarState.HATCH_PICKUP;
+		fourBarMotor = new TalonSRX(4);
+		fourBar = new FourBar(fourBarMotor, fourBarState);
+
+		//create ground intake
+		groundIntakeState = GroundIntake.GroundIntakeState.RETRACTED;
+		groundIntakeMotor = new VictorSPX(5);
+		groundIntake = new GroundIntake(groundIntakeMotor, groundIntakeState, leftGroundIntakePiston, rightGroundIntakePiston, false);
+
+		//create lift
+		liftState = LiftState.GROUND;
+		liftMotorLeader = new TalonSRX(6);
+		liftMotorFollower = new VictorSPX(7);
+		lift = new Lift(liftState, liftMotorLeader, softStopLimitSwitch, limitSwitchLocation, liftMaxVelocity);
+
+		//create lift intake
+		liftIntakeState = LiftIntake.LiftIntakeState.STOPPED;
+		liftIntakeMotorLeader = new VictorSPX(8);
+		liftIntakeMotorFollower = new VictorSPX(9);
+		liftIntakeMotorFollower.set(ControlMode.Follower, liftIntakeMotorLeader.getDeviceID());
+		liftIntakeMotorLeader.setInverted(true);
+		liftIntake = new LiftIntake(liftIntakeMotorLeader, liftIntakeState, liftPiston, false);
+
+		//create Optimus Prime
+		optimusPrime = new OptimusPrime(lift, fourBar, groundIntake);
+
+		//instantiate PDP
+		powerDistPanel = new PowerDistributionPanel();
+
+		//gyro
         ahrs = new AHRS(SPI.Port.kMXP); 
         ahrs.reset();
         gyro = new ADXRS450_Gyro();
 
+		//set listeners
+        leftJoystick = new Joystick(1);
+		listenerLeft = new ListenerManager(leftJoystick);
+		addListenerManager(listenerLeft);
 
-        /*		
-		shiftUpSpeed = 5.0 * Length.ft * 60 / wheelCirc;
-		shiftDownSpeed = 4.0 * Length.ft * 60 / wheelCirc;
-		
-		gearshift = new TwoSpeedGearshift(false, gearshiftPiston);
-		drive.addShifter(gearshift, shiftUpSpeed, shiftDownSpeed);
-        */
-
-        /*
-        //Intake
-        intakeState = Intake.IntakeState.STOPPED;
-		intakeMotorLeader = new VictorSPX(1);
-		intakeMotorFollower = new VictorSPX(2);
-
-		intakeMotorFollower.set(ControlMode.Follower, intakeMotorLeader.getDeviceID());
-        intakeMotorLeader.setInverted(true);
-        
-        Intake.initialize(intakeMotorLeader, intakeState, intakePiston, intakeInverted);
-        intake = Intake.getInstance();
-        
-        //Forklift
-
-        forkliftMotorLeader = new TalonSRX(30);
-		forkliftMotorFollower = new TalonSRX(31);
-
-		forkliftMotorLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
-		forkliftMotorFollower.set(ControlMode.Follower, forkliftMotorLeader.getDeviceID());
-
-		Forklift.initialize(ForkliftState.GROUND, forkliftMotorLeader, forkliftSoftStopLimitSwitch,
-				limitSiwtchLocation, forkliftMaxVelocity);
-        forklift = Forklift.getInstance();
-        */
-
-        Joystick = new Joystick(0);
-		listener = new ListenerManager(Joystick);
-        addListenerManager(listener);
-        /*
-        ds = DriverStation.getInstance();
-
-        speedMult = wheelCirc / 409.6 / 100.0;
-        */
-        
-        /* Dashboard stuff
-        NarwhalDashboard.addButton("rezero", (boolean down) -> {
-			if (down) {
-				forklift.override = true;
-				forklift.powerControl(-0.5);
-			}
-			else {
-				forkliftMotorLeader.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
-				forklift.powerControl(0);
-				forklift.override = false;
-			}
-		});
-
-		NarwhalDashboard.addButton("start_compress", (boolean down) -> {
-			if (down) {
-				compressor.start();
-			}
-		});
-
-		NarwhalDashboard.addButton("stop_compress", (boolean down) -> {
-			if (down) {
-				compressor.stop();
-			}
-        });
-        */
+		rightJoystick = new Joystick(0);
+		listenerRight = new ListenerManager(rightJoystick);
+		addListenerManager(listenerRight);
 
     }
 
     @Override
     protected void setupListeners() {
-        listener.nameControl(ControllerExtreme3D.JOYY, "MoveForwards");
-		listener.nameControl(ControllerExtreme3D.TWIST, "MoveTurn");
-		listener.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");
+        listenerRight.nameControl(ControllerExtreme3D.JOYY, "MoveForwards");
+		listenerRight.nameControl(ControllerExtreme3D.TWIST, "MoveTurn");
+		listenerRight.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");
 
-		listener.addMultiListener(() ->
+		listenerRight.addMultiListener(() ->
 		{
-			double x = listener.getAxis("MoveForwards");
-			double y = listener.getAxis("MoveTurn");
-			double t = listener.getAxis("Throttle") * -1;
+			double x = listenerRight.getAxis("MoveForwards");
+			double y = listenerRight.getAxis("MoveTurn");
+			double t = listenerRight.getAxis("Throttle") * -1;
 			drive.arcadeDrive(x, y, t, true);
-        }, "MoveForwards", "MoveTurn", "Throttle");
-        
-        listener.nameControl(new Button(11), "Forward");
-        listener.addButtonDownListener("Forward", () -> 
-        {
-            leftDriveFront.set(ControlMode.PercentOutput, 100);  
-            rightDriveFront.set(ControlMode.PercentOutput, 100);
-        });
-        listener.addButtonUpListener("Forward", () ->
-        {
-            leftDriveFront.set(ControlMode.PercentOutput, 0);
-            rightDriveFront.set(ControlMode.PercentOutput, 0);
-        });
-        listener.nameControl(new Button(12), "Backward");
-        listener.addButtonDownListener("Backward", () ->
-        {
-            leftDriveFront.set(ControlMode.PercentOutput, -100);
-            rightDriveFront.set(ControlMode.PercentOutput, -100);
-        });
-        listener.addButtonUpListener("Backward", () ->
-        {
-            leftDriveFront.set(ControlMode.PercentOutput, 0);
-            rightDriveFront.set(ControlMode.PercentOutput, 0);
-        });
+		}, "MoveForwards", "MoveTurn", "Throttle");
 
-        /*
-
-        listenerRight.nameControl(new Button(2), "GearShift");
+		listenerRight.nameControl(new Button(2), "GearShift");
 		listenerRight.addButtonDownListener("GearShift", drive::shift);
 
-		listenerRight.nameControl(new POV(0), "IntakePOV");
-		listenerRight.addListener("IntakePOV", (POVValue pov) ->
+		listenerLeft.addListener("ForkliftTest", (double joyY) ->
+		{
+			lift.powerControl(joyY);
+		});
+
+		listenerLeft.nameControl(new Button(6), "FourBarUp");
+		listenerLeft.addButtonDownListener("FourBarUp", () -> {
+			fourBar.powerControl(0.5);
+		});
+		listenerLeft.nameControl(new Button(4), "FourBarDown");
+		listenerLeft.addButtonUpListener("FourBarDown", () -> {
+			fourBar.powerControl(-0.5);
+		});
+		
+		listenerRight.nameControl(new POV(0), "GroundIntakePOV");
+		listenerRight.addListener("GroundIntakePOV", (POVValue pov) ->
 		{
 			int val = pov.getDirectionValue();
 
@@ -256,58 +246,27 @@ public class MainGromit extends NarwhalRobot{
 			case 7:
 			case 8:
 			case 1:
-				intake.setState(IntakeState.OUTTAKE);
+				groundIntake.setState(GroundIntakeState.DEPLOYED_INTAKE);
 				break;
 			case 3:
 			case 4:
 			case 5:
-				intake.setState(IntakeState.INTAKE);
+				groundIntake.setState(GroundIntakeState.DEPLOYED);
 				break;
 			default:
-				intake.setState(IntakeState.STOPPED);
+				groundIntake.setState(GroundIntakeState.RETRACTED);
 			}
 		});
 
-		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "SoftDrop");
-		listenerRight.addButtonDownListener("SoftDrop", () -> {
-			intake.setState(IntakeState.SOFT_DROP);
-		});
-		listenerRight.addButtonUpListener("SoftDrop", () -> {
-			intake.setState(IntakeState.STOPPED);
-		});
-		
-		listenerRight.nameControl(new Button(5), "ForkliftRightUp");
-		listenerRight.addButtonDownListener("ForkliftRightUp", () ->
-		{
-			forklift.powerControl(1.0);
-		});
-		listenerRight.addButtonUpListener("ForkliftRightUp", () ->
-		{
-			forklift.powerControl(0);
+		listenerRight.nameControl(new Button(7), "BallIntake");
+		listenerRight.addButtonDownListener("BallIntake", () -> {
+			cmdIntakeBall.start();
 		});
 
-		listenerRight.nameControl(new Button(3), "ForkliftRightDown");
-		listenerRight.addButtonDownListener("ForkliftRightDown", () ->
-		{
-			forklift.powerControl(-0.7);
-		});
-		listenerRight.addButtonUpListener("ForkliftRightDown", () ->
-		{
-			forklift.powerControl(0.0);
-		});
-		
 		listenerLeft.nameControl(new Button(7), "ZeroForklift");
 		listenerLeft.addButtonDownListener("ZeroForklift", () ->
 		{
-			forkliftMotorLeader.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
-		});
-		
-		listenerLeft.nameControl(ControllerExtreme3D.TRIGGER, "Override");
-		listenerLeft.addButtonDownListener("Override", () -> {
-			forklift.override = true;
-		});
-		listenerLeft.addButtonUpListener("Override", () -> {
-			forklift.override = false;
+			liftMotorLeader.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
 		});
 
 		listenerRight.nameControl(new Button(11), "StartCompressor");
@@ -323,57 +282,40 @@ public class MainGromit extends NarwhalRobot{
 		{
 			compressor.stop();
 		});
+	}
+	
+	protected void constructAutoPrograms(SendableChooser<CommandGroup> programChooser)
+	{
 
-		listenerLeft.nameControl(new Button(11), "ClearStickyFaults");
-		listenerLeft.addButtonDownListener("ClearStickyFaults", powerDistPanel::clearStickyFaults);
+	}
 
-		listenerLeft.nameControl(ControllerExtreme3D.JOYY, "ForkliftTest");
-		listenerLeft.addListener("ForkliftTest", (double joyY) ->
-		{
-			forklift.powerControl(joyY);
-		});
+	@Override
+	protected void teleopInit()
+	{
+
+	}
+	
+	@Override
+	protected void disabledInit()
+	{
+
+	}
+	
+	@Override
+	protected void disabledPeriodic()
+	{
+
+	}
+
+	@Override
+	protected void autonomousInit()
+	{
 		
-		listenerLeft.nameControl(new Button(11), "ReZero");
-		listenerLeft.addButtonDownListener("ReZero", () -> {
-			forklift.override = true;
-			forklift.powerControl(-0.5);
-		});
-		listenerLeft.addButtonUpListener("ReZero", () -> {
-			forklift.override = false;
-			forklift.powerControl(0);
-		});
-		
-		listenerLeft.nameControl(new POV(0), "IntakePOV");
-		listenerLeft.addListener("IntakePOV", (POVValue pov) ->
-		{
-			int val = pov.getDirectionValue();
+	}
 
-			switch (val)
-			{
-			case 7:
-			case 8:
-			case 1:
-				intake.setState(IntakeState.OUTTAKE);
-				break;
-			case 3:
-			case 4:
-			case 5:
-				intake.setState(IntakeState.INTAKE);
-				break;
-			default:
-				intake.setState(IntakeState.STOPPED);
-				break;
-			}
-		});
+	@Override
+	protected void updateDashboard()
+	{	
 		
-		//		listenerLeft.nameControl(new Button(9), "FullDrive");
-		listenerLeft.addButtonDownListener("FullDrive", () -> {
-			drive.arcadeDrive(-1.0, 0, 1.0, true);
-		});
-		listenerLeft.addButtonUpListener("FullDrive", () -> {
-			drive.arcadeDrive(0, 0, 1.0, true);
-		});
-        */
-    }
-
+	}
 }

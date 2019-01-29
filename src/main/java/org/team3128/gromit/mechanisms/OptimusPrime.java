@@ -39,19 +39,24 @@ public class OptimusPrime{
       }
   }
 
+  Lift lift;
+  FourBar fourBar;
+  GroundIntake groundIntake;
+
+  //constructor
+	public OptimusPrime(Lift lift, FourBar fourBar, GroundIntake groundIntake) {
+    this.lift = lift;
+    this.fourBar = fourBar;
+    this.groundIntake = groundIntake;
+				
+	}
+
   public class CmdIntakeBall extends Command 
   {
-    Lift lift;
-    FourBar fourBar;
-    GroundIntake groundIntake;
-
-
-		public CmdIntakeBall(Lift lift, FourBar fourBar, GroundIntake groundIntake)
+    
+		public CmdIntakeBall()
 		{
-			super(3);
-      this.lift = lift;
-      this.fourBar = fourBar;
-      this.groundIntake = groundIntake;
+			super(10);
 		}
 
 		@Override
@@ -93,5 +98,5 @@ public class OptimusPrime{
       return isTimedOut();
       //return isTimedOut() || Math.abs(LiftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
     }
-	}
+  }
 }
