@@ -143,17 +143,11 @@ public class MainPrebot extends NarwhalRobot {
                 tankDrive.getLeftMotors().setSelectedSensorPosition(0);
                 tankDrive.getRightMotors().setSelectedSensorPosition(0);
             }
-            else {
-
-            }
         });
         NarwhalDashboard.addButton("resetMaxSpeed", (boolean down) -> {
             if (down) {
                 maxLeftSpeed = 0;
                 maxRightSpeed = 0;
-            }
-            else {
-
             }
         });
 
@@ -162,16 +156,10 @@ public class MainPrebot extends NarwhalRobot {
             if (down) {
                 new CmdCallibrateWheelbase(ahrs, 10, 1000, 1500, wheelbase);
             }
-            else {
-
-            }
         });
         NarwhalDashboard.addButton("pidCalDrive", (boolean down) -> {
             if (down) {
                 new CmdDriveForward().start();
-            }
-            else {
-
             }
         });
     }
@@ -312,13 +300,29 @@ public class MainPrebot extends NarwhalRobot {
     }
 
     public double getWheelCirc() {
-        return 100 / leftDriveFront.getSelectedSensorPosition() * Angle.CTRE_MAGENC_NU;
+        if (leftDriveFront.getSelectedSensorPosition() == 0 || rightDriveFront.getSelectedSensorPosition() == 0) {
+            return -1;
+        }
+
+        double averagePosition = (leftDriveFront.getSelectedSensorPosition() + rightDriveFront.getSelectedSensorPosition()) / 2;
+
+        return 100 * 4096 / averagePosition;
     }
     public double getLeftKf() {
-        return 1023 / maxLeftSpeed;
+        if (maxLeftSpeed != 0) {
+            return 1023 / maxLeftSpeed;
+        }
+        else {
+            return -1;
+        }
     }
     public double getRightKf() {
-        return 1023 / maxRightSpeed;
+        if (maxLeftSpeed != 0) {
+            return 1023 / maxRightSpeed;
+        }
+        else {
+            return -1;
+        }
     }
     public double getLeftSpeedScalar() {
         if (maxLeftSpeed < maxRightSpeed) {
