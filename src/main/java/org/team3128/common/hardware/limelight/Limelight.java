@@ -69,14 +69,15 @@ public class Limelight
         outputData.theta1 = inputData.tx() + targetArcAngle / 2;
 
         outputData.dY = (targetHeight - cameraHeight) / RobotMath.tan(inputData.ty() + cameraAngle);
-        outputData.dX = outputData.dY / RobotMath.tan(90 - inputData.tx());
+        outputData.dX = outputData.dY * RobotMath.tan(inputData.tx());
 
         outputData.d = outputData.dY / RobotMath.cos(inputData.tx());
 
-        outputData.d0 = outputData.d * RobotMath.cos(inputData.tx() - outputData.theta0) - 0.5 * Math.sqrt(RobotMath.square(targetWidth) - RobotMath.square(2 * outputData.d * RobotMath.sin(inputData.tx() - outputData.theta0)));
-        outputData.d1 = outputData.d * RobotMath.cos(outputData.theta1 - inputData.tx()) + 0.5 * Math.sqrt(RobotMath.square(targetWidth) - RobotMath.square(2 * outputData.d * RobotMath.sin(outputData.theta1 - inputData.tx())));
-
-        outputData.dX = outputData.dY * RobotMath.sin(inputData.tx());
+        double d0SqrtMultiplier = (output.theta0 > 0) ? -1 : 1;
+        double d1SqrtMultiplier = (output.theta1 > 0) ? 1 : -1;
+        
+        outputData.d0 = outputData.d * RobotMath.cos(inputData.tx() - outputData.theta0) + d0SqrtMultiplier * 0.5 * Math.sqrt(RobotMath.square(targetWidth) - RobotMath.square(2 * outputData.d * RobotMath.sin(inputData.tx() - outputData.theta0)));
+        outputData.d1 = outputData.d * RobotMath.cos(outputData.theta1 - inputData.tx()) + d1SqrtMultiplier * 0.5 * Math.sqrt(RobotMath.square(targetWidth) - RobotMath.square(2 * outputData.d * RobotMath.sin(outputData.theta1 - inputData.tx())));
 
         outputData.theta = RobotMath.asin((outputData.d1*RobotMath.cos(outputData.theta1) - outputData.d0*RobotMath.cos(outputData.theta0))/targetWidth);
 
