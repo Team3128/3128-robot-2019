@@ -9,6 +9,7 @@ import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.Wheelbase;
+import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.AngularSpeed;
@@ -406,6 +407,11 @@ public class SRXTankDrive implements ITankDrive
 		double difference = leftDist - rightDist;
 
 		return RobotMath.normalizeAngle((difference / (Math.PI * wheelBase)) * Angle.ROTATIONS);
+	}
+	
+
+	public void configurePID(PIDConstants leftMotionProfile, PIDConstants leftVelocity, PIDConstants rightMotionProfile, PIDConstants rightVelocity) {
+		
 	}
 
 	public class CmdStaticRouteDrive extends CmdMotionProfileMove {

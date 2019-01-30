@@ -1,4 +1,4 @@
-package org.team3128.common.util.limelight;
+package org.team3128.common.hardware.limelight;
 
 import java.util.HashMap;
 
