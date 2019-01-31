@@ -65,6 +65,8 @@ public class MainPrebot extends NarwhalRobot {
 
     public double maxLeftSpeed = 0;
     public double maxRightSpeed = 0;
+    public double leftSpeed = 0;
+    public double rightSpeed = 0;
     public NetworkTable table;
     public NetworkTable table2;
 
@@ -117,8 +119,8 @@ public class MainPrebot extends NarwhalRobot {
         leftDriveMiddle.setInverted(true);
         leftDriveBack.setInverted(true);
 
-        leftDriveFront.setSensorPhase(false);
-        rightDriveFront.setSensorPhase(false);
+        leftDriveFront.setSensorPhase(true);
+        rightDriveFront.setSensorPhase(true);
         
         joystick = new Joystick(1);
 		lm = new ListenerManager(joystick);
@@ -300,14 +302,17 @@ public class MainPrebot extends NarwhalRobot {
 
         SmartDashboard.putNumber("Gyro Angle", RobotMath.normalizeAngle(gyro.getAngle()));
 
-		SmartDashboard.putNumber("Left Speed (nu/100ms)", leftDriveFront.getSelectedSensorVelocity(0));
-        SmartDashboard.putNumber("Right Speed (nu/100ms)", rightDriveFront.getSelectedSensorVelocity(0));
-        
-        maxLeftSpeed = Math.max(leftDriveFront.getSelectedSensorVelocity(), maxLeftSpeed);
-        maxRightSpeed = Math.max(rightDriveFront.getSelectedSensorVelocity(), maxRightSpeed);
+        maxLeftSpeed = leftDriveFront.getSelectedSensorVelocity();
+        maxRightSpeed = rightDriveFront.getSelectedSensorVelocity();
 
-        SmartDashboard.putNumber("Max Left Speed", maxLeftSpeed);
-        SmartDashboard.putNumber("Max Right Speed", maxRightSpeed);
+        SmartDashboard.putNumber("Left Speed", maxLeftSpeed);
+        SmartDashboard.putNumber("Right Speed", maxRightSpeed);
+
+        //leftSpeed = leftDriveFront.getSelectedSensorVelocity();
+        //rightSpeed = rightDriveFront.getSelectedSensorVelocity();
+
+        //SmartDashboard.putNumber("Left Speed (nu/100ms)", leftSpeed);
+        //SmartDashboard.putNumber("Right Speed (nu/100ms)", rightSpeed);
         		
     }
 

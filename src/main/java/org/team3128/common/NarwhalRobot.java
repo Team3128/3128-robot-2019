@@ -286,6 +286,7 @@ public abstract class NarwhalRobot extends RobotBase {
             HAL.observeUserProgramAutonomous();
             Scheduler.getInstance().run();
             autonomousPeriodic();
+            
             m_watchdog.addEpoch("autonomousPeriodic()");
         } else if (isOperatorControl()) {
             // Call TeleopInit() if we are now just entering teleop mode from either a different mode or
