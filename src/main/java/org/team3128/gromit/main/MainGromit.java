@@ -147,7 +147,7 @@ public class MainGromit extends NarwhalRobot{
 		wheelCirc = 12.42*Length.in;
         wheelBase = 68.107;
         robotFreeSpeed = 4200;
-        SRXTankDrive.initialize(rightDriveLeader, leftDriveLeader, wheelCirc, 1, wheelBase, robotFreeSpeed);
+        SRXTankDrive.initialize(rightDriveLeader, leftDriveLeader, wheelCirc, 1, wheelBase, robotFreeSpeed, () -> {}, () -> {});
         drive = SRXTankDrive.getInstance();
         speedScalar = 1;
 		drive.setLeftSpeedScalar(speedScalar);

@@ -73,8 +73,8 @@ public class Limelight
 
         outputData.d = outputData.dY / RobotMath.cos(inputData.tx());
 
-        double d0SqrtMultiplier = (output.theta0 > 0) ? -1 : 1;
-        double d1SqrtMultiplier = (output.theta1 > 0) ? 1 : -1;
+        double d0SqrtMultiplier = (outputData.theta0 > 0) ? -1 : 1;
+        double d1SqrtMultiplier = (outputData.theta1 > 0) ? 1 : -1;
         
         outputData.d0 = outputData.d * RobotMath.cos(inputData.tx() - outputData.theta0) + d0SqrtMultiplier * 0.5 * Math.sqrt(RobotMath.square(targetWidth) - RobotMath.square(2 * outputData.d * RobotMath.sin(inputData.tx() - outputData.theta0)));
         outputData.d1 = outputData.d * RobotMath.cos(outputData.theta1 - inputData.tx()) + d1SqrtMultiplier * 0.5 * Math.sqrt(RobotMath.square(targetWidth) - RobotMath.square(2 * outputData.d * RobotMath.sin(outputData.theta1 - inputData.tx())));

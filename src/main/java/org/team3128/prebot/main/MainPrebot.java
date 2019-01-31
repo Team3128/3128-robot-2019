@@ -80,33 +80,55 @@ public class MainPrebot extends NarwhalRobot {
         leftDriveMiddle.set(ControlMode.Follower, leftDriveFront.getDeviceID());
         leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
 
-        double wheelCirc = 12.42 * Length.in;
+        double wheelCirc = 12.9 * Length.in;
         double wheelBase = 68.107 * Length.in;
-        int robotFreeSpeed = 4200;
+        int robotFreeSpeed = 3700;
 
-        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1.0, wheelBase, robotFreeSpeed);
+        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1.0, wheelBase, robotFreeSpeed,
+            () -> {
+                Log.info("SRXTankDrive", "Inverting for teleop.");
+
+                leftDriveFront.setInverted(false);
+                leftDriveMiddle.setInverted(false);
+                leftDriveBack.setInverted(false);
+
+                rightDriveFront.setInverted(true);
+                rightDriveMiddle.setInverted(true);
+                rightDriveBack.setInverted(true);    
+                
+                leftDriveFront.setSensorPhase(false);
+                rightDriveFront.setSensorPhase(false);
+            },
+            () -> {
+                Log.info("SRXTankDrive", "Inverting for auto.");
+
+                leftDriveFront.setInverted(true);
+                leftDriveMiddle.setInverted(true);
+                leftDriveBack.setInverted(true);
+                
+                rightDriveFront.setInverted(false);
+                rightDriveMiddle.setInverted(false);
+                rightDriveBack.setInverted(false);
+
+                leftDriveFront.setSensorPhase(true);
+                rightDriveFront.setSensorPhase(true);
+            }
+        );
         tankDrive = SRXTankDrive.getInstance();
 
         tankDrive.setLeftSpeedScalar(1.0);
-        tankDrive.setRightSpeedScalar(0.99319568);
-
-        leftDriveFront.setInverted(true);
-        leftDriveMiddle.setInverted(true);
-        leftDriveBack.setInverted(true);
-
-        leftDriveFront.setSensorPhase(true);
-        rightDriveFront.setSensorPhase(true);
+        tankDrive.setRightSpeedScalar(1.0);
         
         ahrs = new AHRS(SPI.Port.kMXP); 
 
         gyro = new ADXRS450_Gyro();
         gyro.calibrate();
 
-        leftMotionProfilePID = new PIDConstants(0.253, 0.038, 0, 0);
-        leftVelocityPID = new PIDConstants(0.253, 0, 0, 0);
+        leftMotionProfilePID = new PIDConstants(0.2740, 0.018, 0, 0.01);
+        leftVelocityPID = new PIDConstants(0.2740, 0, 0, 0);
 
-        rightMotionProfilePID = new PIDConstants(0.253, 0.038, 0, 0);
-        rightVelocityPID = new PIDConstants(0.253, 0, 0, 0);
+        rightMotionProfilePID = new PIDConstants(0.2752, 0.018, 0, 0.01);
+        rightVelocityPID = new PIDConstants(0.2752, 0, 0, 0);
 
         tankDrive.configurePID(leftMotionProfilePID, leftVelocityPID, rightMotionProfilePID, rightVelocityPID);
 
@@ -131,7 +153,7 @@ public class MainPrebot extends NarwhalRobot {
         calculatedWheelbase = new Wheelbase();
         NarwhalDashboard.addButton("wheelbase", (boolean down) -> {
             if (down) {
-                new CmdCallibrateWheelbase(ahrs, 10, 1000, 1500, calculatedWheelbase);
+                (new CmdCallibrateWheelbase(ahrs, 10, 1000, 1500, calculatedWheelbase)).start();;
             }
         });
         
@@ -161,7 +183,7 @@ public class MainPrebot extends NarwhalRobot {
 		lm.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");		
 
         lm.addMultiListener(() -> {
-			tankDrive.arcadeDrive(-0.3 * lm.getAxis("MoveTurn"),
+			tankDrive.arcadeDrive(0.7 * lm.getAxis("MoveTurn"),
 					lm.getAxis("MoveForwards"),
 					-1 * lm.getAxis("Throttle"),
 					true);		
@@ -263,17 +285,14 @@ public class MainPrebot extends NarwhalRobot {
 
         SmartDashboard.putNumber("Gyro Angle", RobotMath.normalizeAngle(gyro.getAngle()));
 
-        maxLeftSpeed = leftDriveFront.getSelectedSensorVelocity();
-        maxRightSpeed = rightDriveFront.getSelectedSensorVelocity();
+        maxLeftSpeed = Math.max(leftDriveFront.getSelectedSensorVelocity(), maxLeftSpeed);
+        maxRightSpeed = Math.max(rightDriveFront.getSelectedSensorVelocity(), maxRightSpeed);
 
-        SmartDashboard.putNumber("Left Speed", maxLeftSpeed);
-        SmartDashboard.putNumber("Right Speed", maxRightSpeed);
+        SmartDashboard.putNumber("Max Left Speed", maxLeftSpeed);
+        SmartDashboard.putNumber("Max Right Speed", maxRightSpeed);
 
-        //leftSpeed = leftDriveFront.getSelectedSensorVelocity();
-        //rightSpeed = rightDriveFront.getSelectedSensorVelocity();
-
-        //SmartDashboard.putNumber("Left Speed (nu/100ms)", leftSpeed);
-        //SmartDashboard.putNumber("Right Speed (nu/100ms)", rightSpeed);
+        SmartDashboard.putNumber("Left Speed", leftDriveFront.getSelectedSensorVelocity());
+        SmartDashboard.putNumber("Right Speed", rightDriveFront.getSelectedSensorVelocity());
         		
     }
 

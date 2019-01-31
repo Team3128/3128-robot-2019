@@ -108,6 +108,9 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	private double leftSpeedScalar, rightSpeedScalar;
 
+	private SRXInvertCallback teleopInvertCallback, autoInvertCallback;
+	private boolean invertedForTeleop;
+
 	public double getGearRatio()
 	{
 		return gearRatio;
@@ -153,11 +156,11 @@ public class SRXTankDrive implements ITankDrive
 	 *            in native units per 100ms, of the robot driving on the ground at
 	 *            100% throttle
 	 */
-	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, int robotMaxSpeed) {
-		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, gearRatio, wheelBase, robotMaxSpeed);
+	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert) {
+		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, gearRatio, wheelBase, robotMaxSpeed, teleopInvert, autoInvert);
 	}
 
-	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, int robotMaxSpeed)
+	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert)
 	{
 		this.leftMotors = leftMotors;
 		this.rightMotors = rightMotors;
@@ -169,6 +172,12 @@ public class SRXTankDrive implements ITankDrive
 
 		leftSpeedScalar = 1;
 		rightSpeedScalar = 1;
+
+		setTeleopInvert(teleopInvert);
+		setAutoInvert(autoInvert);
+
+		invertedForTeleop = true;
+		teleopInvertCallback.invertMotors();
 
 		if (gearRatio <= 0)
 		{
@@ -212,6 +221,10 @@ public class SRXTankDrive implements ITankDrive
 	@Override
 	public void arcadeDrive(double joyX, double joyY, double throttle, boolean fullSpeed)
 	{
+		if (!invertedForTeleop) {
+			teleopInvertCallback.invertMotors();
+			invertedForTeleop = true;
+		}
 		setBrakeNeutralMode();
 
 		double spdL, spdR;
@@ -266,6 +279,14 @@ public class SRXTankDrive implements ITankDrive
 	{
 		Assert.inRange(scalar, 0, 1);
 		rightSpeedScalar = scalar;
+	}
+
+	public void setTeleopInvert(SRXInvertCallback callback) {
+		teleopInvertCallback = callback;
+	}
+
+	public void setAutoInvert(SRXInvertCallback callback) {
+		autoInvertCallback = callback;
 	}
 
 	/**
@@ -411,7 +432,21 @@ public class SRXTankDrive implements ITankDrive
 	
 
 	public void configurePID(PIDConstants leftMotionProfile, PIDConstants leftVelocity, PIDConstants rightMotionProfile, PIDConstants rightVelocity) {
-		
+		leftMotors.config_kP(0, leftMotionProfile.getkP());
+		leftMotors.config_kI(0, leftMotionProfile.getkI());
+		leftMotors.config_kD(0, leftMotionProfile.getkD());
+
+		leftMotors.config_kP(1, leftVelocity.getkP());
+		leftMotors.config_kI(1, leftVelocity.getkI());
+		leftMotors.config_kD(1, leftVelocity.getkD());
+
+		rightMotors.config_kP(0, rightMotionProfile.getkP());
+		rightMotors.config_kI(0, rightMotionProfile.getkI());
+		rightMotors.config_kD(0, rightMotionProfile.getkD());
+
+		rightMotors.config_kP(1, rightVelocity.getkP());
+		rightMotors.config_kI(1, rightVelocity.getkI());
+		rightMotors.config_kD(1, rightVelocity.getkD());
 	}
 
 	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
@@ -596,7 +631,7 @@ public class SRXTankDrive implements ITankDrive
 	{
 		// when the wheels' angular distance get within this threshold of the
 		// correct value, that side is considered done
-		final static double MOVEMENT_ERROR_THRESHOLD = 70 * Angle.DEGREES;
+		final static double MOVEMENT_ERROR_THRESHOLD = 20 * Angle.DEGREES;
 
 		protected double power;
 
@@ -642,6 +677,9 @@ public class SRXTankDrive implements ITankDrive
 			leftMotors.selectProfileSlot(0, 0);
 			rightMotors.selectProfileSlot(0, 0);
 
+			autoInvertCallback.invertMotors();
+			invertedForTeleop = false;
+
 			// Coast speed measured in nu/100ms
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
 			double rightSpeed = (robotMaxSpeed * power * ((useScalars) ? rightSpeedScalar : 1.0));
@@ -678,12 +716,12 @@ public class SRXTankDrive implements ITankDrive
 			}
 
 			leftMotors.configMotionCruiseVelocity((int) leftSpeed, Constants.CAN_TIMEOUT);
-			leftMotors.configMotionAcceleration((int) (leftSpeed / 2), Constants.CAN_TIMEOUT);
+			leftMotors.configMotionAcceleration((int) (leftSpeed), Constants.CAN_TIMEOUT);
 
 			leftMotors.set(leftMode, leftAngle / Angle.CTRE_MAGENC_NU);
 
 			rightMotors.configMotionCruiseVelocity((int) rightSpeed, Constants.CAN_TIMEOUT);
-			rightMotors.configMotionAcceleration((int) (rightSpeed / 2), Constants.CAN_TIMEOUT);
+			rightMotors.configMotionAcceleration((int) (rightSpeed), Constants.CAN_TIMEOUT);
 
 			rightMotors.set(rightMode, rightAngle / Angle.CTRE_MAGENC_NU);
 

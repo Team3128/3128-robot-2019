@@ -286,7 +286,7 @@ public abstract class NarwhalRobot extends RobotBase {
             HAL.observeUserProgramAutonomous();
             Scheduler.getInstance().run();
             autonomousPeriodic();
-            
+
             m_watchdog.addEpoch("autonomousPeriodic()");
         } else if (isOperatorControl()) {
             // Call TeleopInit() if we are now just entering teleop mode from either a different mode or
@@ -338,14 +338,14 @@ public abstract class NarwhalRobot extends RobotBase {
         LiveWindow.updateValues();
         Shuffleboard.update();
         
-        // Warn on loop time overruns
-        if (m_watchdog.isExpired()) {
-            m_watchdog.printEpochs();
-        }
+        // // Warn on loop time overruns
+        // if (m_watchdog.isExpired()) {
+        //     m_watchdog.printEpochs();
+        // }
     }
     
     private void printLoopOverrunMessage() {
-        DriverStation.reportWarning("Loop time of " + m_period + "s overrun\n", false);
+        // DriverStation.reportWarning("Loop time of " + m_period + "s overrun\n", false);
     }
     
     @Override
