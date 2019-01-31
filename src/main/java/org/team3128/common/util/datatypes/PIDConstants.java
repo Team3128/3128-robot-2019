@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  */
 public class PIDConstants
 {
-	private double kP, kI, kD, kF;
+	private double kF, kP, kI, kD;
 	
 	private boolean usingSmartDashboard = false;
 	
@@ -17,26 +17,13 @@ public class PIDConstants
 	String kPKey, kIKey, kDKey, kFKey;
 	
 	
-	public PIDConstants(double kP, double kI, double kD, double kF)
+	public PIDConstants(double kF, double kP, double kI, double kD)
 	{
-		this.kP = kP;
-		
-		this.kI = kI;
-		
-		this.kD = kD;
-		
 		this.kF = kF;
-	}
-	
-	public PIDConstants(double kP)
-	{
+
 		this.kP = kP;
-		
-		this.kI = 0;
-		
-		this.kD = 0;
-		
-		this.kF = 0;
+		this.kI = kI;
+		this.kD = kD;
 	}
 	
 	public double getkP()

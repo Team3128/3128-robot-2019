@@ -7,58 +7,26 @@ import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.util.units.Length;
-import org.team3128.common.util.limelight.CalculatedData;
-import org.team3128.common.util.limelight.Limelight;
-import org.team3128.common.util.limelight.LimelightData;
+import org.team3128.common.hardware.limelight.CalculatedData;
+import org.team3128.common.hardware.limelight.Limelight;
+import org.team3128.common.hardware.limelight.LimelightData;
+
 import org.team3128.testbench.autonomous.*;
 
-import edu.wpi.first.wpilibj.Joystick;
-
-import org.team3128.common.NarwhalRobot;
-import org.team3128.common.drive.SRXTankDrive;
-import org.team3128.common.hardware.misc.Piston;
-import org.team3128.common.hardware.misc.TwoSpeedGearshift;
-import org.team3128.common.listener.ListenerManager;
-import org.team3128.common.listener.POVValue;
-import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.listener.controltypes.Button;
-import org.team3128.common.listener.controltypes.POV;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
-import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
-import org.team3128.common.util.enums.Direction;
-import org.team3128.common.util.units.Angle;
-import org.team3128.common.util.units.Length;
+
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.networktables.NetworkTable;
 
 import java.io.IOException;
-
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
-
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
-import edu.wpi.first.wpilibj.Compressor;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.PowerDistributionPanel;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.command.CommandGroup;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
-
 import java.io.BufferedWriter;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 
 public class MainTestBench extends NarwhalRobot {
 
@@ -89,7 +57,7 @@ public class MainTestBench extends NarwhalRobot {
 
     public double camAngle = 24.5;
     public double camHeight = 10.25;
-    public double hatchHeight = 28.5;
+    public double lowerTargetHeight = 28.5;
     public double w = 14.5;
 
     public int ledToggle = 0;
@@ -103,7 +71,7 @@ public class MainTestBench extends NarwhalRobot {
 	protected void constructHardware()
 	{
         newLine = "";
-        limelight = new Limelight(camAngle, camHeight, hatchHeight, w, true);
+        limelight = new Limelight(camAngle, camHeight, lowerTargetHeight, w);
         newLine = "tx,ty,ts,ta,thoriz,tvert,tshort,tlong,deltax,deltay,theta,calculatedDist,theta0,theta1,d0,d1\n";
         NarwhalDashboard.put("counter", String.valueOf(counter));
         boi1 = new TalonSRX(1);
@@ -141,17 +109,19 @@ public class MainTestBench extends NarwhalRobot {
         listenerRight.nameControl(new Button(2), "LightOn");
 		listenerRight.addButtonDownListener("LightOn", () -> {
             if(ledToggle == 0){
-                limelight.ledOn();
+                limelight.turnOnLED();
                 ledToggle = 1;
             } else {
-                limelight.ledOff();
+                limelight.turnOffLED();
                 ledToggle = 0;
             }
         });
+
         /*listenerRight.nameControl(new Button(2), "LightOff");
 		listenerRight.addButtonUpListener("LightOff", () -> {
 		    table.getEntry("ledMode").setNumber(1);
         });*/
+
         listenerRight.nameControl(new Button(12), "ResetCounter");
         listenerRight.addButtonDownListener("ResetCounter", () -> {
             System.out.print(newLine);
@@ -160,7 +130,7 @@ public class MainTestBench extends NarwhalRobot {
 
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "limelightVals");
 		listenerRight.addButtonDownListener("limelightVals", () -> {
-            limelight.ledOn();
+            limelight.turnOnLED();
 
             LimelightData data = limelight.getValues(1000);
             CalculatedData calcData = limelight.doMath(data);
@@ -193,6 +163,7 @@ public class MainTestBench extends NarwhalRobot {
         listenerRight.nameControl(new Button(9), "deleteLastLine");
         listenerRight.addButtonDownListener("deleteLastLine", () -> {
         });
+
         listenerRight.nameControl(new Button(10), "closeFile");
         listenerRight.addButtonDownListener("closeFile", () -> {
             try {
@@ -201,18 +172,22 @@ public class MainTestBench extends NarwhalRobot {
                 e.printStackTrace();
             }
         });
+
         listenerRight.nameControl(new Button(5), "pipeline_0");
         listenerRight.addButtonDownListener("pipeline_0", () -> {
             table.getEntry("pipeline").setDouble(0.0);
         });
+
         listenerRight.nameControl(new Button(3), "pipeline_1");
         listenerRight.addButtonDownListener("pipeline_1", () -> {
             table.getEntry("pipeline").setDouble(1.0);
         });
+
         listenerRight.nameControl(new Button(4), "pipeline_2");
         listenerRight.addButtonDownListener("pipeline_2", () -> {
             table.getEntry("pipeline").setDouble(2.0);
         });
+
         listenerRight.nameControl(new Button(7), "CamMode");
         listenerRight.addButtonDownListener("CamMode", () -> {
             table.getEntry("camMode").setNumber(0);
@@ -228,7 +203,7 @@ public class MainTestBench extends NarwhalRobot {
 
     @Override
     protected void constructAutoPrograms() {
-        NarwhalDashboard.addAuto("Test", new TestBenchTest(drive));
+        NarwhalDashboard.addAuto("Test", new CmdDriveStraight());
     }
 
     @Override
@@ -239,7 +214,6 @@ public class MainTestBench extends NarwhalRobot {
     @Override
     protected void teleopPeriodic() {
 
-
     }
 
     @Override
@@ -248,12 +222,11 @@ public class MainTestBench extends NarwhalRobot {
 
     @Override
     protected void disabledInit() {
-        limelight.ledOff();
+        limelight.turnOffLED();
     }
 
     @Override
     protected void updateDashboard() {
-        NarwhalDashboard.put("ts", String.valueOf(table.getEntry("ts").getDouble(0.0)));
 
     }
 
