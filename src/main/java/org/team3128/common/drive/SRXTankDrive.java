@@ -4,6 +4,7 @@ import org.team3128.common.drive.routemaker.Routemaker;
 import org.team3128.common.drive.routemaker.ProfilePoint;
 import org.team3128.common.drive.routemaker.Waypoint;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
+import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Assert;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
@@ -21,6 +22,7 @@ import com.ctre.phoenix.motion.MotionProfileStatus;
 import com.ctre.phoenix.motion.TrajectoryPoint;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.can.SlotConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import com.kauailabs.navx.frc.AHRS;
@@ -108,8 +110,22 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	private double leftSpeedScalar, rightSpeedScalar;
 
+	/**
+	 * Callbacks to be executed when the robot is switched between
+	 * operator control and autonomous control to ensure all drive
+	 * motors are driving forward.
+	 */
 	private SRXInvertCallback teleopInvertCallback, autoInvertCallback;
 	private boolean invertedForTeleop;
+
+
+	/**
+	 * FPID constants for both left and righ drive sides in both
+	 * Motion Magic/Motion Profile control mode as well as velocity
+	 * control mode.
+	 */
+	private PIDConstants leftMotionProfilePID, leftVelocityPID;
+	private PIDConstants rightMotionProfilePID, rightVelocityPID;
 
 	public double getGearRatio()
 	{
@@ -178,6 +194,11 @@ public class SRXTankDrive implements ITankDrive
 
 		invertedForTeleop = true;
 		teleopInvertCallback.invertMotors();
+
+		loadSRXPIDConstants();
+		setupDashboardPIDListener();
+
+		sendPIDConstants();
 
 		if (gearRatio <= 0)
 		{
@@ -429,162 +450,108 @@ public class SRXTankDrive implements ITankDrive
 
 		return RobotMath.normalizeAngle((difference / (Math.PI * wheelBase)) * Angle.ROTATIONS);
 	}
-	
 
-	public void configurePID(PIDConstants leftMotionProfile, PIDConstants leftVelocity, PIDConstants rightMotionProfile, PIDConstants rightVelocity) {
-		leftMotors.config_kP(0, leftMotionProfile.getkP());
-		leftMotors.config_kI(0, leftMotionProfile.getkI());
-		leftMotors.config_kD(0, leftMotionProfile.getkD());
+	/**
+	 * Loads stored PID constants from the drive Talon SRXs.
+	 */
+	public void loadSRXPIDConstants() {
+		SlotConfiguration configs = new SlotConfiguration();
 
-		leftMotors.config_kP(1, leftVelocity.getkP());
-		leftMotors.config_kI(1, leftVelocity.getkI());
-		leftMotors.config_kD(1, leftVelocity.getkD());
+		leftMotors.getSlotConfigs(configs, 0, Constants.CAN_TIMEOUT);
+		leftMotionProfilePID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
 
-		rightMotors.config_kP(0, rightMotionProfile.getkP());
-		rightMotors.config_kI(0, rightMotionProfile.getkI());
-		rightMotors.config_kD(0, rightMotionProfile.getkD());
+		leftMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
+		leftVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
 
-		rightMotors.config_kP(1, rightVelocity.getkP());
-		rightMotors.config_kI(1, rightVelocity.getkI());
-		rightMotors.config_kD(1, rightVelocity.getkD());
+		rightMotors.getSlotConfigs(configs, 0, Constants.CAN_TIMEOUT);
+		rightMotionProfilePID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+
+		rightMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
+		rightVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
 	}
 
-	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
-		private MotionProfileStatus leftStatus, rightStatus;
-		private Waypoint[] waypoints;
-		private double power;
+	public void setLeftPID() {
+		leftMotors.config_kF(0, leftMotionProfilePID.kF);
+		leftMotors.config_kP(0, leftMotionProfilePID.kP);
+		leftMotors.config_kI(0, leftMotionProfilePID.kI);
+		leftMotors.config_kD(0, leftMotionProfilePID.kD);
 
-		private Notifier processNotifier;
-
-		public CmdStaticRouteDrive(double power, double timeoutMs, Waypoint... waypoints) {
-			super(timeoutMs);
-
-			this.power = power;
-			this.waypoints = waypoints;
-
-			leftStatus = new MotionProfileStatus();
-			leftStatus.isLast = false;
-			rightStatus = new MotionProfileStatus();
-			rightStatus.isLast = false;
-
-			processNotifier = new Notifier(() -> {
-				System.out.println("Processing");
-				leftMotors.processMotionProfileBuffer();
-				rightMotors.processMotionProfileBuffer();
-			});
-		}
-
-		@Override
-		protected void initialize() {
-			super.initialize();
-
-			leftMotors.selectProfileSlot(0, 0);
-			rightMotors.selectProfileSlot(0, 0);
-
-			leftMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
-			rightMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
-
-			Routemaker rm = new Routemaker(power, waypoints);
-
-			double speed;
-
-			TrajectoryPoint trajPoint = new TrajectoryPoint();
-			trajPoint.profileSlotSelect0 = 0;
-			trajPoint.zeroPos = false;
-			trajPoint.isLastPoint = false;
-
-			ProfilePoint profilePoint;
-
-			boolean first = true;
-
-			do {
-				speed = 1.0;
-				if (rm.s < 0.4) {
-					speed = (0.1 + rm.s) / 0.5;
-				}
-				else if (rm.s > 0.6) {
-					speed = (1.1 - rm.s) / 0.5;
-				}
-
-				profilePoint = rm.getNextPoint(speed);
-				//System.out.println(profilePoint.x + "," + profilePoint.y + " (" + profilePoint.durationMs + ")");
-
-				if (profilePoint.last)
-					trajPoint.isLastPoint = true;
-
-				trajPoint.timeDur = profilePoint.durationMs;
-
-				trajPoint.position = profilePoint.leftDistance;
-				trajPoint.velocity = profilePoint.leftSpeed;
-				leftMotors.pushMotionProfileTrajectory(trajPoint);
-
-				trajPoint.position = profilePoint.rightDistance;
-				trajPoint.velocity = profilePoint.rightSpeed;
-				rightMotors.pushMotionProfileTrajectory(trajPoint);
-
-				if (first) {
-					processNotifier.startPeriodic(Routemaker.durationSec / 2);
-
-					leftMotors.set(ControlMode.MotionProfile, 1);
-					rightMotors.set(ControlMode.MotionProfile, 1);
-
-					first = false;
-				}
-
-			} while (!profilePoint.last);
-		}
-
-		@Override
-		protected synchronized boolean isFinished() {
-			leftMotors.getMotionProfileStatus(leftStatus);
-			rightMotors.getMotionProfileStatus(rightStatus);
-
-			System.out.println(leftStatus.topBufferCnt + " " + leftStatus.btmBufferCnt);
-
-			return super.isFinished() || leftStatus.isLast && rightStatus.isLast;
-		}
-
-		@Override
-		protected synchronized void end() {
-			super.end();
-			processNotifier.close();
-			Log.info("CmdStaticRouteDrive", "Finished.");
-		}
+		leftMotors.config_kF(1, leftVelocityPID.kF);
+		leftMotors.config_kP(1, leftVelocityPID.kP);
+		leftMotors.config_kI(1, leftVelocityPID.kI);
+		leftMotors.config_kD(1, leftVelocityPID.kD);
 	}
 
-	public abstract class CmdMotionProfileMove extends Command {
-		public CmdMotionProfileMove(double timeoutMs) {
-			super(timeoutMs / 1000.0);
-		}
+	public void setRightPID() {
+		rightMotors.config_kF(0, rightMotionProfilePID.kF);
+		rightMotors.config_kP(0, rightMotionProfilePID.kP);
+		rightMotors.config_kI(0, rightMotionProfilePID.kI);
+		rightMotors.config_kD(0, rightMotionProfilePID.kD);
 
-		protected void initialize() {
-			leftMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
-			rightMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
+		rightMotors.config_kF(1, rightVelocityPID.kF);
+		rightMotors.config_kP(1, rightVelocityPID.kP);
+		rightMotors.config_kI(1, rightVelocityPID.kI);
+		rightMotors.config_kD(1, rightVelocityPID.kD);
+	}
 
-			leftMotors.clearMotionProfileTrajectories();
-			rightMotors.clearMotionProfileTrajectories();
+	/**
+	 * Sets up listeners to update drive PID constants when sent from
+	 * NarwhalDashboard
+	 */
+	public void setupDashboardPIDListener() {
+		NarwhalDashboard.addNumDataListener("leftPID", (double constants[]) -> {
+			leftMotionProfilePID.kF = constants[0];
+			leftMotionProfilePID.kP = constants[1];
+			leftMotionProfilePID.kI = constants[2];
+			leftMotionProfilePID.kD = constants[3];
 
-			leftMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
-			rightMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
+			leftVelocityPID.kF = constants[0];
+			leftVelocityPID.kP = constants[4];
+			leftVelocityPID.kI = constants[5];
+			leftVelocityPID.kD = constants[6];
 
-			leftMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
-			rightMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
-		}
+			setLeftPID();
+		});
 
-		@Override
-		protected void execute() {
-		}
+		NarwhalDashboard.addNumDataListener("rightPID", (double constants[]) -> {
+			rightMotionProfilePID.kF = constants[0];
+			rightMotionProfilePID.kP = constants[1];
+			rightMotionProfilePID.kI = constants[2];
+			rightMotionProfilePID.kD = constants[3];
 
-		@Override
-		protected boolean isFinished() {
-			return this.isTimedOut();
-		}
+			rightVelocityPID.kF = constants[0];
+			rightVelocityPID.kP = constants[4];
+			rightVelocityPID.kI = constants[5];
+			rightVelocityPID.kD = constants[6];
 
-		@Override
-		protected void end() {
-			leftMotors.clearMotionProfileTrajectories();
-			rightMotors.clearMotionProfileTrajectories();
-		}
+			setRightPID();
+		});
+	}
+
+	/**
+	 * Sends PID constants to NarwhalDashboard
+	 */
+	public void sendPIDConstants() {
+		NarwhalDashboard.put("l_f", leftMotionProfilePID.kF);
+
+		NarwhalDashboard.put("l_mp_p", leftMotionProfilePID.kP);
+		NarwhalDashboard.put("l_mp_i", leftMotionProfilePID.kI);
+		NarwhalDashboard.put("l_mp_d", leftMotionProfilePID.kD);
+
+		NarwhalDashboard.put("l_mp_p", leftMotionProfilePID.kP);
+		NarwhalDashboard.put("l_mp_i", leftMotionProfilePID.kI);
+		NarwhalDashboard.put("l_mp_d", leftMotionProfilePID.kD);
+
+
+		NarwhalDashboard.put("r_f", rightMotionProfilePID.kF);
+
+		NarwhalDashboard.put("r_mp_p", rightMotionProfilePID.kP);
+		NarwhalDashboard.put("r_mp_i", rightMotionProfilePID.kI);
+		NarwhalDashboard.put("r_mp_d", rightMotionProfilePID.kD);
+
+		NarwhalDashboard.put("r_mp_p", rightMotionProfilePID.kP);
+		NarwhalDashboard.put("r_mp_i", rightMotionProfilePID.kI);
+		NarwhalDashboard.put("r_mp_d", rightMotionProfilePID.kD);
 	}
 
 	/**
@@ -899,6 +866,144 @@ public class SRXTankDrive implements ITankDrive
 				leftAngle = -wheelAngularDist;
 				rightAngle = wheelAngularDist;
 			}
+		}
+	}
+
+	public abstract class CmdMotionProfileMove extends Command {
+		public CmdMotionProfileMove(double timeoutMs) {
+			super(timeoutMs / 1000.0);
+		}
+
+		protected void initialize() {
+			leftMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
+			rightMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
+
+			leftMotors.clearMotionProfileTrajectories();
+			rightMotors.clearMotionProfileTrajectories();
+
+			leftMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
+			rightMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
+
+			leftMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+			rightMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+		}
+
+		@Override
+		protected void execute() {
+		}
+
+		@Override
+		protected boolean isFinished() {
+			return this.isTimedOut();
+		}
+
+		@Override
+		protected void end() {
+			leftMotors.clearMotionProfileTrajectories();
+			rightMotors.clearMotionProfileTrajectories();
+		}
+	}
+
+	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
+		private MotionProfileStatus leftStatus, rightStatus;
+		private Waypoint[] waypoints;
+		private double power;
+
+		private Notifier processNotifier;
+
+		public CmdStaticRouteDrive(double power, double timeoutMs, Waypoint... waypoints) {
+			super(timeoutMs);
+
+			this.power = power;
+			this.waypoints = waypoints;
+
+			leftStatus = new MotionProfileStatus();
+			leftStatus.isLast = false;
+			rightStatus = new MotionProfileStatus();
+			rightStatus.isLast = false;
+
+			processNotifier = new Notifier(() -> {
+				System.out.println("Processing");
+				leftMotors.processMotionProfileBuffer();
+				rightMotors.processMotionProfileBuffer();
+			});
+		}
+
+		@Override
+		protected void initialize() {
+			super.initialize();
+
+			leftMotors.selectProfileSlot(0, 0);
+			rightMotors.selectProfileSlot(0, 0);
+
+			leftMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
+			rightMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
+
+			Routemaker rm = new Routemaker(power, waypoints);
+
+			double speed;
+
+			TrajectoryPoint trajPoint = new TrajectoryPoint();
+			trajPoint.profileSlotSelect0 = 0;
+			trajPoint.zeroPos = false;
+			trajPoint.isLastPoint = false;
+
+			ProfilePoint profilePoint;
+
+			boolean first = true;
+
+			do {
+				speed = 1.0;
+				if (rm.s < 0.4) {
+					speed = (0.1 + rm.s) / 0.5;
+				}
+				else if (rm.s > 0.6) {
+					speed = (1.1 - rm.s) / 0.5;
+				}
+
+				profilePoint = rm.getNextPoint(speed);
+				//System.out.println(profilePoint.x + "," + profilePoint.y + " (" + profilePoint.durationMs + ")");
+
+				if (profilePoint.last)
+					trajPoint.isLastPoint = true;
+
+				trajPoint.timeDur = profilePoint.durationMs;
+
+				trajPoint.position = profilePoint.leftDistance;
+				trajPoint.velocity = profilePoint.leftSpeed;
+				leftMotors.pushMotionProfileTrajectory(trajPoint);
+
+				trajPoint.position = profilePoint.rightDistance;
+				trajPoint.velocity = profilePoint.rightSpeed;
+				rightMotors.pushMotionProfileTrajectory(trajPoint);
+
+				if (first) {
+					processNotifier.startPeriodic(Routemaker.durationSec / 2);
+
+					leftMotors.set(ControlMode.MotionProfile, 1);
+					rightMotors.set(ControlMode.MotionProfile, 1);
+
+					first = false;
+				}
+
+			} while (!profilePoint.last);
+		}
+
+		@Override
+		protected synchronized boolean isFinished() {
+			leftMotors.getMotionProfileStatus(leftStatus);
+			rightMotors.getMotionProfileStatus(rightStatus);
+
+			System.out.println(leftStatus.topBufferCnt + " " + leftStatus.btmBufferCnt);
+
+			return super.isFinished() || leftStatus.isLast && rightStatus.isLast;
+		}
+
+		@Override
+		protected synchronized void end() {
+			super.end();
+			processNotifier.close();
+			Log.info("CmdStaticRouteDrive", "Finished.");
 		}
 	}
 

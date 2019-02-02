@@ -47,7 +47,7 @@ public class VelocityPID
 		
 		double errorDerivative = error - lastVelocityError;
 		
-		storedOutput = (pidConstants.getkP() * error) + (pidConstants.getkI() * errorSum) + (pidConstants.getkD() * errorDerivative) + storedOutput;
+		storedOutput = (pidConstants.kP * error) + (pidConstants.kI * errorSum) + (pidConstants.kD * errorDerivative) + storedOutput;
 		
 		lastVelocityError = error;
 		

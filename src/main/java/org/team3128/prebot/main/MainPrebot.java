@@ -124,14 +124,6 @@ public class MainPrebot extends NarwhalRobot {
         gyro = new ADXRS450_Gyro();
         gyro.calibrate();
 
-        leftMotionProfilePID = new PIDConstants(0.2740, 0.018, 0, 0.01);
-        leftVelocityPID = new PIDConstants(0.2740, 0, 0, 0);
-
-        rightMotionProfilePID = new PIDConstants(0.2752, 0.018, 0, 0.01);
-        rightVelocityPID = new PIDConstants(0.2752, 0, 0, 0);
-
-        tankDrive.configurePID(leftMotionProfilePID, leftVelocityPID, rightMotionProfilePID, rightVelocityPID);
-
         joystick = new Joystick(1);
 		lm = new ListenerManager(joystick);
         addListenerManager(lm);

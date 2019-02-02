@@ -24,6 +24,7 @@ public class NarwhalDashboard extends WebSocketServer {
     private static LinkedHashMap<String, CommandGroup> autoPrograms = new LinkedHashMap<String, CommandGroup>();
 
     private static HashMap<String, DashButtonCallback> buttons = new HashMap<String, DashButtonCallback>();
+    private static HashMap<String, NumericalDataCallback> numDataCallbacks = new HashMap<String, NumericalDataCallback>();
 
     private static String selectedAuto = null;
     private static boolean autosPushed = false;
@@ -59,6 +60,10 @@ public class NarwhalDashboard extends WebSocketServer {
 
     public static void addButton(String key, DashButtonCallback callback) {
         buttons.put(key, callback);
+    }
+
+    public static void addNumDataListener(String key, NumericalDataCallback callback) {
+        numDataCallbacks.put(key, callback);
     }
 
     /**
@@ -193,7 +198,21 @@ public class NarwhalDashboard extends WebSocketServer {
         }
         else if (parts[0].equals("numData")) {
             String key = parts[1];
-            double numericalData = Double.parseDouble(parts[2]);
+            String list = parts[2];
+
+            String[] stringData = list.split(",");
+            double[] data = new double[stringData.length];
+
+            for (int i = 0; i < stringData.length; i++) {
+                data[i] = Double.parseDouble(stringData[i]);
+            }
+
+            if (numDataCallbacks.containsKey(key)) {
+                numDataCallbacks.get(key).process(data);
+            }
+            else {
+                Log.info("NarwhalDashboard", "Recieved, but will not process, numerical data: " + key + " = " + data);
+            }
         }
         else if (parts[0].equals("button")) {
             String key = parts[1];
