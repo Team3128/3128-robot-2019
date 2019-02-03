@@ -8,9 +8,7 @@ import org.team3128.common.util.units.Angle;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.command.Command;
-
 
 /**
  * Control system for the four bar
@@ -23,11 +21,10 @@ public class FourBar
 {
     public final double ratio = 19100.0 / (76 * Length.in); //to be calculated, convert angle to native units
 
-    public enum FourBarState{
-        BALL_INTAKE(0.0 * Angle.DEGREES), 
-        HATCH_PICKUP(10.0 * Angle.DEGREES),
-    //    LOW_DROP_OFF(40.0), same as hatch pickup 
-        HIGH_DROP_OFF(120.0 * Angle.DEGREES);
+    public enum FourBarState {
+        CARGO_INTAKE(0.0 * Angle.DEGREES), 
+        LOW(10.0 * Angle.DEGREES),
+        HIGH(120.0 * Angle.DEGREES);
 
 		public double targetAngle;
 
@@ -80,13 +77,26 @@ public class FourBar
 	int limitSwitchLocation;
 	private double desiredAngle;
 	
-	//constructor
-	public FourBar(TalonSRX fourBarMotor, FourBarState state) {
+	private static FourBar instance = null;
+	public static FourBar getInstance() {
+		if (instance != null) {
+			return instance;
+		}
+
+		Log.fatal("FourBar", "Attempted to get instance before initializtion! Call initialize(...) first.");
+		return null;
+	}
+
+	public static void initialize(TalonSRX fourBarMotor, FourBarState state) {
+		instance = new FourBar(fourBarMotor, state);
+	}
+
+	private FourBar(TalonSRX fourBarMotor, FourBarState state) {
 		this.fourBarMotor = fourBarMotor;
 		this.state = state;
 				
-		this.state = FourBarState.HATCH_PICKUP;
-		setState(FourBarState.HATCH_PICKUP);
+		this.state = FourBarState.LOW;
+		setState(FourBarState.LOW);
 	}
 
     public void setState(FourBarState fourBarState)
@@ -114,34 +124,34 @@ public class FourBar
 		desiredAngle = joystick;
 	}
 	
-	public class CmdZeroFourBar extends Command {
+	public class CmdForceZeroFourBar extends Command {
 		private boolean done = false;
 
-		public CmdZeroFourBar() {
+		public CmdForceZeroFourBar() {
 			super(0.5);
 		}
 
 		@Override
 		protected void initialize() {
 			fourBarMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
-			state = FourBarState.BALL_INTAKE;
+			state = FourBarState.CARGO_INTAKE;
 			done = true;
 		}
 
 		@Override
 		protected boolean isFinished()
 		{
-			return true || isTimedOut();
+			return done || isTimedOut();
 		}
 	}
 
-	public class CmdSetLiftPosition extends Command
+	public class CmdSetFourBarPosition extends Command
 	{
 		FourBarState angleState;
 
-		public CmdSetLiftPosition(FourBarState angleState)
+		public CmdSetFourBarPosition(FourBarState angleState)
 		{
-			super(3);
+			super(2);
 			this.angleState = angleState;
 		}
 
@@ -152,7 +162,6 @@ public class FourBar
 			Log.debug("CmdSetLiftPosition", "Changing state to " + angleState.name());
 			Log.debug("CmdSetLiftPosition", "Target: " + fourBarMotor.getClosedLoopTarget(0));
 		}
-
 
 		@Override
 		protected void execute() {

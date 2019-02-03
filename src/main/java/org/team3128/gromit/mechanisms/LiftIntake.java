@@ -4,6 +4,9 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import org.team3128.common.hardware.misc.Piston;
+import org.team3128.common.util.Log;
+
+import edu.wpi.first.wpilibj.command.Command;
 
 /**
  * Control system for the mechanism controlling mechanisms 
@@ -16,9 +19,9 @@ public class LiftIntake {
     public enum LiftIntakeState
 	{
 		STOPPED(0, true, "Stopped"),
-		BALL_INTAKE(-1.0, true, "Ball intake"),
-        BALL_OUTTAKE(1.0, true, "Ball outtake"),
-        HATCH_INTAKE(0.0, false, "Hatch intake");
+		BALL_INTAKE(-1.0, true, "Ball Intake"),
+        BALL_OUTTAKE(1.0, true, "Ball Outtake"),
+        HATCH_INTAKE(0.0, false, "Hatch Panel Intake");
 
 		private double rollerPower;
 		private boolean isClosed;
@@ -27,12 +30,13 @@ public class LiftIntake {
 		private LiftIntakeState(double rollerPower, boolean isClosed, String name) {
 			this.rollerPower = rollerPower;
 			this.isClosed = isClosed;
-			this.name= name;
+			this.name = name;
 		}
 
 		public double getRollerPower() {
 			return rollerPower;
 		}
+
 		public boolean getPistonPosition() {
 			return isClosed;
 		}
@@ -40,19 +44,31 @@ public class LiftIntake {
 		public String getName() {
 			return name;
         }
-    }
+	}
+	
     VictorSPX intakeMotors;
-	//private DigitalInput limSwitch;
-	private LiftIntakeState state, newState;
-	private Piston piston;
+	private LiftIntakeState state;
+	private Piston demogorgonPiston;
 	private double invertMultiplier;
 
-	//constructor
-	public LiftIntake(VictorSPX intakeMotors, LiftIntakeState state, Piston piston, boolean inverted) {
+	private static LiftIntake instance = null;
+	public static LiftIntake getInstance() {
+		if (instance != null) {
+			return instance;
+		}
+
+		Log.fatal("LiftIntake", "Attempted to get instance before initializtion! Call initialize(...) first.");
+		return null;
+	}
+
+	public static void initialize(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, boolean inverted) {
+		instance = new LiftIntake(intakeMotors, state, demogorgonPiston, inverted);
+	}
+
+	private LiftIntake(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, boolean inverted) {
 		this.intakeMotors = intakeMotors;
-		//this.limSwitch = limSwitch;
 		this.state = state;
-		this.piston = piston;		
+		this.demogorgonPiston = demogorgonPiston;		
 		
 		this.invertMultiplier = (inverted) ? -1 : 1;
 		
@@ -61,38 +77,43 @@ public class LiftIntake {
 	}
 	
 	public void setState(LiftIntakeState newState) {
-		if (state != newState) {
-			this.newState = newState;
-			
+		if (state != newState) {			
 			if(newState.getPistonPosition()) {
-				piston.setPistonOn();
+				demogorgonPiston.setPistonOn();
 			}
 			else {
-				piston.setPistonOff();
+				demogorgonPiston.setPistonOff();
 			}
 			
-			Thread intakeThread = new Thread(() -> {
-				if (this.state.equals(LiftIntakeState.BALL_INTAKE) && this.newState.equals(LiftIntakeState.STOPPED)) {
-					try
-					{
-						Thread.sleep(1000);
-					}
-					catch (InterruptedException e)
-					{
-						e.printStackTrace();
-					}
-				}
-				
-				setIntakePower(this.newState.getRollerPower());
-				this.state = this.newState;
-			});
-			intakeThread.start();
-			
-			
+			setIntakePower(newState.getRollerPower());
+
+			state = newState;
 		}
 	}
 	
-	public synchronized void setIntakePower(double power) {
+	private void setIntakePower(double power) {
 		intakeMotors.set(ControlMode.PercentOutput, invertMultiplier * power);
-	}    
+	}
+
+	public class CmdSetLiftIntakeState extends Command {
+		LiftIntakeState desiredState;
+
+		public CmdSetLiftIntakeState(LiftIntakeState state) {
+			super(0.1);
+
+			desiredState = state;
+		}
+
+		@Override
+		protected void initialize()
+		{
+			setState(desiredState);
+		}
+
+		@Override
+		protected boolean isFinished()
+		{
+			return isTimedOut();
+		}
+	}
 }

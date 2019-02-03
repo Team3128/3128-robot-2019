@@ -1,38 +1,44 @@
 package org.team3128.gromit.mechanisms;
 
-import org.team3128.gromit.mechanisms.Lift.LiftState;
+import org.team3128.gromit.mechanisms.Lift.LiftHeight;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 
-import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.command.CommandGroup;
+
+import org.team3128.common.autonomous.primitives.CmdRunInParallel;
+import org.team3128.common.util.Log;
 import org.team3128.gromit.mechanisms.LiftIntake;
 
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;
 import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;;
 
 /**
- * Control system for the mechanism controlling mechanisms 
+ * Overall mechanism wrapper to control the {@link Lift} and {@link LiftIntake}.
  * 
  * @author Chris, Jude, Tygan
  * 
  */
 
-public class OptimusPrime{
-  public enum RobotState{
-      BALL_INTAKE_LOW(Lift.LiftState.BALL_INTAKE_LOW, FourBar.FourBarState.BALL_INTAKE),
-      BALL_INTAKE_HIGH(Lift.LiftState.BALL_INTAKE_HIGH, FourBar.FourBarState.BALL_INTAKE),
-      BOT_HATCH(Lift.LiftState.BOT_HATCH, FourBar.FourBarState.HATCH_PICKUP),
-      MID_HATCH(Lift.LiftState.MID_HATCH, FourBar.FourBarState.HATCH_PICKUP),
-      TOP_HATCH(Lift.LiftState.TOP_HATCH, FourBar.FourBarState.HIGH_DROP_OFF),
-      BOT_BALL(Lift.LiftState.BOT_BALL, FourBar.FourBarState.HATCH_PICKUP),
-      MID_BALL(Lift.LiftState.MID_BALL, FourBar.FourBarState.HATCH_PICKUP),
-      TOP_BALL(Lift.LiftState.TOP_HATCH, FourBar.FourBarState.HIGH_DROP_OFF),
-      CARGO_BALL(Lift.LiftState.CARGO_BALL, FourBar.FourBarState.HATCH_PICKUP);
+public class OptimusPrime {
+  public enum RobotState {
+      INTAKE_FLOOR_CARGO(LiftHeight.INTAKE_FLOOR_CARGO, FourBarState.CARGO_INTAKE),
+      HOLD_CARGO(LiftHeight.HOLD_CARGO, FourBarState.CARGO_INTAKE),
 
-      public LiftState targetLiftState;
+      DEPOSIT_LOW_HATCH(LiftHeight.LOW_HATCH, FourBarState.LOW),
+      DEPOSIT_MID_HATCH(LiftHeight.MID_HATCH, FourBarState.LOW),
+      DEPOSIT_TOP_HATCH(LiftHeight.TOP_HATCH, FourBarState.HIGH),
+
+      DEPOSIT_LOW_CARGO(LiftHeight.LOW_CARGO, FourBarState.LOW),
+      DEPOSIT_MID_CARGO(LiftHeight.MID_CARGO, FourBarState.LOW),
+      DEPOSIT_TOP_CARGO(LiftHeight.TOP_HATCH, FourBarState.HIGH),
+
+      INTAKE_LOADING_CARGO(LiftHeight.INTAKE_LOADING_CARGO, FourBarState.LOW);
+
+      public LiftHeight targetLiftState;
       public FourBarState targetFourBarState;
       //states for lift intake and ground intakes
 
-      private RobotState(LiftState liftState, FourBarState fourBarState)
+      private RobotState(LiftHeight liftState, FourBarState fourBarState)
       {
         this.targetLiftState = liftState;
         this.targetFourBarState = fourBarState;
@@ -40,63 +46,53 @@ public class OptimusPrime{
   }
 
   Lift lift;
+  LiftIntake liftIntake;
   FourBar fourBar;
   GroundIntake groundIntake;
 
-  //constructor
-	public OptimusPrime(Lift lift, FourBar fourBar, GroundIntake groundIntake) {
-    this.lift = lift;
-    this.fourBar = fourBar;
-    this.groundIntake = groundIntake;
-				
-	}
-
-  public class CmdIntakeBall extends Command 
-  {
-    
-		public CmdIntakeBall()
-		{
-			super(10);
+  private static OptimusPrime instance = null;
+  public static OptimusPrime getInstance() {
+    if (instance != null) {
+			return instance;
 		}
 
-		@Override
-		protected void initialize()
-		{
-      Thread ballIntake = new Thread(()->{
-        lift.setState(LiftState.BALL_INTAKE_LOW);
-        groundIntake.setState(GroundIntakeState.DEPLOYED);
-        fourBar.setState(FourBarState.BALL_INTAKE);
-        groundIntake.setState(GroundIntakeState.DEPLOYED_INTAKE);
-        groundIntake.setState(GroundIntakeState.DEPLOYED);
-        lift.liftIntake.setState(LiftIntakeState.BALL_INTAKE);
-        lift.setState(LiftState.BALL_INTAKE_HIGH);
-        groundIntake.setState(GroundIntakeState.RETRACTED);  
-      });
-      ballIntake.start();
+		Log.fatal("OptimusPrime", "Attempted to get instance before initializtion! Call initialize(...) first.");
+		return null;
+  }
+
+  public static void initialize() {
+    instance = new OptimusPrime();
+  }
+
+	private OptimusPrime() {
+    lift = Lift.getInstance();
+    liftIntake = LiftIntake.getInstance();
+    fourBar = FourBar.getInstance();
+    groundIntake = GroundIntake.getInstance();
+  }
+  
+  public class CmdEnterIntakeMode extends CommandGroup {
+    public CmdEnterIntakeMode() {      
+      addSequential(new CmdRunInParallel(
+        lift.new CmdSetLiftPosition(LiftHeight.INTAKE_FLOOR_CARGO),
+        liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.BALL_INTAKE)));
+      addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
+      addSequential(fourBar.new CmdSetFourBarPosition(FourBarState.CARGO_INTAKE));
+      addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.INTAKING));
     }
+  }
 
+  public class CmdExitIntakeMode extends CommandGroup {
+    public CmdExitIntakeMode() {
+      addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
+      addSequential(lift.new CmdSetLiftPosition(LiftHeight.HOLD_CARGO));
+      addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.RETRACTED));
+    }
+  }
 
-		@Override
-		protected void execute() {
-			//Log.debug("CmdSetLiftPosition", "Error: " + (LiftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)));
-		}
-
-		@Override
-		protected void end() {
-      lift.powerControl(0);
-      fourBar.powerControl(0);
-		}
-
-		@Override
-		protected void interrupted()
-		{
-			end();
-		}
-
-    @Override
-    protected boolean isFinished() {
-      return isTimedOut();
-      //return isTimedOut() || Math.abs(LiftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
+  public class CmdDepositGameElement extends CommandGroup {
+    public CmdDepositGameElement() {
+      //TODO
     }
   }
 }

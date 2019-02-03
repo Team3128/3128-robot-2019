@@ -3,7 +3,6 @@ package org.team3128.gromit.mechanisms;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.units.Length;
-import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 
 //import org.team3128.gromit.mechanisms.Intake.IntakeState;
 
@@ -14,7 +13,8 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.command.Command;
 
 /**
- * Control system for the lift mechanism 
+ * Control system for the two-stage, continuous elevator-style lift mechanism. The
+ * {@link FourBar} is mounted to the first stage of the list.
  * 
  * @author Chris, Jude, Tygan
  * 
@@ -33,27 +33,29 @@ public class Lift
 
 	public double error, currentPosition;
 
-	//private IntakeState intakeState;
-
-	public enum LiftState
+	public enum LiftHeight
 	{
 		/*
 		these need to be deifined better
 		*/
-		GROUND(0 * Length.ft),
-		BALL_INTAKE_LOW(1.5 * Length.ft), //first raise for ball intake
-		BALL_INTAKE_HIGH(2.5 * Length.ft), //second raise for ball intake
-		BOT_BALL(3 * Length.ft),
-		MID_BALL(59 * Length.in),
-        TOP_BALL(64 * Length.in),
-        BOT_HATCH(0 * Length.ft), //same for rocket and cargo and loading station
+		BASE(0 * Length.ft),
+
+		INTAKE_FLOOR_CARGO(1.5 * Length.ft), //first raise for ball intake
+		HOLD_CARGO(2.5 * Length.ft), //second raise for ball intake
+
+		LOW_CARGO(3 * Length.ft),
+		MID_CARGO(59 * Length.in),
+		TOP_CARGO(64 * Length.in),
+		
+        LOW_HATCH(0 * Length.ft), //same for rocket and cargo and loading station
         MID_HATCH(0 * Length.ft),
-        TOP_HATCH(0 * Length.ft),
-        CARGO_BALL(0 * Length.ft);
+		TOP_HATCH(0 * Length.ft),
+		
+        INTAKE_LOADING_CARGO(0 * Length.ft);
 
 		public double targetHeight;
 
-		private LiftState(double height)
+		private LiftHeight(double height)
 		{
 			this.targetHeight = height;
 		}
@@ -91,19 +93,17 @@ public class Lift
 		if (mode != controlMode)
 		{
 			controlMode = mode;
-			Log.debug("setControlMode", "Setting to " + mode.name());
+			Log.debug("Lift", "Setting control mode to " + mode.getName() + ", with PID slot " + mode.getPIDSlot());
 			liftMotor.selectProfileSlot(mode.getPIDSlot(), 0);
-			System.out.println(mode.getPIDSlot());
 		}
 	}
 
-	LiftIntake liftIntake;
 	TalonSRX liftMotor;
 	DigitalInput softStopLimitSwitch;
-	Thread depositCubeThread, depositingRollerThread;
+	Thread depositCubeThread, liftThread;
 
 	public LiftControlMode controlMode;
-	public LiftState state;
+	public LiftHeight state;
 
 	int limitSwitchLocation, LiftMaxVelocity;
 
@@ -133,16 +133,11 @@ public class Lift
 		return null;
 	}
 
-	public static void initialize(LiftState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch,
-	int limitSwitchLocation, int LiftMaxVelocity) {
-        //instance = new Lift();
+	public static void initialize(LiftHeight state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int limitSwitchLocation, int LiftMaxVelocity) {
 		instance = new Lift(state, liftMotor, softStopLimitSwitch, limitSwitchLocation, LiftMaxVelocity);
 	}
 
-	public Lift(LiftState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch,
-			int limitSwitchLocation, int LiftMaxVelocity)
-	{
-		//this.intake = Intake.getInstance();
+	private Lift(LiftHeight state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int limitSwitchLocation, int LiftMaxVelocity) {
 		this.liftMotor = liftMotor;
 		this.softStopLimitSwitch = softStopLimitSwitch;
 		this.limitSwitchLocation = limitSwitchLocation;
@@ -157,8 +152,11 @@ public class Lift
 
 		liftMotor.configOpenloopRamp(0.2, Constants.CAN_TIMEOUT);
 
-		depositingRollerThread = new Thread(() ->
+		// We may want to nuke this entire thread because we'll just give drivers complete override.
+		liftThread = new Thread(() ->
 		{
+			double target = 0;
+
 			while (true)
 			{
 				if (this.getLiftSwitch())
@@ -171,7 +169,7 @@ public class Lift
 					this.liftMotor.set(ControlMode.PercentOutput, 0);
 				}
 				else {
-					double target = 0;
+					target = 0;
 
 					this.canRaise = this.liftMotor.getSelectedSensorPosition(0) < this.maxHeight;
 					this.canLower = this.liftMotor.getSelectedSensorPosition(0) > 100;
@@ -180,7 +178,6 @@ public class Lift
 						if (this.override) {
 							target = this.desiredTarget;
 							this.liftMotor.set(ControlMode.PercentOutput, target);
-
 						}
 						else {
 							if (this.desiredTarget > 0 && this.canRaise) {
@@ -202,10 +199,7 @@ public class Lift
 							}
 						}
 					}
-
-
 				}
-
 
 				this.currentPosition = liftMotor.getSelectedSensorPosition(0) / ratio;
 				double targetHeight = this.state.targetHeight;
@@ -224,10 +218,10 @@ public class Lift
 			}
 		});
 
-		depositingRollerThread.start();
+		liftThread.start();
 	}
 
-	public void setState(LiftState liftState)
+	public void setState(LiftHeight liftState)
 	{
 		if (state != liftState)
 		{
@@ -240,7 +234,7 @@ public class Lift
 				setControlMode(LiftControlMode.POSITION_UP);
 			}
 			state = liftState;
-			Log.info("Lift and Intake", "Going to " + state.targetHeight + " inches.");
+			Log.info("Lift", "Going to " + state.targetHeight + " cm.");
 			liftMotor.set(ControlMode.MotionMagic, state.targetHeight * ratio);
 		}
 	}
@@ -257,17 +251,17 @@ public class Lift
 		return !softStopLimitSwitch.get();
 	}
 
-	public class CmdZeroLift extends Command {
+	public class CmdForceZeroLift extends Command {
 		private boolean done = false;
 
-		public CmdZeroLift() {
+		public CmdForceZeroLift() {
 			super(0.5);
 		}
 
 		@Override
 		protected void initialize() {
 			liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
-			state = LiftState.GROUND;
+			state = LiftHeight.BASE;
 
 			done = true;
 		}
@@ -275,15 +269,15 @@ public class Lift
 		@Override
 		protected boolean isFinished()
 		{
-			return true || isTimedOut();
+			return done || isTimedOut();
 		}
 	}
 
 	public class CmdSetLiftPosition extends Command
 	{
-		LiftState heightState;
+		LiftHeight heightState;
 
-		public CmdSetLiftPosition(LiftState heightState)
+		public CmdSetLiftPosition(LiftHeight heightState)
 		{
 			super(3);
 			this.heightState = heightState;
@@ -320,59 +314,6 @@ public class Lift
 		protected boolean isFinished()
 		{
 			return isTimedOut() || Math.abs(liftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
-		}
-	}
-
-	public class CmdRunLiftIntake extends Command
-	{
-		boolean timesOut;
-		LiftIntakeState state;
-
-		public CmdRunLiftIntake(LiftIntakeState state)
-		{
-			super(0.5);
-
-			timesOut = false;
-
-			this.state = state;
-		}
-
-		public CmdRunLiftIntake(LiftIntakeState state, int msec) {
-			super(msec / 1000.0);
-
-			timesOut = true;
-
-			this.state = state;
-		}
-
-		@Override
-		protected void initialize()
-		{
-			liftIntake.setState(state); //error will be resolved once LiftIntake Mechanism is created
-		}
-
-
-		@Override
-		protected void execute() {
-		}
-
-		@Override
-		protected void end() {
-
-			if (timesOut) liftIntake.setState(LiftIntakeState.STOPPED); //error will be resolved once LiftIntake Mechanism is created
-		}
-
-		@Override
-		protected void interrupted()
-		{
-			Log.debug("CmdRunIntake", "Ending, was interrupted.");
-			end();
-		}
-
-		@Override
-		protected boolean isFinished()
-		{
-			return isTimedOut();
 		}
 	}
 }

@@ -4,6 +4,9 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import org.team3128.common.hardware.misc.Piston;
+import org.team3128.common.util.Log;
+
+import edu.wpi.first.wpilibj.command.Command;
 
 /**
  * Control system for the mechanism controlling mechanisms 
@@ -16,8 +19,9 @@ public class GroundIntake {
     public enum GroundIntakeState
 	{
 		DEPLOYED(0, true, "Deployed"),
-		DEPLOYED_INTAKE(-1.0, false, "Deployed and Intake"),
+		INTAKING(-1.0, false, "Intaking"),
 		RETRACTED(0.0, true, "Retract");
+
 		private double rollerPower;
 		private boolean isClosed;
 		private String name;
@@ -25,7 +29,7 @@ public class GroundIntake {
 		private GroundIntakeState(double rollerPower, boolean isClosed, String name) {
 			this.rollerPower = rollerPower;
 			this.isClosed = isClosed;
-			this.name= name;
+			this.name = name;
 		}
 
 		public double getRollerPower() {
@@ -40,19 +44,28 @@ public class GroundIntake {
         }
     }
     VictorSPX intakeMotors;
-	//private DigitalInput limSwitch;
-	private GroundIntakeState state, newState;
-    private Piston leftPiston;
-    private Piston rightPiston;
+	private GroundIntakeState state;
+    private Piston deployPistons;
 	private double invertMultiplier;
 
-	//constructor
-	public GroundIntake(VictorSPX intakeMotors, GroundIntakeState state, Piston leftPiston, Piston rightPiston, boolean inverted) {
+	private static GroundIntake instance = null;
+	public static GroundIntake getInstance() {
+		if (instance != null) {
+			return instance;
+		}
+
+		Log.fatal("GroundIntake", "Attempted to get instance before initializtion! Call initialize(...) first.");
+		return null;
+	}
+
+	public static void initialize(VictorSPX intakeMotors, GroundIntakeState state, Piston deployPistons, boolean inverted) {
+		instance = new GroundIntake(intakeMotors, state, deployPistons, inverted);
+	}
+
+	private GroundIntake(VictorSPX intakeMotors, GroundIntakeState state, Piston deployPistons, boolean inverted) {
 		this.intakeMotors = intakeMotors;
-		//this.limSwitch = limSwitch;
 		this.state = state;
-        this.leftPiston = leftPiston;
-        this.rightPiston = rightPiston;		
+        this.deployPistons = deployPistons;
 		
 		this.invertMultiplier = (inverted) ? -1 : 1;
 		
@@ -61,39 +74,43 @@ public class GroundIntake {
 	}
 	
 	public void setState(GroundIntakeState newState) {
-		if (state != newState) {
-			this.newState = newState;
-			
+		if (state != newState) {			
 			if(newState.getPistonPosition()) {
-                leftPiston.setPistonOn();
-                rightPiston.setPistonOn();
+                deployPistons.setPistonOn();
 			}
 			else {
-                leftPiston.setPistonOff();
-				rightPiston.setPistonOff();
+                deployPistons.setPistonOff();
 			}
-			
-			Thread intakeThread = new Thread(() -> {
-				if (this.state.equals(GroundIntakeState.DEPLOYED_INTAKE) && this.newState.equals(GroundIntakeState.RETRACTED)) {
-					try
-					{
-						Thread.sleep(1000);
-					}
-					catch (InterruptedException e)
-					{
-						e.printStackTrace();
-					}
-				}
 				
-				setIntakePower(this.newState.getRollerPower());
-				this.state = this.newState;
-			});
-			intakeThread.start();
-			
+			setIntakePower(newState.getRollerPower());
+
+			state = newState;
 		}
 	}
 	
-	public synchronized void setIntakePower(double power) {
+	private void setIntakePower(double power) {
 		intakeMotors.set(ControlMode.PercentOutput, invertMultiplier * power);
-	}    
+	}
+
+	public class CmdSetGroundIntakeState extends Command {
+		GroundIntakeState desiredState;
+
+		public CmdSetGroundIntakeState(GroundIntakeState state) {
+			super(0.1);
+
+			desiredState = state;
+		}
+
+		@Override
+		protected void initialize()
+		{
+			setState(desiredState);
+		}
+
+		@Override
+		protected boolean isFinished()
+		{
+			return isTimedOut();
+		}
+	}
 }
