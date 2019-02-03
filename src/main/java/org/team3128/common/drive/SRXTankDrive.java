@@ -471,6 +471,8 @@ public class SRXTankDrive implements ITankDrive
 	}
 
 	public void setLeftPID() {
+		Log.info("SRXTankDrive", "Setting left PID constants.");
+
 		leftMotors.config_kF(0, leftMotionProfilePID.kF);
 		leftMotors.config_kP(0, leftMotionProfilePID.kP);
 		leftMotors.config_kI(0, leftMotionProfilePID.kI);
@@ -480,9 +482,13 @@ public class SRXTankDrive implements ITankDrive
 		leftMotors.config_kP(1, leftVelocityPID.kP);
 		leftMotors.config_kI(1, leftVelocityPID.kI);
 		leftMotors.config_kD(1, leftVelocityPID.kD);
+
+		sendPIDConstants();
 	}
 
 	public void setRightPID() {
+		Log.info("SRXTankDrive", "Setting right PID constants.");
+
 		rightMotors.config_kF(0, rightMotionProfilePID.kF);
 		rightMotors.config_kP(0, rightMotionProfilePID.kP);
 		rightMotors.config_kI(0, rightMotionProfilePID.kI);
@@ -492,6 +498,8 @@ public class SRXTankDrive implements ITankDrive
 		rightMotors.config_kP(1, rightVelocityPID.kP);
 		rightMotors.config_kI(1, rightVelocityPID.kI);
 		rightMotors.config_kD(1, rightVelocityPID.kD);
+
+		sendPIDConstants();
 	}
 
 	/**

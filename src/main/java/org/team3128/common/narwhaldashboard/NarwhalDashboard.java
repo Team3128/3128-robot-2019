@@ -173,7 +173,7 @@ public class NarwhalDashboard extends WebSocketServer {
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-        Log.info("NarwhalDashboard", conn.getRemoteSocketAddress().getHostName() + " has closed its connection.");
+        //Log.info("NarwhalDashboard", conn.getRemoteSocketAddress().getHostName() + " has closed its connection.");
     }
 
     @Override
