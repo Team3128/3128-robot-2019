@@ -17,4 +17,9 @@ public class PIDConstants
 		this.kI = kI;
 		this.kD = kD;
 	}
+
+	@Override
+	public String toString() {
+		return "F: " + kF + ", P: " + kP + ", I: " + kI + ", D:" + kD;
+	}
 }

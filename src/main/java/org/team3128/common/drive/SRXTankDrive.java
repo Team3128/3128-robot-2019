@@ -459,15 +459,19 @@ public class SRXTankDrive implements ITankDrive
 
 		leftMotors.getSlotConfigs(configs, 0, Constants.CAN_TIMEOUT);
 		leftMotionProfilePID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Left MP: " + leftMotionProfilePID);
 
 		leftMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
 		leftVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Left V: " + leftVelocityPID);
 
 		rightMotors.getSlotConfigs(configs, 0, Constants.CAN_TIMEOUT);
 		rightMotionProfilePID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Right MP: " + rightMotionProfilePID);
 
 		rightMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
 		rightVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Right V: " + rightVelocityPID);
 	}
 
 	public void setLeftPID() {
@@ -508,31 +512,31 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	public void setupDashboardPIDListener() {
 		NarwhalDashboard.addNumDataListener("leftPID", (double constants[]) -> {
-			leftMotionProfilePID.kF = constants[0];
-			leftMotionProfilePID.kP = constants[1];
-			leftMotionProfilePID.kI = constants[2];
-			leftMotionProfilePID.kD = constants[3];
+			this.leftMotionProfilePID.kF = constants[0];
+			this.leftMotionProfilePID.kP = constants[1];
+			this.leftMotionProfilePID.kI = constants[2];
+			this.leftMotionProfilePID.kD = constants[3];
 
-			leftVelocityPID.kF = constants[0];
-			leftVelocityPID.kP = constants[4];
-			leftVelocityPID.kI = constants[5];
-			leftVelocityPID.kD = constants[6];
+			this.leftVelocityPID.kF = constants[0];
+			this.leftVelocityPID.kP = constants[4];
+			this.leftVelocityPID.kI = constants[5];
+			this.leftVelocityPID.kD = constants[6];
 
-			setLeftPID();
+			this.setLeftPID();
 		});
 
 		NarwhalDashboard.addNumDataListener("rightPID", (double constants[]) -> {
-			rightMotionProfilePID.kF = constants[0];
-			rightMotionProfilePID.kP = constants[1];
-			rightMotionProfilePID.kI = constants[2];
-			rightMotionProfilePID.kD = constants[3];
+			this.rightMotionProfilePID.kF = constants[0];
+			this.rightMotionProfilePID.kP = constants[1];
+			this.rightMotionProfilePID.kI = constants[2];
+			this.rightMotionProfilePID.kD = constants[3];
 
-			rightVelocityPID.kF = constants[0];
-			rightVelocityPID.kP = constants[4];
-			rightVelocityPID.kI = constants[5];
-			rightVelocityPID.kD = constants[6];
+			this.rightVelocityPID.kF = constants[0];
+			this.rightVelocityPID.kP = constants[4];
+			this.rightVelocityPID.kI = constants[5];
+			this.rightVelocityPID.kD = constants[6];
 
-			setRightPID();
+			this.setRightPID();
 		});
 	}
 
@@ -546,9 +550,9 @@ public class SRXTankDrive implements ITankDrive
 		NarwhalDashboard.put("l_mp_i", leftMotionProfilePID.kI);
 		NarwhalDashboard.put("l_mp_d", leftMotionProfilePID.kD);
 
-		NarwhalDashboard.put("l_mp_p", leftMotionProfilePID.kP);
-		NarwhalDashboard.put("l_mp_i", leftMotionProfilePID.kI);
-		NarwhalDashboard.put("l_mp_d", leftMotionProfilePID.kD);
+		NarwhalDashboard.put("l_v_p", leftVelocityPID.kP);
+		NarwhalDashboard.put("l_v_i", leftVelocityPID.kI);
+		NarwhalDashboard.put("l_v_d", leftVelocityPID.kD);
 
 
 		NarwhalDashboard.put("r_f", rightMotionProfilePID.kF);
@@ -557,9 +561,9 @@ public class SRXTankDrive implements ITankDrive
 		NarwhalDashboard.put("r_mp_i", rightMotionProfilePID.kI);
 		NarwhalDashboard.put("r_mp_d", rightMotionProfilePID.kD);
 
-		NarwhalDashboard.put("r_mp_p", rightMotionProfilePID.kP);
-		NarwhalDashboard.put("r_mp_i", rightMotionProfilePID.kI);
-		NarwhalDashboard.put("r_mp_d", rightMotionProfilePID.kD);
+		NarwhalDashboard.put("r_v_p", leftVelocityPID.kP);
+		NarwhalDashboard.put("r_v_i", leftVelocityPID.kI);
+		NarwhalDashboard.put("r_v_d", leftVelocityPID.kD);
 	}
 
 	/**
