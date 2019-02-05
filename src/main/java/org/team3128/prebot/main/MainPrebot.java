@@ -145,7 +145,7 @@ public class MainPrebot extends NarwhalRobot {
         calculatedWheelbase = new Wheelbase();
         NarwhalDashboard.addButton("wheelbase", (boolean down) -> {
             if (down) {
-                (new CmdCallibrateWheelbase(ahrs, 10, 1000, 1500, calculatedWheelbase)).start();;
+                (new CmdCallibrateWheelbase(ahrs, 5000, 1000, 1500, calculatedWheelbase)).start();;
             }
         });
         
@@ -276,6 +276,7 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.put("rightVelocityError", calculatedWheelbase.rightVelocityError);
 
         SmartDashboard.putNumber("Gyro Angle", RobotMath.normalizeAngle(gyro.getAngle()));
+        SmartDashboard.putNumber("AHRS Angle", ahrs.getAngle());
 
         maxLeftSpeed = Math.max(leftDriveFront.getSelectedSensorVelocity(), maxLeftSpeed);
         maxRightSpeed = Math.max(rightDriveFront.getSelectedSensorVelocity(), maxRightSpeed);

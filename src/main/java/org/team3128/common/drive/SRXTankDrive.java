@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj.SPI;
 //import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * Class which represents a tank drive powered by Talon SRXs on a robot.
@@ -1065,6 +1066,9 @@ public class SRXTankDrive implements ITankDrive
 			leftMotors.selectProfileSlot(1, 0);
 			rightMotors.selectProfileSlot(1, 0);
 
+			autoInvertCallback.invertMotors();
+			invertedForTeleop = false;
+
 			leftSquareErrorSum = 0;
 			rightSquareErrorSum = 0;
 
@@ -1083,14 +1087,18 @@ public class SRXTankDrive implements ITankDrive
 
 		@Override
 		protected void execute() {
-			leftSquareErrorSum += RobotMath.square(leftSpeed - leftMotors.getSelectedSensorVelocity());
-			rightSquareErrorSum += RobotMath.square(rightSpeed - rightMotors.getSelectedSensorVelocity());
-
-			errorSampleCount += 1;
+			
 		}
 
 		@Override
 		protected boolean isFinished() {
+			leftSquareErrorSum += RobotMath.square(leftSpeed - leftMotors.getSelectedSensorVelocity());
+			rightSquareErrorSum += RobotMath.square(rightSpeed - rightMotors.getSelectedSensorVelocity());
+
+			SmartDashboard.putNumber("Left Velocity", leftMotors.getSelectedSensorVelocity());
+
+			errorSampleCount += 1;
+
 			return this.isTimedOut();
 		}
 
