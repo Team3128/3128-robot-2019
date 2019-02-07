@@ -885,6 +885,9 @@ public class SRXTankDrive implements ITankDrive
 	public abstract class CmdMotionProfileMove extends Command {
 		public CmdMotionProfileMove(double timeoutMs) {
 			super(timeoutMs / 1000.0);
+
+			autoInvertCallback.invertMotors();
+			invertedForTeleop = false;
 		}
 
 		protected void initialize() {
@@ -936,7 +939,6 @@ public class SRXTankDrive implements ITankDrive
 			rightStatus.isLast = false;
 
 			processNotifier = new Notifier(() -> {
-				System.out.println("Processing");
 				leftMotors.processMotionProfileBuffer();
 				rightMotors.processMotionProfileBuffer();
 			});
@@ -975,7 +977,11 @@ public class SRXTankDrive implements ITankDrive
 				}
 
 				profilePoint = rm.getNextPoint(speed);
-				//System.out.println(profilePoint.x + "," + profilePoint.y + " (" + profilePoint.durationMs + ")");
+				// System.out.println(profilePoint.x + "," + profilePoint.y + " (" + profilePoint.durationMs + ")");
+				System.out.println(profilePoint.leftDistance + "," + profilePoint.rightDistance);
+
+				SmartDashboard.putNumber("Desired Left", profilePoint.leftDistance);
+				SmartDashboard.putNumber("Desired Right", profilePoint.rightDistance);
 
 				if (profilePoint.last)
 					trajPoint.isLastPoint = true;
@@ -986,9 +992,15 @@ public class SRXTankDrive implements ITankDrive
 				trajPoint.velocity = profilePoint.leftSpeed;
 				leftMotors.pushMotionProfileTrajectory(trajPoint);
 
+				//System.out.println("left: " + trajPoint.position);
+
 				trajPoint.position = profilePoint.rightDistance;
 				trajPoint.velocity = profilePoint.rightSpeed;
 				rightMotors.pushMotionProfileTrajectory(trajPoint);
+
+				//System.out.println("right: " + trajPoint.position);
+				//System.out.println("");
+
 
 				if (first) {
 					processNotifier.startPeriodic(Routemaker.durationSec / 2);
@@ -1007,9 +1019,11 @@ public class SRXTankDrive implements ITankDrive
 			leftMotors.getMotionProfileStatus(leftStatus);
 			rightMotors.getMotionProfileStatus(rightStatus);
 
-			System.out.println(leftStatus.topBufferCnt + " " + leftStatus.btmBufferCnt);
+			if (super.isFinished()) {
+				Log.info("CmdStaticRouteDrive", "Timed out.");
+			}
 
-			return super.isFinished() || leftStatus.isLast && rightStatus.isLast;
+			return super.isFinished() /* || leftStatus.isLast && rightStatus.isLast */;
 		}
 
 		@Override

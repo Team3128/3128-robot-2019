@@ -80,8 +80,8 @@ public class MainPrebot extends NarwhalRobot {
         leftDriveMiddle.set(ControlMode.Follower, leftDriveFront.getDeviceID());
         leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
 
-        double wheelCirc = 12.9 * Length.in;
-        double wheelBase = 68.107 * Length.in;
+        double wheelCirc = 13.12 * Length.in;
+        double wheelBase = 80.12 * Length.in;
         int robotFreeSpeed = 3700;
 
         SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1.0, wheelBase, robotFreeSpeed,
@@ -286,6 +286,9 @@ public class MainPrebot extends NarwhalRobot {
 
         SmartDashboard.putNumber("Left Speed", leftDriveFront.getSelectedSensorVelocity());
         SmartDashboard.putNumber("Right Speed", rightDriveFront.getSelectedSensorVelocity());
+
+        SmartDashboard.putNumber("Left Position", leftDriveFront.getSelectedSensorPosition());
+        SmartDashboard.putNumber("Right Position", rightDriveFront.getSelectedSensorPosition());
         		
     }
 
