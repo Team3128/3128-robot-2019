@@ -960,7 +960,7 @@ public class SRXTankDrive implements ITankDrive
 
 			TrajectoryPoint trajPoint = new TrajectoryPoint();
 			trajPoint.profileSlotSelect0 = 0;
-			trajPoint.zeroPos = false;
+			trajPoint.zeroPos = true;
 			trajPoint.isLastPoint = false;
 
 			ProfilePoint profilePoint;

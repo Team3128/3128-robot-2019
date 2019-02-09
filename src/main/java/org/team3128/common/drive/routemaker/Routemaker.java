@@ -52,9 +52,6 @@ public class Routemaker {
     private double[] parincs;
     private double[] lengths;
 
-    private double l_sum = 0;
-    private double r_sum = 0;
-
     private SRXTankDrive drive;
 
     private double v_max;
@@ -130,6 +127,9 @@ public class Routemaker {
     private double v_cap;
 
     public Waypoint wp_target;
+
+    private double l_pos;
+    private double r_pos;
 
     private boolean last = false;
 
@@ -235,11 +235,11 @@ public class Routemaker {
             r_l = r_r + wb;
         }
 
-        l_sum += Convert.lengthCMtoCTRE(r_l * rad, drive.wheelCircumfrence);
-        r_sum += Convert.lengthCMtoCTRE(r_r * rad, drive.wheelCircumfrence);
+        l_pos = ((v_l < 0) ? -1 : 1) * Convert.lengthCMtoCTRE(r_l * rad, drive.wheelCircumfrence);
+        r_pos = ((v_r < 0) ? -1 : 1) * Convert.lengthCMtoCTRE(r_r * rad, drive.wheelCircumfrence);
 
         wp_target = spline.getIntermediateWaypoint(s);
 
-        return (new ProfilePoint(wp_target.x, wp_target.y, last, l_sum, r_sum, (last) ? 0 : v_l, (last) ? 0 : v_r, (int) Math.ceil(1000 * dt)));
+        return (new ProfilePoint(wp_target.x, wp_target.y, last, l_pos, r_pos, (last) ? 0 : v_l, (last) ? 0 : v_r, (int) Math.ceil(1000 * dt)));
     }
 }
