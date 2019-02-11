@@ -20,7 +20,7 @@ import org.team3128.gromit.mechanisms.LiftIntake;
 import org.team3128.gromit.mechanisms.OptimusPrime;
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;
 import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;
-import org.team3128.gromit.mechanisms.Lift.LiftHeight;
+import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -34,6 +34,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
+import edu.wpi.first.wpilibj.RobotBase;
 
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
@@ -84,7 +85,7 @@ public class MainGromit extends NarwhalRobot{
 
 	// Lift
 	public Lift lift;
-	public LiftHeight liftState;
+	public LiftHeightState liftState;
 	public TalonSRX liftMotorLeader;
 	public VictorSPX liftMotorFollower;
 	public DigitalInput softStopLimitSwitch;
@@ -94,10 +95,14 @@ public class MainGromit extends NarwhalRobot{
 	public LiftIntake liftIntake;
 	public LiftIntakeState liftIntakeState;
 	public VictorSPX liftIntakeMotorLeader, liftIntakeMotorFollower;
-	public Piston liftPiston;
+	public Piston demogorgonPiston;
 
 	// Optimus Prime!
 	public OptimusPrime optimusPrime;
+
+	// Climb
+	public Piston climbPiston;
+	public TalonSRX climbMotor;
 
 	// Controls
 	public Joystick leftJoystick;
@@ -113,16 +118,16 @@ public class MainGromit extends NarwhalRobot{
     @Override
     protected void constructHardware() {
 		// Construct and Configure Drivetrain
-		leftDriveLeader = new TalonSRX(0);
-		leftDriveFollower = new VictorSPX(1);
-		rightDriveLeader = new TalonSRX(2);
-		leftDriveFollower = new VictorSPX(3);
+		leftDriveLeader = new TalonSRX(10);
+		leftDriveFollower = new VictorSPX(11);
+		rightDriveLeader = new TalonSRX(15);
+		rightDriveFollower = new VictorSPX(16);
 
 		leftDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
-		leftDriveFollower.set(ControlMode.Follower, leftDriveLeader.getDeviceID());
+		leftDriveFollower.follow(leftDriveLeader);
 
         rightDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
-		rightDriveFollower.set(ControlMode.Follower, rightDriveLeader.getDeviceID());
+		rightDriveFollower.follow(rightDriveLeader);
 		
 		SRXTankDrive.initialize(rightDriveLeader, leftDriveLeader, wheelCirc, 1, wheelbase, driveMaxSpeed, teleopInvertCallback, autoInvertCallback);
         drive = SRXTankDrive.getInstance();
@@ -130,8 +135,6 @@ public class MainGromit extends NarwhalRobot{
 		drive.setLeftSpeedScalar(leftSpeedScalar);
 		drive.setRightSpeedScalar(rightSpeedScalar);
 		
-		shiftUpSpeed = 0;
-		shiftDownSpeed = 0;
 		gearshift = new TwoSpeedGearshift(false, gearshiftPiston);
 		drive.addShifter(gearshift, shiftUpSpeed, shiftDownSpeed);
 
@@ -140,7 +143,7 @@ public class MainGromit extends NarwhalRobot{
 
 		// Create Four-Bar
 		fourBarState = FourBarState.LOW;
-		fourBarMotor = new TalonSRX(4);
+		fourBarMotor = new TalonSRX(30);
 
 		FourBar.initialize(fourBarMotor, fourBarState);
 		fourBar = FourBar.getInstance();
@@ -148,16 +151,19 @@ public class MainGromit extends NarwhalRobot{
 
 		// Create Ground Intake
 		groundIntakeState = GroundIntake.GroundIntakeState.RETRACTED;
-		groundIntakeMotor = new VictorSPX(5);
+		groundIntakeMotor = new VictorSPX(99);
 
 		GroundIntake.initialize(groundIntakeMotor, groundIntakeState, groundIntakePistons, false);
 		groundIntake = GroundIntake.getInstance();
 
 
 		// Create Lift
-		liftState = LiftHeight.BASE;
-		liftMotorLeader = new TalonSRX(6);
-		liftMotorFollower = new VictorSPX(7);
+		liftState = LiftHeightState.BASE;
+		liftMotorLeader = new TalonSRX(20);
+		liftMotorFollower = new VictorSPX(21);
+
+		liftMotorLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
+		liftMotorFollower.follow(liftMotorLeader);
 
 		Lift.initialize(liftState, liftMotorLeader, softStopLimitSwitch, limitSwitchLocation, liftMaxVelocity);
 		lift = Lift.getInstance();
@@ -165,12 +171,12 @@ public class MainGromit extends NarwhalRobot{
 
 		// Create Lift Intake
 		liftIntakeState = LiftIntake.LiftIntakeState.STOPPED;
-		liftIntakeMotorLeader = new VictorSPX(8);
-		liftIntakeMotorFollower = new VictorSPX(9);
+		liftIntakeMotorLeader = new VictorSPX(31);
+		liftIntakeMotorFollower = new VictorSPX(32);
 		liftIntakeMotorFollower.set(ControlMode.Follower, liftIntakeMotorLeader.getDeviceID());
 		liftIntakeMotorLeader.setInverted(true);
 
-		LiftIntake.initialize(liftIntakeMotorLeader, liftIntakeState, liftPiston, false);
+		LiftIntake.initialize(liftIntakeMotorLeader, liftIntakeState, demogorgonPiston, false);
 		liftIntake = LiftIntake.getInstance();
 
 
@@ -178,6 +184,8 @@ public class MainGromit extends NarwhalRobot{
 		OptimusPrime.initialize();
 		optimusPrime = OptimusPrime.getInstance();
 
+		// Climber
+		climbMotor = new TalonSRX(40);
 
 		// Instantiate PDP
 		powerDistPanel = new PowerDistributionPanel();
@@ -212,17 +220,17 @@ public class MainGromit extends NarwhalRobot{
 			double y = listenerRight.getAxis("MoveTurn");
 			double t = listenerRight.getAxis("Throttle") * -1;
 
-			drive.arcadeDrive(x, y, t, true);
+			drive.arcadeDrive(x, -0.8 * y, t, true);
 		}, "MoveForwards", "MoveTurn", "Throttle");
 
 		listenerRight.nameControl(new Button(2), "Gearshift");
 		listenerRight.addButtonDownListener("Gearshift", drive::shift);
 
-		listenerLeft.nameControl(ControllerExtreme3D.JOYY, "ManualLiftControl");
-		listenerLeft.addListener("ManualLiftControl", (double joyY) ->
-		{
-			lift.powerControl(joyY);
-		});
+		// listenerLeft.nameControl(ControllerExtreme3D.JOYY, "ManualLiftControl");
+		// listenerLeft.addListener("ManualLiftControl", (double joyY) ->
+		// {
+		// 	lift.powerControl(joyY);
+		// });
 
 		listenerLeft.nameControl(new Button(6), "FourBarUp");
 		listenerLeft.addButtonDownListener("FourBarUp", () -> {

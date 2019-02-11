@@ -31,14 +31,15 @@ public class POVValue
 	 * Construct a POV control value from the angle it should match.
 	 * 
 	 * <pre>
-	 *      1
-	 *   8     2
+	 *      8
+	 *   1     7
 	 *  
-	 * 7    0    3
+	 * 2    0    6
 	 *    
-	 *   6     4
-	 *      5
-     </pre>
+	 *   3     5
+	 *      4
+	 </pre>
+	 
 	 * @param directionValue
 	 */
 	public POVValue(int directionValue) {
