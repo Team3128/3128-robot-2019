@@ -14,14 +14,15 @@ import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 
 import org.team3128.gromit.mechanisms.FourBar;
-import org.team3128.gromit.mechanisms.GroundIntake;
+// import org.team3128.gromit.mechanisms.GroundIntake;
 import org.team3128.gromit.mechanisms.Lift;
 import org.team3128.gromit.mechanisms.LiftIntake;
 import org.team3128.gromit.mechanisms.OptimusPrime;
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;
-import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;
+// import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;
 import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
+import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
@@ -34,7 +35,6 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
-import edu.wpi.first.wpilibj.RobotBase;
 
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
@@ -78,8 +78,8 @@ public class MainGromit extends NarwhalRobot{
 	public TalonSRX fourBarMotor;
 
 	// Ground Intake
-	public GroundIntake groundIntake;
-	public GroundIntakeState groundIntakeState;
+	// public GroundIntake groundIntake;
+	// public GroundIntakeState groundIntakeState;
 	public VictorSPX groundIntakeMotor;
 	public Piston groundIntakePistons;
 
@@ -114,6 +114,26 @@ public class MainGromit extends NarwhalRobot{
 	public PowerDistributionPanel powerDistPanel;
 
 	public DriverStation ds;
+	public boolean override = false;
+
+	public enum ManualControlMode {
+        LIFT,
+        FOUR_BAR;
+    }
+	ManualControlMode manualControMode = ManualControlMode.LIFT;
+	
+	public enum GameElement {
+		CARGO,
+		HATCH_PANEL;
+	}
+	GameElement currentGameElement = GameElement.CARGO;
+
+	public enum ScoreLevel {
+		TOP,
+		MID,
+		LOW;
+	}
+	ScoreLevel currentScoreLevel = ScoreLevel.LOW;
 
     @Override
     protected void constructHardware() {
@@ -150,11 +170,11 @@ public class MainGromit extends NarwhalRobot{
 
 
 		// Create Ground Intake
-		groundIntakeState = GroundIntake.GroundIntakeState.RETRACTED;
-		groundIntakeMotor = new VictorSPX(99);
+		// groundIntakeState = GroundIntake.GroundIntakeState.RETRACTED;
+		// groundIntakeMotor = new VictorSPX(99);
 
-		GroundIntake.initialize(groundIntakeMotor, groundIntakeState, groundIntakePistons, false);
-		groundIntake = GroundIntake.getInstance();
+		// GroundIntake.initialize(groundIntakeMotor, groundIntakeState, groundIntakePistons, false);
+		// groundIntake = GroundIntake.getInstance();
 
 
 		// Create Lift
@@ -184,8 +204,9 @@ public class MainGromit extends NarwhalRobot{
 		OptimusPrime.initialize();
 		optimusPrime = OptimusPrime.getInstance();
 
-		// Climber
+		// Create the Climber
 		climbMotor = new TalonSRX(40);
+		climbMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
 
 		// Instantiate PDP
 		powerDistPanel = new PowerDistributionPanel();
@@ -211,6 +232,9 @@ public class MainGromit extends NarwhalRobot{
 
     @Override
     protected void setupListeners() {
+		// REGULAR CONTROLS
+
+		// Drive
         listenerRight.nameControl(ControllerExtreme3D.JOYY, "MoveForwards");
 		listenerRight.nameControl(ControllerExtreme3D.TWIST, "MoveTurn");
 		listenerRight.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");
@@ -226,22 +250,7 @@ public class MainGromit extends NarwhalRobot{
 		listenerRight.nameControl(new Button(2), "Gearshift");
 		listenerRight.addButtonDownListener("Gearshift", drive::shift);
 
-		// listenerLeft.nameControl(ControllerExtreme3D.JOYY, "ManualLiftControl");
-		// listenerLeft.addListener("ManualLiftControl", (double joyY) ->
-		// {
-		// 	lift.powerControl(joyY);
-		// });
-
-		listenerLeft.nameControl(new Button(6), "FourBarUp");
-		listenerLeft.addButtonDownListener("FourBarUp", () -> {
-			fourBar.powerControl(0.5);
-		});
-
-		listenerLeft.nameControl(new Button(4), "FourBarDown");
-		listenerLeft.addButtonUpListener("FourBarDown", () -> {
-			fourBar.powerControl(-0.5);
-		});
-		
+		// Optimus Prime Controls
 		listenerRight.nameControl(new POV(0), "IntakePOV");
 		listenerRight.addListener("IntakePOV", (POVValue pov) ->
 		{
@@ -257,13 +266,43 @@ public class MainGromit extends NarwhalRobot{
 			}
 		});
 
-		listenerLeft.nameControl(new Button(7), "ForceLiftZero");
-		listenerLeft.addButtonDownListener("ForceLiftZero", () ->
-		{
-			liftMotorLeader.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "Score");
+		listenerRight.addButtonDownListener("Score", () -> {
+			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreLevel));
+		});
+		listenerRight.addButtonUpListener("Score", () -> {
+			optimusPrime.setState(RobotState.REST);
 		});
 
-		listenerRight.nameControl(new Button(11), "StartCompressor");
+		// Game Element Controls
+		listenerRight.nameControl(new Button(3), "SelectHatchPanel");
+		listenerRight.addButtonDownListener("SelectHatchPanel", () -> {
+			currentGameElement = GameElement.HATCH_PANEL;
+		});
+
+		listenerRight.nameControl(new Button(3), "SelectCargo");
+		listenerRight.addButtonDownListener("SelectCargo", () -> {
+			currentGameElement = GameElement.CARGO;
+		});
+
+		// Height Controls
+		listenerRight.nameControl(new Button(7), "SelectTopLevel");
+		listenerRight.addButtonDownListener("SelectTopLevel", () -> {
+			currentScoreLevel = ScoreLevel.TOP;
+		});
+
+		listenerRight.nameControl(new Button(9), "SelectMidLevel");
+		listenerRight.addButtonDownListener("SelectMidLevel", () -> {
+			currentScoreLevel = ScoreLevel.MID;
+		});
+
+		listenerRight.nameControl(new Button(11), "SelectLowLevel");
+		listenerRight.addButtonDownListener("SelectLowLevel", () -> {
+			currentScoreLevel = ScoreLevel.LOW;
+		});
+
+		// Compressor
+		listenerRight.nameControl(new Button(10), "StartCompressor");
 		listenerRight.addButtonDownListener("StartCompressor", () ->
 		{
 			compressor.start();
@@ -276,6 +315,97 @@ public class MainGromit extends NarwhalRobot{
 			compressor.stop();
 			Log.info("MainGuido", "Stopping Compressor");
 		});
+
+		// MANUAL CONTROLS AND OVERRIDES
+
+		listenerLeft.nameControl(ControllerExtreme3D.TRIGGER, "Override");
+        listenerLeft.addButtonDownListener("Override", () -> {
+            override = true;
+        });
+        listenerLeft.addButtonUpListener("Override", () -> {
+            override = false;
+		});
+		
+		listenerLeft.nameControl(new Button(2), "ManualMode");
+        listenerLeft.addButtonDownListener("ManualMode", () -> {
+            manualControMode = ManualControlMode.FOUR_BAR;
+        });
+        listenerLeft.addButtonUpListener("ManualMode", () -> {
+            manualControMode = ManualControlMode.LIFT;
+		});
+		
+		listenerLeft.nameControl(ControllerExtreme3D.JOYY, "ManualContol");
+        listenerLeft.addListener("ManualContol", (double joy) -> {
+            if (manualControMode == ManualControlMode.FOUR_BAR) {
+                fourBar.override = true;
+                fourBar.powerControl(joy * 0.5);
+            }
+            else {
+                lift.override = override;
+                lift.powerControl(joy);
+            }
+		});
+		
+		listenerLeft.nameControl(new POV(0), "ManualIntakePOV");
+        listenerLeft.addListener("ManualIntakePOV", (POVValue povVal) -> {
+            switch (povVal.getDirectionValue()) {
+                case 8:
+                case 1:
+                case 2:
+                    liftIntakeMotorLeader.set(ControlMode.PercentOutput, +0.5);
+                    break;
+                case 4:
+                case 5:
+                case 6:
+                    liftIntakeMotorLeader.set(ControlMode.PercentOutput, -0.5);
+                    break;
+                default:
+                    liftIntakeMotorLeader.set(ControlMode.PercentOutput, 0);
+                    break;
+            }
+		});
+		
+		listenerLeft.nameControl(new Button(5), "DemogorgonGrab");
+        listenerLeft.addButtonDownListener("DemogorgonGrab", () -> {
+            demogorgonPiston.setPistonOff();
+        });
+        listenerLeft.addButtonUpListener("DemogorgonGrab", () -> {
+            demogorgonPiston.setPistonOn();
+        });
+
+        listenerLeft.nameControl(new Button(9), "ClimbPistonExtend");
+        listenerLeft.addButtonDownListener("ClimbPistonExtend", () -> {
+            climbPiston.setPistonOn();
+        });
+
+        listenerLeft.nameControl(new Button(10), "ClimbPistonRetract");
+        listenerLeft.addButtonDownListener("ClimbPistonRetract", () -> {
+            climbPiston.setPistonOff();
+        });
+
+        listenerLeft.nameControl(new Button(11), "BackLegDown");
+        listenerLeft.nameControl(new Button(12), "BackLegUp");
+        listenerLeft.addMultiListener(() -> {
+            if (listenerLeft.getButton("BackLegDown") && 
+               !listenerLeft.getButton("BackLegUp")) {
+                climbMotor.set(ControlMode.PercentOutput, +1.0);
+            }
+            else if (listenerLeft.getButton("BackLegUp") &&
+                    !listenerLeft.getButton("BackLegDown")) {
+                climbMotor.set(ControlMode.PercentOutput, -1.0);
+            }
+            else {
+                climbMotor.set(ControlMode.PercentOutput, 0.0);
+            }
+        }, "BackLegDown", "BackLegUp");
+		
+		listenerLeft.nameControl(new Button(7), "SetLiftZero");
+		listenerLeft.addButtonDownListener("SetLiftZero", () ->
+		{
+			liftMotorLeader.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+		});
+
+
 	}
 	
 	@Override

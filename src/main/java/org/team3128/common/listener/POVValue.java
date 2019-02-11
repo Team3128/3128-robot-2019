@@ -8,13 +8,13 @@ package org.team3128.common.listener;
  * 
  * <pre>
  *      8
- *   7     1
+ *   1     7
  *  
- * 6    0    2
+ * 2    0    6
  *    
- *   5     3
+ *   3     5
  *      4
- *      </pre>
+ * </pre>
  * 
  * @author Narwhal
  *

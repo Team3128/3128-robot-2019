@@ -21,8 +21,10 @@ import edu.wpi.first.wpilibj.command.Command;
 
 public class FourBar
 {
-    public final double ratio = 4000 / 180; //to be calculated, convert angle to native units
+    public final double ratio = 4000 / (180 * Angle.DEGREES);
 	public double error, currentAngle;
+
+	private final double allowableError = 2 * Angle.DEGREES;
 
     public enum FourBarState {
         CARGO_INTAKE(0.0 * Angle.DEGREES), 
@@ -36,8 +38,7 @@ public class FourBar
 		}
 	}
 	
-	public enum FourBarControlMode
-	{
+	public enum FourBarControlMode {
 		PERCENT(2, "Percent Output"),
 		POSITION_UP(0, "Position (Up)"),
 		POSITION_DOWN(1, "Position (Down)");
@@ -63,12 +64,11 @@ public class FourBar
 
 	}
 
-	public void setControlMode(FourBarControlMode mode)
-	{
+	public void setControlMode(FourBarControlMode mode) {
 		if (mode != controlMode)
 		{
 			controlMode = mode;
-			Log.debug("setControlMode", "Setting to " + mode.name());
+			Log.debug("FourBar", "Setting control mode to " + mode.name());
 			fourBarMotor.selectProfileSlot(mode.getPIDSlot(), 0);
 			System.out.println(mode.getPIDSlot());
 		}
@@ -83,12 +83,11 @@ public class FourBar
 
 	int limitSwitchLocation, maxVelocity;
 
+	// Control Thread Variables
 	public double peakBreakPower = 0.15;
-	public double breakAngle = -80 * Angle.DEGREES;
 
-	public int controlBuffer = 200;
-
-	public double maxAngle = 85.0 * Angle.DEGREES;
+	public double maxAngle = +85.0 * Angle.DEGREES;
+	public double minAngle = -85.0 * Angle.DEGREES;
 
 	public boolean disabled = false;
 
@@ -122,6 +121,7 @@ public class FourBar
 		fourBarThread = new Thread(() ->
 		{
 			double target = 0;
+			double targetHeight;
 
 			while (true)
 			{
@@ -137,8 +137,8 @@ public class FourBar
 				else {
 					target = 0;
 
-					this.canRaise = this.fourBarMotor.getSelectedSensorPosition(0) < this.maxAngle - this.controlBuffer;
-					this.canLower = this.fourBarMotor.getSelectedSensorPosition(0) > this.controlBuffer;
+					this.canRaise = this.getCurrentAngle() < this.maxAngle - 5 * Angle.DEGREES;
+					this.canLower = this.getCurrentAngle() > this.minAngle + 7 * Angle.DEGREES;
 
 					if (this.controlMode == FourBarControlMode.PERCENT) {
 						if (this.override) {
@@ -153,8 +153,7 @@ public class FourBar
 								target = 0.7 * this.desiredTarget;
 							}
 
-							if ((Math.abs(target) < 0.1
-									&& this.getCurrentAngle() >= this.breakAngle)) {
+							if ((Math.abs(target) < 0.1 && this.getCurrentAngle() >= this.minAngle + 7 * Angle.DEGREES)) {
 								target = this.peakBreakPower * RobotMath.cos(this.getCurrentAngle());
 							}
 
@@ -165,12 +164,13 @@ public class FourBar
 							}
 						}
 					}
+					else {
+						this.currentAngle = this.getCurrentAngle();
+						targetHeight = this.state.targetAngle;
+		
+						this.error = Math.abs(currentAngle - targetHeight);
+					}
 				}
-
-				this.currentAngle = this.getCurrentAngle();
-				double targetHeight = this.state.targetAngle;
-
-				this.error = Math.abs(currentAngle - targetHeight);
 
 				try
 				{
@@ -180,9 +180,9 @@ public class FourBar
 				{
 					e.printStackTrace();
 				}
-
 			}
 		});
+
 		//fourBarThread.start();
 	}
 
@@ -245,6 +245,7 @@ public class FourBar
 	public class CmdSetFourBarPosition extends Command
 	{
 		FourBarState angleState;
+		private double error;
 
 		public CmdSetFourBarPosition(FourBarState angleState)
 		{
@@ -256,32 +257,30 @@ public class FourBar
 		protected void initialize()
 		{
 			setState(angleState);
-			Log.debug("CmdSetLiftPosition", "Changing state to " + angleState.name());
-			Log.debug("CmdSetLiftPosition", "Target: " + fourBarMotor.getClosedLoopTarget(0));
-		}
-
-		@Override
-		protected void execute() {
-			Log.debug("CmdSetLiftPosition", "Error: " + (fourBarMotor.getSelectedSensorPosition(0) - (int)(angleState.targetAngle * ratio)));
+			Log.debug("CmdSetFourBarPosition", "Changing state to " + angleState.name());
+			Log.debug("CmdSetFourBarPosition", "Target: " + fourBarMotor.getClosedLoopTarget(0));
 		}
 
 		@Override
 		protected void end() {
 			powerControl(0);
-			Log.debug("CmdSetLiftPosition", "Lift at desired height of " + angleState.targetAngle);
+			Log.debug("CmdSetFourBarPosition", "Lift at desired height of " + angleState.targetAngle);
 		}
 
 		@Override
 		protected void interrupted()
 		{
-			Log.debug("Lift and Intake", "Ending, was interrupted.");
+			Log.debug("CmdSetFourBarPosition", "Interrupted.");
 			end();
 		}
 
 		@Override
 		protected boolean isFinished()
 		{
-			return isTimedOut() || Math.abs(fourBarMotor.getSelectedSensorPosition(0) - (int)(angleState.targetAngle * ratio)) < 300;
+			error = (getCurrentAngle() - angleState.targetAngle);
+			Log.debug("CmdSetFourBarPosition", "Error: " + error + "deg.");
+
+			return isTimedOut() || Math.abs(error) < allowableError;
 		}
 	}
 

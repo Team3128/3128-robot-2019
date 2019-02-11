@@ -19,8 +19,8 @@ public class LiftIntake {
     public enum LiftIntakeState
 	{
 		STOPPED(0, true, "Stopped"),
-		BALL_INTAKE(-1.0, true, "Ball Intake"),
-        BALL_OUTTAKE(1.0, true, "Ball Outtake"),
+		CARGO_INTAKE(-1.0, true, "Cargo Intake"),
+        CARGO_OUTTAKE(1.0, true, "Cargo Outtake"),
         HATCH_INTAKE(0.0, false, "Hatch Panel Intake");
 
 		private double rollerPower;
