@@ -23,13 +23,13 @@ import edu.wpi.first.wpilibj.command.Command;
 public class Lift
 {
 	/**
-	 * The ratio of the number of native units that results in a forkift
-	 * movement of 1 centimeter.
+	 * The native units that results in lift movement of 1 centimeter.
 	 * 
-	 * MAX ENCODER POSITION = 20,000 MAX HEIGHT = 12ft
+	 * MAX ENCODER POSITION = ??? native units
+	 * MAX HEIGHT = ??? inches
 	 */
 	public final double ratio = 19100.0 / (76 * Length.in); //to be calculated
-	final double tolerance = 5 * Length.in; //to be calculated
+	final double allowableError = 4 * Length.in;
 
 	public double error, currentPosition;
 
@@ -100,17 +100,17 @@ public class Lift
 
 	TalonSRX liftMotor;
 	DigitalInput softStopLimitSwitch;
-	Thread liftThread;
 
 	public LiftControlMode controlMode;
 	public LiftHeightState heightState;
 
 	int limitSwitchLocation, liftMaxVelocity;
 
-	public double brakePower = 0.3;
-	public double brakeHeight = 0.5 * Length.ft;
+	Thread liftThread;
 
-	public int controlBuffer = 200;
+	public double brakePower = 0.3;
+
+	public double controlBuffer = 2 * Length.in;
 
 	public double maxHeight;
 
@@ -172,8 +172,8 @@ public class Lift
 				else {
 					target = 0;
 
-					this.canRaise = this.liftMotor.getSelectedSensorPosition(0) < this.maxHeight - this.controlBuffer;
-					this.canLower = this.liftMotor.getSelectedSensorPosition(0) > this.controlBuffer;
+					this.canRaise = this.getCurrentHeight() < this.maxHeight - this.controlBuffer;
+					this.canLower = this.getCurrentHeight() > this.controlBuffer;
 
 					if (this.controlMode == LiftControlMode.PERCENT) {
 						if (this.override) {
@@ -188,8 +188,7 @@ public class Lift
 								target = 0.7 * this.desiredTarget;
 							}
 
-							if ((Math.abs(target) < 0.1
-									&& this.liftMotor.getSelectedSensorPosition(0) / ratio >= this.brakeHeight)) {
+							if ((Math.abs(target) < 0.1 && this.getCurrentHeight() >= 1 * Length.ft)) {
 								target = this.brakePower;
 							}
 
@@ -200,12 +199,13 @@ public class Lift
 							}
 						}
 					}
+					else {
+						this.currentPosition = liftMotor.getSelectedSensorPosition(0) / ratio;
+						double targetHeight = this.heightState.targetHeight;
+
+						this.error = Math.abs(currentPosition - targetHeight);
+					}
 				}
-
-				this.currentPosition = liftMotor.getSelectedSensorPosition(0) / ratio;
-				double targetHeight = this.heightState.targetHeight;
-
-				this.error = Math.abs(currentPosition - targetHeight);
 
 				try
 				{
@@ -222,6 +222,10 @@ public class Lift
 		liftThread.start();
 	}
 
+	public double getCurrentHeight() {
+		return liftMotor.getSelectedSensorPosition(0) / ratio;
+	}
+
 	public void setState(LiftHeightState liftState)
 	{
 		if (heightState != liftState)
@@ -234,8 +238,10 @@ public class Lift
 			{
 				setControlMode(LiftControlMode.POSITION_UP);
 			}
+
 			heightState = liftState;
-			Log.info("Lift", "Going to " + heightState.targetHeight + " cm.");
+
+			Log.info("Lift", "Setting height to " + heightState.targetHeight + " cm.");
 			liftMotor.set(ControlMode.MotionMagic, heightState.targetHeight * ratio);
 		}
 	}
@@ -290,32 +296,29 @@ public class Lift
 		{
 			setState(heightState);
 			Log.debug("CmdSetLiftPosition", "Changing state to " + heightState.name());
-			Log.debug("CmdSetLiftPosition", "Target: " + liftMotor.getClosedLoopTarget(0));
-		}
-
-
-		@Override
-		protected void execute() {
-			Log.debug("CmdSetLiftPosition", "Error: " + (liftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)));
 		}
 
 		@Override
 		protected void end() {
 			powerControl(0);
-			Log.debug("CmdSetLiftPosition", "Lift at desired height of " + heightState.targetHeight);
+			Log.debug("CmdSetLiftPosition", "Lift at desired height of " + (heightState.targetHeight / Length.in) + " inches.");
 		}
 
 		@Override
 		protected void interrupted()
 		{
-			Log.debug("Lift and Intake", "Ending, was interrupted.");
-			end();
+			powerControl(0);
+			Log.debug("CmdSetLiftPosition", "Interrupted. Final height = " + (getCurrentHeight() / Length.in) + " inches.");
 		}
 
 		@Override
 		protected boolean isFinished()
 		{
-			return isTimedOut() || Math.abs(liftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
+			error = getCurrentHeight() - heightState.targetHeight;
+
+			Log.debug("CmdSetLiftPosition", "Error: " + (error / Length.in) + " inches");
+
+			return isTimedOut() || Math.abs(error) < allowableError;
 		}
 	}
 }

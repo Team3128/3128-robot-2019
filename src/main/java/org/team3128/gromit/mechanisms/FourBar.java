@@ -21,6 +21,9 @@ import edu.wpi.first.wpilibj.command.Command;
 
 public class FourBar
 {
+	/**
+	 * The angle in native units equal to 1 degree.
+	 */
     public final double ratio = 4000 / (180 * Angle.DEGREES);
 	public double error, currentAngle;
 
@@ -258,27 +261,26 @@ public class FourBar
 		{
 			setState(angleState);
 			Log.debug("CmdSetFourBarPosition", "Changing state to " + angleState.name());
-			Log.debug("CmdSetFourBarPosition", "Target: " + fourBarMotor.getClosedLoopTarget(0));
 		}
 
 		@Override
 		protected void end() {
 			powerControl(0);
-			Log.debug("CmdSetFourBarPosition", "Lift at desired height of " + angleState.targetAngle);
+			Log.debug("CmdSetFourBarPosition", "Lift at desired height of " + angleState.targetAngle + " degrees.");
 		}
 
 		@Override
 		protected void interrupted()
 		{
-			Log.debug("CmdSetFourBarPosition", "Interrupted.");
-			end();
+			powerControl(0);
+			Log.debug("CmdSetFourBarPosition", "Interrupted. Final angle = " + getCurrentAngle() + " degrees.");
 		}
 
 		@Override
 		protected boolean isFinished()
 		{
 			error = (getCurrentAngle() - angleState.targetAngle);
-			Log.debug("CmdSetFourBarPosition", "Error: " + error + "deg.");
+			Log.debug("CmdSetFourBarPosition", "Error: " + error + "deg");
 
 			return isTimedOut() || Math.abs(error) < allowableError;
 		}
