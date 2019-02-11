@@ -33,7 +33,7 @@ public class Lift
 
 	public double error, currentPosition;
 
-	public enum LiftHeight
+	public enum LiftHeightState
 	{
 		/*
 		these need to be deifined better
@@ -55,7 +55,7 @@ public class Lift
 
 		public double targetHeight;
 
-		private LiftHeight(double height)
+		private LiftHeightState(double height)
 		{
 			this.targetHeight = height;
 		}
@@ -100,15 +100,17 @@ public class Lift
 
 	TalonSRX liftMotor;
 	DigitalInput softStopLimitSwitch;
-	Thread depositCubeThread, liftThread;
+	Thread liftThread;
 
 	public LiftControlMode controlMode;
-	public LiftHeight state;
+	public LiftHeightState heightState;
 
-	int limitSwitchLocation, LiftMaxVelocity;
+	int limitSwitchLocation, liftMaxVelocity;
 
-	public double brakePower = 0.15;
+	public double brakePower = 0.3;
 	public double brakeHeight = 0.5 * Length.ft;
+
+	public int controlBuffer = 200;
 
 	public double maxHeight;
 
@@ -133,26 +135,25 @@ public class Lift
 		return null;
 	}
 
-	public static void initialize(LiftHeight state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int limitSwitchLocation, int LiftMaxVelocity) {
+	public static void initialize(LiftHeightState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int limitSwitchLocation, int LiftMaxVelocity) {
 		instance = new Lift(state, liftMotor, softStopLimitSwitch, limitSwitchLocation, LiftMaxVelocity);
 	}
 
-	private Lift(LiftHeight state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int limitSwitchLocation, int LiftMaxVelocity) {
+	private Lift(LiftHeightState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int limitSwitchLocation, int LiftMaxVelocity) {
 		this.liftMotor = liftMotor;
 		this.softStopLimitSwitch = softStopLimitSwitch;
 		this.limitSwitchLocation = limitSwitchLocation;
-		this.state = state;
+		this.heightState = state;
 
 		controlMode = LiftControlMode.PERCENT;
 
-		liftMotor.configMotionCruiseVelocity(2000, Constants.CAN_TIMEOUT);
-		liftMotor.configMotionAcceleration(4000, Constants.CAN_TIMEOUT);
+		liftMotor.configMotionCruiseVelocity((int) (0.9 * liftMaxVelocity), Constants.CAN_TIMEOUT);
+		liftMotor.configMotionAcceleration((int) (1.5 * liftMaxVelocity), Constants.CAN_TIMEOUT);
 
 		liftMotor.selectProfileSlot(0, 0);
 
 		liftMotor.configOpenloopRamp(0.2, Constants.CAN_TIMEOUT);
 
-		// We may want to nuke this entire thread because we'll just give drivers complete override.
 		liftThread = new Thread(() ->
 		{
 			double target = 0;
@@ -171,8 +172,8 @@ public class Lift
 				else {
 					target = 0;
 
-					this.canRaise = this.liftMotor.getSelectedSensorPosition(0) < this.maxHeight;
-					this.canLower = this.liftMotor.getSelectedSensorPosition(0) > 100;
+					this.canRaise = this.liftMotor.getSelectedSensorPosition(0) < this.maxHeight - this.controlBuffer;
+					this.canLower = this.liftMotor.getSelectedSensorPosition(0) > this.controlBuffer;
 
 					if (this.controlMode == LiftControlMode.PERCENT) {
 						if (this.override) {
@@ -202,7 +203,7 @@ public class Lift
 				}
 
 				this.currentPosition = liftMotor.getSelectedSensorPosition(0) / ratio;
-				double targetHeight = this.state.targetHeight;
+				double targetHeight = this.heightState.targetHeight;
 
 				this.error = Math.abs(currentPosition - targetHeight);
 
@@ -221,11 +222,11 @@ public class Lift
 		liftThread.start();
 	}
 
-	public void setState(LiftHeight liftState)
+	public void setState(LiftHeightState liftState)
 	{
-		if (state != liftState)
+		if (heightState != liftState)
 		{
-			if (liftState.targetHeight < state.targetHeight)
+			if (liftState.targetHeight < heightState.targetHeight)
 			{
 				setControlMode(LiftControlMode.POSITION_DOWN);
 			}
@@ -233,9 +234,9 @@ public class Lift
 			{
 				setControlMode(LiftControlMode.POSITION_UP);
 			}
-			state = liftState;
-			Log.info("Lift", "Going to " + state.targetHeight + " cm.");
-			liftMotor.set(ControlMode.MotionMagic, state.targetHeight * ratio);
+			heightState = liftState;
+			Log.info("Lift", "Going to " + heightState.targetHeight + " cm.");
+			liftMotor.set(ControlMode.MotionMagic, heightState.targetHeight * ratio);
 		}
 	}
 
@@ -248,7 +249,8 @@ public class Lift
 
 	public boolean getLiftSwitch()
 	{
-		return !softStopLimitSwitch.get();
+		return false;
+		//return !softStopLimitSwitch.get();
 	}
 
 	public class CmdForceZeroLift extends Command {
@@ -261,7 +263,7 @@ public class Lift
 		@Override
 		protected void initialize() {
 			liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
-			state = LiftHeight.BASE;
+			heightState = LiftHeightState.BASE;
 
 			done = true;
 		}
@@ -275,9 +277,9 @@ public class Lift
 
 	public class CmdSetLiftPosition extends Command
 	{
-		LiftHeight heightState;
+		LiftHeightState heightState;
 
-		public CmdSetLiftPosition(LiftHeight heightState)
+		public CmdSetLiftPosition(LiftHeightState heightState)
 		{
 			super(3);
 			this.heightState = heightState;

@@ -71,9 +71,6 @@ public class LiftIntake {
 		this.demogorgonPiston = demogorgonPiston;		
 		
 		this.invertMultiplier = (inverted) ? -1 : 1;
-		
-		this.state = LiftIntakeState.BALL_OUTTAKE;
-		setState(LiftIntakeState.STOPPED);
 	}
 	
 	public void setState(LiftIntakeState newState) {
