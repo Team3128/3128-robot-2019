@@ -12,7 +12,7 @@ import org.team3128.common.listener.controltypes.Button;
 import org.team3128.common.listener.controltypes.POV;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
-
+import org.team3128.common.util.units.Angle;
 import org.team3128.gromit.mechanisms.FourBar;
 // import org.team3128.gromit.mechanisms.GroundIntake;
 import org.team3128.gromit.mechanisms.Lift;
@@ -280,7 +280,7 @@ public class MainGromit extends NarwhalRobot{
 			currentGameElement = GameElement.HATCH_PANEL;
 		});
 
-		listenerRight.nameControl(new Button(3), "SelectCargo");
+		listenerRight.nameControl(new Button(4), "SelectCargo");
 		listenerRight.addButtonDownListener("SelectCargo", () -> {
 			currentGameElement = GameElement.CARGO;
 		});
@@ -405,6 +405,10 @@ public class MainGromit extends NarwhalRobot{
 			liftMotorLeader.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
 		});
 
+		listenerLeft.nameControl(new Button(8), "SetFourBarBase");
+		listenerLeft.addButtonDownListener("SetFourBarBase", () -> {
+			fourBar.setAngle(-90 * Angle.DEGREES);
+		});
 
 	}
 	

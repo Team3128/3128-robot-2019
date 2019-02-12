@@ -24,7 +24,7 @@ public class FourBar
 	/**
 	 * The angle in native units equal to 1 degree.
 	 */
-    public final double ratio = 4000 / (180 * Angle.DEGREES);
+    public final double ratio = 4400 / (180 * Angle.DEGREES);
 	public double error, currentAngle;
 
 	private final double allowableError = 2 * Angle.DEGREES;
@@ -184,13 +184,18 @@ public class FourBar
 					e.printStackTrace();
 				}
 			}
+
 		});
 
-		//fourBarThread.start();
+		fourBarThread.start();
 	}
 
 	public double getCurrentAngle() {
 		return fourBarMotor.getSelectedSensorPosition(0) / ratio;
+	}
+
+	public void setAngle(double angle) {
+		fourBarMotor.setSelectedSensorPosition((int) (angle * ratio), 0, Constants.CAN_TIMEOUT);
 	}
 
     public void setState(FourBarState fourBarState)

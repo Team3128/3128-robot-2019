@@ -46,10 +46,17 @@ public class MainGromitCompetition extends MainGromit {
 
         super.constructHardware();
 
-        liftMotorLeader.setInverted(true);
-        liftMotorLeader.setSensorPhase(false);
+        // Lift Inverts
+        liftMotorLeader.setInverted(false);
+        liftMotorLeader.setSensorPhase(true);
 
         liftMotorLeader.setSelectedSensorPosition(0);
+
+        liftMotorFollower.setInverted(true);
+
+        // FourBar Invert
+        fourBarMotor.setInverted(true);
+        fourBarMotor.setSensorPhase(false);
     }
 
     public static void main(String... args) {
