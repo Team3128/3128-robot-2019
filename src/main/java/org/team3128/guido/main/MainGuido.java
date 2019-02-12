@@ -32,6 +32,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 
 public class MainGuido extends NarwhalRobot
@@ -219,10 +220,10 @@ public class MainGuido extends NarwhalRobot
 
 		forklift.maxHeight = 19000;
 
-		CameraServer cameraServer = CameraServer.getInstance();
-		UsbCamera camera = cameraServer.startAutomaticCapture(0);
-		camera.setFPS(10);
-		camera.setResolution(160, 120);
+		// CameraServer cameraServer = CameraServer.getInstance();
+		// UsbCamera camera = cameraServer.startAutomaticCapture(0);
+		// camera.setFPS(10);
+		// camera.setResolution(160, 120);
 	}
 
 	@Override
@@ -234,10 +235,10 @@ public class MainGuido extends NarwhalRobot
 
 		listenerRight.addMultiListener(() ->
 		{
-			double x = listenerRight.getAxis("MoveForwards");
-			double y = listenerRight.getAxis("MoveTurn");
+			double x = listenerRight.getAxis("MoveTurn");
+			double y = listenerRight.getAxis("MoveForwards");
 			double t = listenerRight.getAxis("Throttle") * -1;
-			drive.arcadeDrive(x, y, t, true);
+			drive.arcadeDrive(-1 * x, -1 * y, t, true);
 		}, "MoveForwards", "MoveTurn", "Throttle");
 
 		listenerRight.nameControl(new Button(2), "GearShift");
@@ -320,9 +321,6 @@ public class MainGuido extends NarwhalRobot
 		{
 			compressor.stop();
 		});
-
-		listenerLeft.nameControl(new Button(11), "ClearStickyFaults");
-		listenerLeft.addButtonDownListener("ClearStickyFaults", powerDistPanel::clearStickyFaults);
 
 		listenerLeft.nameControl(ControllerExtreme3D.JOYY, "ForkliftTest");
 		listenerLeft.addListener("ForkliftTest", (double joyY) ->
@@ -458,5 +456,9 @@ public class MainGuido extends NarwhalRobot
 		
 		forkliftHeight = 10.25/12.0 + forkliftMotorLeader.getSelectedSensorPosition(0) / 262.95 / 12;
 		NarwhalDashboard.put("height", forkliftHeight);
+	}
+
+	public static void main(String[] args) {
+		RobotBase.startRobot(MainGuido::new);
 	}
 }
