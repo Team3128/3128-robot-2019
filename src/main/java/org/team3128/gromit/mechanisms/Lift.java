@@ -11,6 +11,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * Control system for the two-stage, continuous elevator-style lift mechanism. The
@@ -25,10 +26,10 @@ public class Lift
 	/**
 	 * The native units that results in lift movement of 1 centimeter.
 	 * 
-	 * MAX ENCODER POSITION = ??? native units
-	 * MAX HEIGHT = ??? inches
+	 * MAX ENCODER POSITION = 51,745 native units
+	 * MAX HEIGHT = 78.5 inches
 	 */
-	public final double ratio = 19100.0 / (76 * Length.in); //to be calculated
+	public final double ratio = 51745 / (78.8 * Length.in); //to be calculated
 	final double allowableError = 4 * Length.in;
 
 	public double error, currentPosition;
@@ -36,7 +37,7 @@ public class Lift
 	public enum LiftHeightState
 	{
 		/*
-		these need to be deifined better
+		these need to be defined better
 		*/
 		BASE(0 * Length.ft),
 
@@ -108,11 +109,11 @@ public class Lift
 
 	Thread liftThread;
 
-	public double brakePower = 0.3;
+	public double brakePower = 0.15;
 
 	public double controlBuffer = 2 * Length.in;
 
-	public double maxHeight;
+	public double maxHeight = 78 * Length.in;
 
 	public boolean disabled = false;
 
@@ -174,6 +175,9 @@ public class Lift
 
 					this.canRaise = this.getCurrentHeight() < this.maxHeight - this.controlBuffer;
 					this.canLower = this.getCurrentHeight() > this.controlBuffer;
+
+					SmartDashboard.putBoolean("Can Raise?", this.canRaise);
+					SmartDashboard.putBoolean("Can Lower?", this.canLower);
 
 					if (this.controlMode == LiftControlMode.PERCENT) {
 						if (this.override) {
