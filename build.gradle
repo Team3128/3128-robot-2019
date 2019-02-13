@@ -6,7 +6,7 @@ plugins {
 //def ROBOT_MAIN_CLASS = "org.team3128.testbench.main.MainTestBench"
 //def ROBOT_MAIN_CLASS = "org.team3128.prebot.main.MainPrebot"
 //def ROBOT_MAIN_CLASS = "org.team3128.gromit.main.MainGromitCompetition"
-def ROBOT_MAIN_CLASS = "org.team3128.guido.main.MainGuido"
+def ROBOT_MAIN_CLASS = "org.team3128.prebot.main.MainPrebot"
 
 
 // Define my targets (RoboRIO) and artifacts (deployable files)

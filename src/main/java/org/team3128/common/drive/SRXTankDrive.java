@@ -914,9 +914,19 @@ public class SRXTankDrive implements ITankDrive
 		}
 
 		@Override
+		public void interrupted() {
+			leftMotors.clearMotionProfileTrajectories();
+			rightMotors.clearMotionProfileTrajectories();
+
+			tankDrive(0, 0);
+		}
+
+		@Override
 		protected void end() {
 			leftMotors.clearMotionProfileTrajectories();
 			rightMotors.clearMotionProfileTrajectories();
+
+			tankDrive(0, 0);
 		}
 	}
 
@@ -969,11 +979,11 @@ public class SRXTankDrive implements ITankDrive
 
 			do {
 				speed = 1.0;
-				if (rm.s < 0.4) {
-					speed = (0.1 + rm.s) / 0.5;
+				if (rm.s < 0.2) {
+					speed = (0.1 + rm.s) / 0.3;
 				}
-				else if (rm.s > 0.6) {
-					speed = (1.1 - rm.s) / 0.5;
+				else if (rm.s > 0.8) {
+					speed = (1.1 - rm.s) / 0.7;
 				}
 
 				profilePoint = rm.getNextPoint(speed);
@@ -1027,8 +1037,17 @@ public class SRXTankDrive implements ITankDrive
 		}
 
 		@Override
+		public void interrupted() {
+			end();
+
+			Log.info("CmdStaticRouteDrive", "Interrupted.");
+
+		}
+
+		@Override
 		protected synchronized void end() {
 			super.end();
+
 			processNotifier.close();
 			Log.info("CmdStaticRouteDrive", "Finished.");
 		}
