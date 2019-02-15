@@ -8,6 +8,7 @@ import org.team3128.prebot.autonomous.*;
 
 import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.SRXTankDrive;
+import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.units.Length;
 import org.team3128.common.util.Log;
@@ -18,6 +19,8 @@ import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.listener.controltypes.Button;
+
+import org.team3128.common.hardware.limelight.*;
 
 import com.kauailabs.navx.frc.AHRS;
 
@@ -59,6 +62,7 @@ public class MainPrebot extends NarwhalRobot {
 
     public Wheelbase calculatedWheelbase;
 
+    public Limelight limelight = new Limelight(26 * Length.in, 6.15 * Length.in, 28.5 * Length.in, 14.5 * Length.in);
 	@Override
 	protected void constructHardware()
 	{
@@ -80,8 +84,8 @@ public class MainPrebot extends NarwhalRobot {
         leftDriveMiddle.set(ControlMode.Follower, leftDriveFront.getDeviceID());
         leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
 
-        double wheelCirc = 13.12 * Length.in;
-        double wheelBase = 80.12 * Length.in;
+        double wheelCirc = 13.21 * Length.in;
+        double wheelBase = 68.61 * Length.in;
         int robotFreeSpeed = 3700;
 
         SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1.0, wheelBase, robotFreeSpeed,
@@ -115,9 +119,8 @@ public class MainPrebot extends NarwhalRobot {
             }
         );
         tankDrive = SRXTankDrive.getInstance();
-
         tankDrive.setLeftSpeedScalar(1.0);
-        tankDrive.setRightSpeedScalar(1.0);
+        tankDrive.setRightSpeedScalar(0.9178);
         
         ahrs = new AHRS(SPI.Port.kMXP); 
 
@@ -165,7 +168,7 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(ahrs, 10, 1000, 1500, calculatedWheelbase));
         NarwhalDashboard.addAuto("Forward CV", new CmdDriveForwardCVTest());
         NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
-        NarwhalDashboard.addAuto("Heading Then Arc Turn", new CmdHeadingThenArc());
+        NarwhalDashboard.addAuto("Heading Then Arc Turn", new CmdHeadingThenArc(limelight));
         // previous speeds that were used were 2000, 4000 (arbitrarily picked)
     }
 
@@ -176,8 +179,8 @@ public class MainPrebot extends NarwhalRobot {
 		lm.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");		
 
         lm.addMultiListener(() -> {
-			tankDrive.arcadeDrive(0.7 * lm.getAxis("MoveTurn"),
-					lm.getAxis("MoveForwards"),
+			tankDrive.arcadeDrive(0.7 * RobotMath.thresh(lm.getAxis("MoveTurn"), 0.2),
+					RobotMath.thresh(lm.getAxis("MoveForwards"), 0.2),
 					-1 * lm.getAxis("Throttle"),
 					true);		
         }, "MoveTurn", "MoveForwards", "Throttle");
@@ -185,7 +188,7 @@ public class MainPrebot extends NarwhalRobot {
         lm.nameControl(new Button(12), "FullSpeed");
         lm.addButtonDownListener("FullSpeed", () ->
 		{
-			tankDrive.tankDrive(1, 1);
+			tankDrive.tankDrive(-1, -1);
         });
         lm.addButtonUpListener("FullSpeed", () ->
 		{

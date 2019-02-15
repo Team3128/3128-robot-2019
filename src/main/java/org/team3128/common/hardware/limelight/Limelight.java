@@ -19,8 +19,8 @@ public class Limelight
     public double targetHeight;
     public double targetWidth;
 
-    public NetworkTable limelightTable, calcValsTable;
-    public NetworkTableEntry nd, nd0, nd1, ntheta, ntheta0, ntheta1, ndeltax, ndeltay, ;
+    public NetworkTable limelightTable, calcValsTable, camTranTable;
+    public NetworkTableEntry nd, nd0, nd1, ntheta, ntheta0, ntheta1, ndeltax, ndeltay;
     
     public Limelight(double cameraAngle, double cameraHeight, double targetHeight, double targetWidth){
         this.cameraAngle = cameraAngle;

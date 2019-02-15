@@ -611,18 +611,24 @@ public class SRXTankDrive implements ITankDrive
 	{
 		// when the wheels' angular distance get within this threshold of the
 		// correct value, that side is considered done
-		final static double MOVEMENT_ERROR_THRESHOLD = 20 * Angle.DEGREES;
+		final static double MOVEMENT_ERROR_THRESHOLD = 360 * Angle.DEGREES;
+		final static double ERROR_PLATEAU_THRESHOLD = 0.01 * Angle.DEGREES;
 
 		protected double power;
 
 		protected double leftAngle, rightAngle;
 
-		protected int correctDistanceCount = 0;
+		protected int errorPlateauCount = 25;
 
 		protected MoveEndMode endMode;
 
-		boolean leftDone;
-		boolean rightDone;
+		boolean leftDone, rightDone;
+		int leftCount, rightCount;
+		double lastLeftError, lastRightError;
+
+		double leftError, rightError;
+
+		boolean isInZone;
 
 		boolean useScalars;
 
@@ -729,23 +735,46 @@ public class SRXTankDrive implements ITankDrive
 		// execute()
 		protected boolean isFinished()
 		{
-			double leftError = leftMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - leftAngle;
-			double rightError = rightMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - rightAngle;
-
-			Log.debug("CmdMotionMagicMove",
-					  "L=" + leftMotors.getSelectedSensorPosition(0)  + "nu; err=" + leftError  + "deg, "
-					+ "R=" + rightMotors.getSelectedSensorPosition(0) + "nu; err=" + rightError + "deg.");
-
-			leftDone = leftAngle == 0 || Math.abs(leftError) < MOVEMENT_ERROR_THRESHOLD;
-			rightDone = rightAngle == 0 || Math.abs(rightError) < MOVEMENT_ERROR_THRESHOLD;
-
 			if (isTimedOut())
 			{
 				Log.unusual("CmdMotionMagicMove", "Autonomous Move Overtime.");
 				return true;
 			}
 
-			boolean isInZone;
+			leftError = leftMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - leftAngle;
+			rightError = rightMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - rightAngle;
+
+			Log.debug("CmdMotionMagicMove",
+					  "L=" + leftMotors.getSelectedSensorPosition(0)  + "nu; err=" + leftError  + "deg, "
+					+ "R=" + rightMotors.getSelectedSensorPosition(0) + "nu; err=" + rightError + "deg.");
+
+			if (leftError < -MOVEMENT_ERROR_THRESHOLD || rightError < -MOVEMENT_ERROR_THRESHOLD) {
+				return false;
+			}
+
+			if (leftAngle == 0) {
+				leftCount = errorPlateauCount + 1;
+			}
+			else if (Math.abs(leftError - lastLeftError) < ERROR_PLATEAU_THRESHOLD) {
+				leftCount += 1;
+			}
+			else {
+				leftCount = 0;
+			}
+			lastLeftError = leftError;
+			leftDone = leftCount > errorPlateauCount;
+			
+			if (rightAngle == 0) {
+				rightCount = errorPlateauCount + 1;
+			}
+			else if (Math.abs(rightError - lastRightError) < ERROR_PLATEAU_THRESHOLD) {
+				rightCount += 1;
+			}
+			else {
+				rightCount = 0;
+			}
+			lastRightError = rightError;
+			rightDone = rightCount > errorPlateauCount;
 
 			switch (endMode)
 			{
@@ -758,23 +787,16 @@ public class SRXTankDrive implements ITankDrive
 				break;
 			}
 
-			if (isInZone)
-			{
-				++correctDistanceCount;
-			}
-			else
-			{
-				correctDistanceCount = 0;
-			}
-
-			return correctDistanceCount > 25;
-
+			return isInZone;
 		}
 
 		// Called once after isFinished returns true
 		protected void end()
 		{
 			Log.info("CmdMotionMagicMove", "Ending normally.");
+			Log.debug("CmdMotionMagicMove", "Final Errors:\n" + 
+					  "  L=" + leftError  + "deg\n"
+					+ "  R=" + rightError + "deg");
 
 			stopMovement();
 		}
