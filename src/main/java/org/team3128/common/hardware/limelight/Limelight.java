@@ -20,7 +20,7 @@ public class Limelight
     public double targetWidth;
 
     public NetworkTable limelightTable, calcValsTable;
-    public NetworkTableEntry nd, nd0, nd1, ntheta, ntheta0, ntheta1, ndeltax, ndeltay;
+    public NetworkTableEntry nd, nd0, nd1, ntheta, ntheta0, ntheta1, ndeltax, ndeltay, ;
     
     public Limelight(double cameraAngle, double cameraHeight, double targetHeight, double targetWidth){
         this.cameraAngle = cameraAngle;
@@ -29,6 +29,7 @@ public class Limelight
         this.targetWidth = targetWidth;
 
         limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
+        camTranTable = NetworkTableInstance.getDefault().getTable("camtran");
         calcValsTable = NetworkTableInstance.getDefault().getTable("calculatedLimelight");
 
         nd = calcValsTable.getEntry("d");
@@ -48,7 +49,6 @@ public class Limelight
 
         for(String valueKey : LimelightConstants.valueKeys) {
             runningTotal = 0;
-
             for(int a = 0; a < numSamples; a++){
                 runningTotal += limelightTable.getEntry(valueKey).getDouble(0.0);
             }
@@ -58,6 +58,15 @@ public class Limelight
 
         data.set("tx", -1 * data.tx());
 
+        for(String valueKey : LimelightConstants.valueKeysPnP) {
+            runningTotal = 0;
+            for(int a = 0; a < numSamples; a++){
+                runningTotal += camTranTable.getEntry(valueKey).getDouble(0.0);
+            }
+
+            data.set(valueKey, runningTotal / numSamples);
+        }
+        
         return data;
     }
     
@@ -89,6 +98,8 @@ public class Limelight
         ntheta1.setString(("" + outputData.theta1));
         ndeltax.setString(("" + outputData.dX));
         ndeltay.setString(("" + outputData.dY));
+
+
 
         return outputData;
     }
