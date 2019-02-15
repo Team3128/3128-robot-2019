@@ -19,8 +19,8 @@ public class Limelight
     public double targetHeight;
     public double targetWidth;
 
-    public NetworkTable limelightTable, calcValsTable, camTranTable;
-    public NetworkTableEntry nd, nd0, nd1, ntheta, ntheta0, ntheta1, ndeltax, ndeltay;
+    public NetworkTable limelightTable, calcValsTable;
+    public NetworkTableEntry nd, nd0, nd1, ntheta, ntheta0, ntheta1, ndeltax, ndeltay, camtran;
     
     public Limelight(double cameraAngle, double cameraHeight, double targetHeight, double targetWidth){
         this.cameraAngle = cameraAngle;
@@ -29,7 +29,6 @@ public class Limelight
         this.targetWidth = targetWidth;
 
         limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
-        camTranTable = NetworkTableInstance.getDefault().getTable("camtran");
         calcValsTable = NetworkTableInstance.getDefault().getTable("calculatedLimelight");
 
         nd = calcValsTable.getEntry("d");
@@ -44,9 +43,9 @@ public class Limelight
 
     public LimelightData getValues(int numSamples) {
         LimelightData data = new LimelightData();
-
         double runningTotal;
-
+        double[] camtranArray;
+        int index = 0;
         for(String valueKey : LimelightConstants.valueKeys) {
             runningTotal = 0;
             for(int a = 0; a < numSamples; a++){
@@ -57,14 +56,17 @@ public class Limelight
         }
 
         data.set("tx", -1 * data.tx());
-
-        for(String valueKey : LimelightConstants.valueKeysPnP) {
-            runningTotal = 0;
-            for(int a = 0; a < numSamples; a++){
-                runningTotal += camTranTable.getEntry(valueKey).getDouble(0.0);
+        //load the camtranArray
+        camtranArray = limelightTable.getEntry("camtran").getDoubleArray(new double[6]);
+        //add each element in the array to the updated values for however many times numSamples dictates(minus 1 because the array is initially loaded in with values)
+        for(int a = 0; a < numSamples - 1; a++){
+            for(int b = 0; b < camtranArray.length; b++){
+                camtranArray[b] += limelightTable.getEntry("camtran").getDoubleArray(new double[6])[b];
             }
-
-            data.set(valueKey, runningTotal / numSamples);
+        }
+        for(String valueKey : LimelightConstants.valueKeysPnP) {
+            data.set(valueKey, camtranArray[index] / numSamples);
+            index++;
         }
         
         return data;
