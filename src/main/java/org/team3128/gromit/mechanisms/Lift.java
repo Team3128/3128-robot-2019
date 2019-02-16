@@ -29,10 +29,10 @@ public class Lift
 		*/
 		BASE(0 * Length.ft),
 
-		INTAKE_FLOOR_CARGO(1.5 * Length.ft), //first raise for ball intake
-		HOLD_CARGO(2.5 * Length.ft), //second raise for ball intake
+		INTAKE_FLOOR_CARGO(6.3 * Length.in), //first raise for ball intake
+		HOLD_CARGO(12 * Length.in), //second raise for ball intake
 
-		LOW_CARGO(3 * Length.ft),
+		LOW_CARGO(36 * Length.in),
 		MID_CARGO(59 * Length.in),
 		TOP_CARGO(64 * Length.in),
 		
@@ -40,7 +40,8 @@ public class Lift
         MID_HATCH(0 * Length.ft),
 		TOP_HATCH(0 * Length.ft),
 		
-        INTAKE_LOADING_CARGO(0 * Length.ft);
+        LOADING_SHIP_CARGO(0 * Length.ft),
+        LOADING_SHIP_HATCH(0 * Length.ft);
 
 		public double targetHeight;
 
@@ -122,6 +123,10 @@ public class Lift
 
 	public boolean override = false;
 
+	private boolean cmdControlled = false;
+
+	private double lastHeight;
+
 
 	private static Lift instance = null;
 	public static Lift getInstance() {
@@ -170,7 +175,7 @@ public class Lift
 					target = 0;
 
 					this.canRaise = this.getCurrentHeight() < this.maxHeight - this.controlBuffer;
-					this.canLower = this.getCurrentHeight() > this.controlBuffer;
+					this.canLower = this.getCurrentHeight() > 0;
 
 					if (this.controlMode == LiftControlMode.PERCENT) {
 						if (this.override) {
@@ -196,6 +201,12 @@ public class Lift
 							}
 						}
 					}
+					// else if (!this.cmdControlled) {
+					// 	if (Math.abs(getCurrentHeight() - heightState.targetHeight) < 4 * Length.in && 
+					// 	    Math.abs(getCurrentHeight() - lastHeight) < 0.1 * Length.in) {
+					// 		powerControl(0);
+					// 	}
+					// }
 				}
 
 				try
@@ -219,19 +230,19 @@ public class Lift
 
 	public void setState(LiftHeightState liftState)
 	{
-		if (heightState != liftState)
-		{
-			if (liftState.targetHeight < heightState.targetHeight)
-			{
-				setControlMode(LiftControlMode.POSITION_DOWN);
-			}
-			else
+		heightState = liftState;
+
+		if (Math.abs(getCurrentHeight() - heightState.targetHeight) > 4 * Length.in) {
+			if (getCurrentHeight() < heightState.targetHeight)
 			{
 				setControlMode(LiftControlMode.POSITION_UP);
 			}
-
-			heightState = liftState;
-
+			else
+			{
+				setControlMode(LiftControlMode.POSITION_DOWN);
+			}
+	
+			lastHeight = getCurrentHeight();
 			Log.info("Lift", "Setting height to " + heightState.targetHeight + " cm.");
 			liftMotor.set(ControlMode.MotionMagic, heightState.targetHeight * ratio);
 		}
@@ -298,6 +309,8 @@ public class Lift
 		@Override
 		protected void initialize()
 		{
+			cmdControlled = true;
+
 			setState(heightState);
 			Log.debug("CmdSetLiftPosition", "Changing state to " + heightState.name());
 		}
@@ -305,6 +318,7 @@ public class Lift
 		@Override
 		protected void end() {
 			powerControl(0);
+			cmdControlled = false;
 			Log.debug("CmdSetLiftPosition", "Lift at desired height of " + (heightState.targetHeight / Length.in) + " inches.");
 		}
 
@@ -312,6 +326,7 @@ public class Lift
 		protected void interrupted()
 		{
 			powerControl(0);
+			cmdControlled = false;
 			Log.debug("CmdSetLiftPosition", "Interrupted. Final height = " + (getCurrentHeight() / Length.in) + " inches.");
 		}
 

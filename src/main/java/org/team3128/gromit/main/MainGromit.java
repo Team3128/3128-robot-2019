@@ -41,6 +41,7 @@ import edu.wpi.first.wpilibj.PowerDistributionPanel;
 
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 
@@ -121,6 +122,14 @@ public class MainGromit extends NarwhalRobot{
 	public DriverStation ds;
 	public boolean override = false;
 
+	public CommandGroup enterIntake, exitIntake;
+
+	// 4200
+	public double maxLiftSpeed = 0;
+
+	// 7510
+	public double minLiftSpeed = 0;
+
 	public enum ManualControlMode {
         LIFT,
         FOUR_BAR;
@@ -191,7 +200,7 @@ public class MainGromit extends NarwhalRobot{
 
 
 		// Create Four-Bar
-		fourBarState = FourBarState.LOW;
+		fourBarState = FourBarState.HIGH;
 		fourBarMotor = new TalonSRX(30);
 
 		FourBar.initialize(fourBarMotor, fourBarState, fourBarLimitSwitch, fourBarSwitchPosition, fourBarMaxVelocity);
@@ -263,9 +272,46 @@ public class MainGromit extends NarwhalRobot{
 			}
 		});
 
-		NarwhalDashboard.addButton("fourbar_low", (boolean down) -> {
+		NarwhalDashboard.addButton("fourbar_ship_low", (boolean down) -> {
 			if (down) {
-				fourBar.setState(FourBarState.LOW);
+				fourBar.setState(FourBarState.SHIP_LOADING);
+			}
+		});
+
+		NarwhalDashboard.addButton("fourbar_rocket_low", (boolean down) -> {
+			if (down) {
+				fourBar.setState(FourBarState.ROCKET_LOW);
+			}
+		});
+
+		NarwhalDashboard.addButton("fourbar_intake", (boolean down) -> {
+			if (down) {
+				fourBar.setState(FourBarState.CARGO_INTAKE);
+			}
+		});
+
+
+		NarwhalDashboard.addButton("lift_base", (boolean down) -> {
+			if (down) {
+				lift.setState(LiftHeightState.BASE);
+			}
+		});
+
+		NarwhalDashboard.addButton("lift_low", (boolean down) -> {
+			if (down) {
+				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreLevel.LOW).targetLiftState);
+			}
+		});
+
+		NarwhalDashboard.addButton("lift_mid", (boolean down) -> {
+			if (down) {
+				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreLevel.MID).targetLiftState);
+			}
+		});
+
+		NarwhalDashboard.addButton("lift_top", (boolean down) -> {
+			if (down) {
+				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreLevel.TOP).targetLiftState);
 			}
 		});
     }
@@ -298,10 +344,16 @@ public class MainGromit extends NarwhalRobot{
 				case 3:
 				case 4:
 				case 5:
-					(optimusPrime.new CmdEnterIntakeMode()).start();
+					if (exitIntake != null) exitIntake.cancel();
+
+					enterIntake = (optimusPrime.new CmdEnterIntakeMode());
+					enterIntake.start();
 					break;
 				default:
-					(optimusPrime.new CmdExitIntakeMode()).start();
+					if (enterIntake != null) enterIntake.cancel();
+
+					exitIntake = (optimusPrime.new CmdExitIntakeMode());
+					exitIntake.start();
 					break;
 			}
 		});
@@ -315,12 +367,12 @@ public class MainGromit extends NarwhalRobot{
 		});
 
 		// Game Element Controls
-		listenerRight.nameControl(new Button(3), "SelectHatchPanel");
+		listenerRight.nameControl(new Button(4), "SelectHatchPanel");
 		listenerRight.addButtonDownListener("SelectHatchPanel", () -> {
 			currentGameElement = GameElement.HATCH_PANEL;
 		});
 
-		listenerRight.nameControl(new Button(4), "SelectCargo");
+		listenerRight.nameControl(new Button(3), "SelectCargo");
 		listenerRight.addButtonDownListener("SelectCargo", () -> {
 			currentGameElement = GameElement.CARGO;
 		});
@@ -369,34 +421,26 @@ public class MainGromit extends NarwhalRobot{
 		// MANUAL CONTROLS AND OVERRIDES
 
 		listenerLeft.nameControl(ControllerExtreme3D.TRIGGER, "Override");
-        listenerLeft.addButtonDownListener("Override", () -> {
-            override = true;
-        });
-        listenerLeft.addButtonUpListener("Override", () -> {
-            override = false;
-		});
-		
 		listenerLeft.nameControl(new Button(2), "ManualMode");
-        listenerLeft.addButtonDownListener("ManualMode", () -> {
-            manualControMode = ManualControlMode.FOUR_BAR;
-        });
-        listenerLeft.addButtonUpListener("ManualMode", () -> {
-            manualControMode = ManualControlMode.LIFT;
-		});
-		
-		listenerLeft.nameControl(ControllerExtreme3D.JOYY, "ManualContol");
-        listenerLeft.addListener("ManualContol", (double joy) -> {
-            if (manualControMode == ManualControlMode.FOUR_BAR) {
-				fourBar.override = override;
+		listenerLeft.nameControl(ControllerExtreme3D.JOYY, "ManualControl");
+
+		listenerLeft.addMultiListener(() -> {
+			if (listenerLeft.getButton("ManualMode")) {
+				lift.override = false;
 				lift.powerControl(0);
-                fourBar.powerControl(joy);
-            }
-            else {
-				lift.override = override;
+
+				fourBar.override = listenerLeft.getButton("Override");
+				fourBar.powerControl(listenerLeft.getAxis("ManualControl"));
+			}
+			else {
+				fourBar.override = false;
 				fourBar.powerControl(0);
-                lift.powerControl(joy);
-            }
-		});
+
+				lift.override = listenerLeft.getButton("Override");
+				lift.powerControl(listenerLeft.getAxis("ManualControl"));
+			}
+		}, "ManualMode", "Override", "ManualControl");
+
 		
 		listenerLeft.nameControl(new POV(0), "ManualIntakePOV");
         listenerLeft.addListener("ManualIntakePOV", (POVValue povVal) -> {
@@ -506,6 +550,12 @@ public class MainGromit extends NarwhalRobot{
 		SmartDashboard.putBoolean("Four Bar: Can Lower", fourBar.canLower);
 
 		SmartDashboard.putNumber("Four Bar Angle (degrees)", fourBar.getCurrentAngle());
+
+		maxLiftSpeed = Math.max(maxLiftSpeed, liftMotorLeader.getSelectedSensorVelocity());
+		SmartDashboard.putNumber("Max Upward Lift Speed", maxLiftSpeed);
+
+		minLiftSpeed = Math.min(minLiftSpeed, liftMotorLeader.getSelectedSensorVelocity());
+		SmartDashboard.putNumber("Min Lift Speed", minLiftSpeed);
 
 
 		NarwhalDashboard.put("scoring_height", (targetStructure == ScoreStructure.CARGO_SHIP) ? "ship" : targetScoreLevel.getName());

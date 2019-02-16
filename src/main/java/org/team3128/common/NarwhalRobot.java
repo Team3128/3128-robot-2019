@@ -128,7 +128,7 @@ public abstract class NarwhalRobot extends RobotBase {
     /* ----------- Overridable periodic code ----------------- */
 
     protected double m_period;
-    public static final double kDefaultPeriod = 0.02;
+    public static final double kDefaultPeriod = 0.03;
     
     private enum Mode {
         kNone,

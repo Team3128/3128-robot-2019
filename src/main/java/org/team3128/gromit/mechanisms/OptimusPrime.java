@@ -28,15 +28,16 @@ public class OptimusPrime {
         INTAKE_FLOOR_CARGO(LiftHeightState.INTAKE_FLOOR_CARGO, FourBarState.CARGO_INTAKE),
         HOLD_CARGO(LiftHeightState.HOLD_CARGO, FourBarState.CARGO_INTAKE),
         
-        DEPOSIT_LOW_HATCH(LiftHeightState.LOW_HATCH, FourBarState.LOW),
-        DEPOSIT_MID_HATCH(LiftHeightState.MID_HATCH, FourBarState.LOW),
+        DEPOSIT_LOW_HATCH(LiftHeightState.LOW_HATCH, FourBarState.ROCKET_LOW),
+        DEPOSIT_MID_HATCH(LiftHeightState.MID_HATCH, FourBarState.ROCKET_LOW),
         DEPOSIT_TOP_HATCH(LiftHeightState.TOP_HATCH, FourBarState.HIGH),
         
-        DEPOSIT_LOW_CARGO(LiftHeightState.LOW_CARGO, FourBarState.LOW),
-        DEPOSIT_MID_CARGO(LiftHeightState.MID_CARGO, FourBarState.LOW),
+        DEPOSIT_LOW_CARGO(LiftHeightState.LOW_CARGO, FourBarState.ROCKET_LOW),
+        DEPOSIT_MID_CARGO(LiftHeightState.MID_CARGO, FourBarState.ROCKET_LOW),
         DEPOSIT_TOP_CARGO(LiftHeightState.TOP_CARGO, FourBarState.HIGH),
         
-        INTAKE_LOADING_CARGO(LiftHeightState.INTAKE_LOADING_CARGO, FourBarState.LOW);
+        LOADING_SHIP_CARGO(LiftHeightState.LOADING_SHIP_CARGO, FourBarState.SHIP_LOADING),
+        LOADING_SHIP_HATCH(LiftHeightState.LOADING_SHIP_HATCH, FourBarState.SHIP_LOADING);
         
         public LiftHeightState targetLiftState;
         public FourBarState targetFourBarState;

@@ -48,7 +48,7 @@ public class MainGromitCompetition extends MainGromit {
 
         liftLimitSwitch = new DigitalInput(2);
         liftSwitchPosition = 0;
-        liftMaxVelocity = 500;
+        liftMaxVelocity = 4200;
 
         fourBarLimitSwitch = new DigitalInput(0);
         fourBarSwitchPosition = +90 * Angle.DEGREES;
