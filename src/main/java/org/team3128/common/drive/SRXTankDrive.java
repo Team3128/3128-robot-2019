@@ -1073,6 +1073,42 @@ public class SRXTankDrive implements ITankDrive
 		}
 	}
 
+	public class CmdDriveUntilStop extends Command {
+		double power;
+
+		public CmdDriveUntilStop(double power, int timeoutMs) {
+			super(timeoutMs / 1000.0);
+
+			this.power = power;
+		}
+
+		@Override
+		protected void initialize() {
+			leftMotors.set(ControlMode.PercentOutput, leftSpeedScalar * power);
+			rightMotors.set(ControlMode.PercentOutput, rightSpeedScalar * power);
+		}
+
+		@Override
+		protected boolean isFinished() {
+			return Math.abs(leftMotors.getSelectedSensorVelocity()) < 200 && Math.abs(rightMotors.getSelectedSensorVelocity()) < 200 || isTimedOut();
+		}
+
+		@Override
+		protected void end() {
+			leftMotors.set(ControlMode.PercentOutput, 0);
+			rightMotors.set(ControlMode.PercentOutput, 0);
+
+			if (isTimedOut()) {
+				Log.unusual("CmdDriveUntilStopped", "Timed out.");
+			}
+		}
+
+		@Override
+		protected void interrupted() {
+			end();
+		}
+	}
+
 	/**
 	 * Callibration command to determine effective wheelbase of the robot. This is to account for the field material scrubbing against the wheels,
 	 * resisting a turning motion.
@@ -1115,6 +1151,7 @@ public class SRXTankDrive implements ITankDrive
 			this.calculatedWheelbase = calculatedWheelbase;
 		}
 
+		@Override
 		protected void initialize() {
 			leftMotors.selectProfileSlot(1, 0);
 			rightMotors.selectProfileSlot(1, 0);
