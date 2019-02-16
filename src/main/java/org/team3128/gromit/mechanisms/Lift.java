@@ -23,19 +23,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Lift
 {
-	/**
-	 * The native units that results in lift movement of 1 centimeter.
-	 * 
-	 * MAX ENCODER POSITION = 51,745 native units
-	 * MAX HEIGHT = 78.5 inches
-	 */
-	public final double ratio = 51745 / (78.8 * Length.in); //to be calculated
-	final double allowableError = 4 * Length.in;
-
-	public double error, currentPosition;
-
-	public enum LiftHeightState
-	{
+	public enum LiftHeightState {
 		/*
 		these need to be defined better
 		*/
@@ -62,8 +50,7 @@ public class Lift
 		}
 	}
 
-	public enum LiftControlMode
-	{
+	public enum LiftControlMode {
 		PERCENT(2, "Percent Output"),
 		POSITION_UP(0, "Position (Up)"),
 		POSITION_DOWN(1, "Position (Down)");
@@ -89,8 +76,7 @@ public class Lift
 
 	}
 
-	public void setControlMode(LiftControlMode mode)
-	{
+	public void setControlMode(LiftControlMode mode) {
 		if (mode != controlMode)
 		{
 			controlMode = mode;
@@ -99,14 +85,25 @@ public class Lift
 		}
 	}
 
+	/**
+	 * The native units that results in lift movement of 1 centimeter.
+	 * 
+	 * MAX ENCODER POSITION = 51,745 native units
+	 * MAX HEIGHT = 78.5 inches
+	 */
+	public final double ratio = 51745 / (78.8 * Length.in);
+	public double error;
+
+	// Physical Components
 	TalonSRX liftMotor;
-	DigitalInput softStopLimitSwitch;
+	DigitalInput limitSwitch;
 
 	public LiftControlMode controlMode;
 	public LiftHeightState heightState;
 
 	int limitSwitchLocation, liftMaxVelocity;
 
+	// Lift Thread
 	Thread liftThread;
 
 	public double brakePower = 0.15;
@@ -144,15 +141,13 @@ public class Lift
 		this.liftMotor = liftMotor;
 		this.heightState = state;
 
-		this.softStopLimitSwitch = softStopLimitSwitch;
+		this.limitSwitch = softStopLimitSwitch;
 		this.liftMaxVelocity = liftMaxVelocity;
 
-		controlMode = LiftControlMode.PERCENT;
+		setControlMode(LiftControlMode.PERCENT);
 
 		liftMotor.configMotionCruiseVelocity((int) (0.9 * liftMaxVelocity), Constants.CAN_TIMEOUT);
 		liftMotor.configMotionAcceleration((int) (1.5 * liftMaxVelocity), Constants.CAN_TIMEOUT);
-
-		liftMotor.selectProfileSlot(0, 0);
 
 		liftMotor.configOpenloopRamp(0.2, Constants.CAN_TIMEOUT);
 
@@ -162,7 +157,7 @@ public class Lift
 
 			while (true)
 			{
-				if (this.getLiftSwitch())
+				if (this.getLimitSwitch())
 				{
 					this.liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
 				}
@@ -200,12 +195,6 @@ public class Lift
 								this.setPoint = target;
 							}
 						}
-					}
-					else {
-						this.currentPosition = liftMotor.getSelectedSensorPosition(0) / ratio;
-						double targetHeight = this.heightState.targetHeight;
-
-						this.error = Math.abs(currentPosition - targetHeight);
 					}
 				}
 
@@ -255,38 +244,52 @@ public class Lift
 		desiredTarget = joystick;
 	}
 
-	public boolean getLiftSwitch()
+	public boolean getLimitSwitch()
 	{
-		return !softStopLimitSwitch.get();
+		return !limitSwitch.get();
 	}
 
-	public class CmdForceZeroLift extends Command {
-		private boolean done = false;
-
-		public CmdForceZeroLift() {
-			super(0.5);
+	public class CmdZero extends Command {
+		public CmdZero() {
+			super(0.2);
 		}
 
 		@Override
 		protected void initialize() {
-			liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
-			heightState = LiftHeightState.BASE;
-
-			done = true;
+			override = true;
+			powerControl(-0.2);
 		}
 
 		@Override
 		protected boolean isFinished()
 		{
-			return done || isTimedOut();
+			return getLimitSwitch() || isTimedOut();
+		}
+
+		@Override
+		protected void end() {
+			override = false;
+			liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
+		}
+
+		@Override
+		protected void interrupted() {
+			end();
 		}
 	}
 
-	public class CmdSetLiftPosition extends Command
+	public class CmdHeightControl extends Command
 	{
+		final static double MOVEMENT_ERROR_THRESHOLD = 6 * Length.in;
+		final static double ERROR_PLATEAU_THRESHOLD = 0.01 * Length.in;
+
+		final static int ERROR_PLATEAU_COUNT = 10;
+
+		int plateauCount;
+
 		LiftHeightState heightState;
 
-		public CmdSetLiftPosition(LiftHeightState heightState)
+		public CmdHeightControl(LiftHeightState heightState)
 		{
 			super(3);
 			this.heightState = heightState;
@@ -319,7 +322,18 @@ public class Lift
 
 			Log.debug("CmdSetLiftPosition", "Error: " + (error / Length.in) + " inches");
 
-			return isTimedOut() || Math.abs(error) < allowableError;
+			if (Math.abs(error) > 6 * Length.in) return false;
+
+			if (Math.abs(error) < MOVEMENT_ERROR_THRESHOLD) {
+				plateauCount += 1;
+			}
+			else {
+				plateauCount = 0;
+			}
+
+			if (plateauCount > ERROR_PLATEAU_COUNT) return true;
+
+			return isTimedOut();
 		}
 	}
 }

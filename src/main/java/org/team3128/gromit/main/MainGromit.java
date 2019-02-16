@@ -42,13 +42,11 @@ import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.AnalogInput;
 
 
 public class MainGromit extends NarwhalRobot{
 
     public AHRS ahrs;
-    AnalogInput ai = new AnalogInput(0);
 	public ADXRS450_Gyro gyro;
 	
 	// Drivetrain
@@ -130,17 +128,41 @@ public class MainGromit extends NarwhalRobot{
 	ManualControlMode manualControMode = ManualControlMode.LIFT;
 	
 	public enum GameElement {
-		CARGO,
-		HATCH_PANEL;
+		CARGO("cargo"),
+		HATCH_PANEL("hatch_panel");
+
+		private String name;
+		private GameElement(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return name;
+		}
 	}
 	GameElement currentGameElement = GameElement.CARGO;
 
 	public enum ScoreLevel {
-		TOP,
-		MID,
-		LOW;
+		TOP("top"),
+		MID("mid"),
+		LOW("low");
+
+		private String name;
+		private ScoreLevel(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return name;
+		}
 	}
-	ScoreLevel currentScoreLevel = ScoreLevel.LOW;
+ 	ScoreLevel targetScoreLevel = ScoreLevel.LOW;
+
+	public enum ScoreStructure {
+		CARGO_SHIP,
+		ROCKET;
+	}
+	ScoreStructure targetStructure = ScoreStructure.CARGO_SHIP;
 
     @Override
     protected void constructHardware() {
@@ -286,7 +308,7 @@ public class MainGromit extends NarwhalRobot{
 
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "Score");
 		listenerRight.addButtonDownListener("Score", () -> {
-			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreLevel));
+			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, targetScoreLevel));
 		});
 		listenerRight.addButtonUpListener("Score", () -> {
 			optimusPrime.setState(RobotState.REST);
@@ -303,20 +325,30 @@ public class MainGromit extends NarwhalRobot{
 			currentGameElement = GameElement.CARGO;
 		});
 
+		// Scoring Structure Controls
+		listenerRight.nameControl(new Button(6), "SelectCargoShip");
+		listenerRight.addButtonDownListener("SelectCargoShip", () -> {
+			targetStructure = ScoreStructure.CARGO_SHIP;
+			targetScoreLevel = ScoreLevel.LOW;
+		});
+
 		// Height Controls
 		listenerRight.nameControl(new Button(7), "SelectTopLevel");
 		listenerRight.addButtonDownListener("SelectTopLevel", () -> {
-			currentScoreLevel = ScoreLevel.TOP;
+			targetStructure = ScoreStructure.ROCKET;
+			targetScoreLevel = ScoreLevel.TOP;
 		});
 
 		listenerRight.nameControl(new Button(9), "SelectMidLevel");
 		listenerRight.addButtonDownListener("SelectMidLevel", () -> {
-			currentScoreLevel = ScoreLevel.MID;
+			targetStructure = ScoreStructure.ROCKET;
+			targetScoreLevel = ScoreLevel.MID;
 		});
 
 		listenerRight.nameControl(new Button(11), "SelectLowLevel");
 		listenerRight.addButtonDownListener("SelectLowLevel", () -> {
-			currentScoreLevel = ScoreLevel.LOW;
+			targetStructure = ScoreStructure.ROCKET;
+			targetScoreLevel = ScoreLevel.LOW;
 		});
 
 		// Compressor
@@ -470,9 +502,13 @@ public class MainGromit extends NarwhalRobot{
 		SmartDashboard.putNumber("Lift Height (inches)", lift.getCurrentHeight() / Length.in);
 
 
-		SmartDashboard.putBoolean("FourBar: Can Raise", fourBar.canRaise);
-		SmartDashboard.putBoolean("FourBar: Can Lower", fourBar.canLower);
+		SmartDashboard.putBoolean("Four Bar: Can Raise", fourBar.canRaise);
+		SmartDashboard.putBoolean("Four Bar: Can Lower", fourBar.canLower);
 
-		SmartDashboard.putNumber("FourBar Angle (degrees)", fourBar.getCurrentAngle());
+		SmartDashboard.putNumber("Four Bar Angle (degrees)", fourBar.getCurrentAngle());
+
+
+		NarwhalDashboard.put("scoring_height", (targetStructure == ScoreStructure.CARGO_SHIP) ? "ship" : targetScoreLevel.getName());
+		NarwhalDashboard.put("game_element", currentGameElement.getName());
 	}
 }

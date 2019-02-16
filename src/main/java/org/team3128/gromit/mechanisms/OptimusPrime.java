@@ -23,8 +23,10 @@ import org.team3128.gromit.mechanisms.FourBar.FourBarState;
 
 public class OptimusPrime {
     public enum RobotState {
+        REST(LiftHeightState.BASE, FourBarState.HIGH),
+
         INTAKE_FLOOR_CARGO(LiftHeightState.INTAKE_FLOOR_CARGO, FourBarState.CARGO_INTAKE),
-        REST(LiftHeightState.HOLD_CARGO, FourBarState.CARGO_INTAKE),
+        HOLD_CARGO(LiftHeightState.HOLD_CARGO, FourBarState.CARGO_INTAKE),
         
         DEPOSIT_LOW_HATCH(LiftHeightState.LOW_HATCH, FourBarState.LOW),
         DEPOSIT_MID_HATCH(LiftHeightState.MID_HATCH, FourBarState.LOW),
@@ -105,11 +107,11 @@ public class OptimusPrime {
     public class CmdEnterIntakeMode extends CommandGroup {
         public CmdEnterIntakeMode() {      
             addSequential(new CmdRunInParallel(
-            lift.new CmdSetLiftPosition(LiftHeightState.INTAKE_FLOOR_CARGO),
+            lift.new CmdHeightControl(LiftHeightState.INTAKE_FLOOR_CARGO),
             liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.CARGO_INTAKE))
             );
             // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
-            addSequential(fourBar.new CmdSetFourBarPosition(FourBarState.CARGO_INTAKE));
+            addSequential(fourBar.new CmdAngleControl(FourBarState.CARGO_INTAKE));
             // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.INTAKING));
         }
     }
@@ -118,7 +120,7 @@ public class OptimusPrime {
         public CmdExitIntakeMode() {
             // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
             addSequential(new CmdRunInParallel(
-            lift.new CmdSetLiftPosition(LiftHeightState.HOLD_CARGO),
+            lift.new CmdHeightControl(LiftHeightState.HOLD_CARGO),
             liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.CARGO_INTAKE))
             );
             // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.RETRACTED));

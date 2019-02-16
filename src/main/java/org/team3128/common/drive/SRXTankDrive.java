@@ -609,16 +609,14 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	public class CmdMotionMagicMove extends Command
 	{
-		// when the wheels' angular distance get within this threshold of the
-		// correct value, that side is considered done
 		final static double MOVEMENT_ERROR_THRESHOLD = 360 * Angle.DEGREES;
 		final static double ERROR_PLATEAU_THRESHOLD = 0.01 * Angle.DEGREES;
+
+		final static int ERROR_PLATEAU_COUNT = 25;
 
 		protected double power;
 
 		protected double leftAngle, rightAngle;
-
-		protected int errorPlateauCount = 25;
 
 		protected MoveEndMode endMode;
 
@@ -753,7 +751,7 @@ public class SRXTankDrive implements ITankDrive
 			}
 
 			if (leftAngle == 0) {
-				leftCount = errorPlateauCount + 1;
+				leftCount = ERROR_PLATEAU_COUNT + 1;
 			}
 			else if (Math.abs(leftError - lastLeftError) < ERROR_PLATEAU_THRESHOLD) {
 				leftCount += 1;
@@ -762,10 +760,10 @@ public class SRXTankDrive implements ITankDrive
 				leftCount = 0;
 			}
 			lastLeftError = leftError;
-			leftDone = leftCount > errorPlateauCount;
+			leftDone = leftCount > ERROR_PLATEAU_COUNT;
 			
 			if (rightAngle == 0) {
-				rightCount = errorPlateauCount + 1;
+				rightCount = ERROR_PLATEAU_COUNT + 1;
 			}
 			else if (Math.abs(rightError - lastRightError) < ERROR_PLATEAU_THRESHOLD) {
 				rightCount += 1;
@@ -774,7 +772,7 @@ public class SRXTankDrive implements ITankDrive
 				rightCount = 0;
 			}
 			lastRightError = rightError;
-			rightDone = rightCount > errorPlateauCount;
+			rightDone = rightCount > ERROR_PLATEAU_COUNT;
 
 			switch (endMode)
 			{

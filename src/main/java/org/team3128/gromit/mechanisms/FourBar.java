@@ -133,7 +133,7 @@ public class FourBar
 
 			while (true)
 			{
-				if (this.getLiftSwitch())
+				if (this.getLimitSwitch())
 				{
 					this.setCurrentAngle(limitSwitchAngle);
 				}
@@ -235,38 +235,46 @@ public class FourBar
 		desiredTarget = angle;
 	}
 
-	public boolean getLiftSwitch()
+	public boolean getLimitSwitch()
 	{
 		return !limitSwitch.get();
 	}
-	
-	public class CmdForceZeroFourBar extends Command {
-		private boolean done = false;
 
-		public CmdForceZeroFourBar() {
-			super(0.5);
+	public class CmdZero extends Command {
+		public CmdZero() {
+			super(0.25);
 		}
 
 		@Override
 		protected void initialize() {
-			fourBarMotor.setSelectedSensorPosition((int) (ratio * limitSwitchAngle), 0, Constants.CAN_TIMEOUT);
-			state = FourBarState.CARGO_INTAKE;
-			done = true;
+			override = true;
+			powerControl(0.2);
 		}
 
 		@Override
 		protected boolean isFinished()
 		{
-			return done || isTimedOut();
+			return getLimitSwitch() || isTimedOut();
+		}
+
+		@Override
+		protected void end() {
+			override = false;
+			setCurrentAngle(limitSwitchAngle);
+		}
+
+		@Override
+		protected void interrupted() {
+			end();
 		}
 	}
 
-	public class CmdSetFourBarPosition extends Command
+	public class CmdAngleControl extends Command
 	{
 		FourBarState angleState;
 		private double error;
 
-		public CmdSetFourBarPosition(FourBarState angleState)
+		public CmdAngleControl(FourBarState angleState)
 		{
 			super(2);
 			this.angleState = angleState;
@@ -298,7 +306,7 @@ public class FourBar
 			error = (getCurrentAngle() - angleState.targetAngle);
 			Log.debug("CmdSetFourBarPosition", "Error: " + error + "deg");
 
-			return isTimedOut() || Math.abs(error) < allowableError;
+			return Math.abs(error) < allowableError || isTimedOut();
 		}
 	}
 
