@@ -136,15 +136,16 @@ public class Lift
 		return null;
 	}
 
-	public static void initialize(LiftHeightState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int limitSwitchLocation, int LiftMaxVelocity) {
-		instance = new Lift(state, liftMotor, softStopLimitSwitch, limitSwitchLocation, LiftMaxVelocity);
+	public static void initialize(LiftHeightState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int liftMaxVelocity) {
+		instance = new Lift(state, liftMotor, softStopLimitSwitch, liftMaxVelocity);
 	}
 
-	private Lift(LiftHeightState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int limitSwitchLocation, int LiftMaxVelocity) {
+	private Lift(LiftHeightState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int liftMaxVelocity) {
 		this.liftMotor = liftMotor;
-		this.softStopLimitSwitch = softStopLimitSwitch;
-		this.limitSwitchLocation = limitSwitchLocation;
 		this.heightState = state;
+
+		this.softStopLimitSwitch = softStopLimitSwitch;
+		this.liftMaxVelocity = liftMaxVelocity;
 
 		controlMode = LiftControlMode.PERCENT;
 
@@ -176,9 +177,6 @@ public class Lift
 					this.canRaise = this.getCurrentHeight() < this.maxHeight - this.controlBuffer;
 					this.canLower = this.getCurrentHeight() > this.controlBuffer;
 
-					SmartDashboard.putBoolean("Can Raise?", this.canRaise);
-					SmartDashboard.putBoolean("Can Lower?", this.canLower);
-
 					if (this.controlMode == LiftControlMode.PERCENT) {
 						if (this.override) {
 							target = this.desiredTarget;
@@ -192,7 +190,7 @@ public class Lift
 								target = 0.7 * this.desiredTarget;
 							}
 
-							if ((Math.abs(target) < 0.1 && this.getCurrentHeight() >= 1 * Length.ft)) {
+							if ((Math.abs(target) < 0.1 && this.getCurrentHeight() >= 3 * Length.in)) {
 								target = this.brakePower;
 							}
 
@@ -259,8 +257,7 @@ public class Lift
 
 	public boolean getLiftSwitch()
 	{
-		return false;
-		//return !softStopLimitSwitch.get();
+		return !softStopLimitSwitch.get();
 	}
 
 	public class CmdForceZeroLift extends Command {

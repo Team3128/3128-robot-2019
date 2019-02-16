@@ -10,15 +10,18 @@ import org.team3128.common.listener.POVValue;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.listener.controltypes.Button;
 import org.team3128.common.listener.controltypes.POV;
+import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.units.Angle;
+import org.team3128.common.util.units.Length;
 import org.team3128.gromit.mechanisms.FourBar;
 // import org.team3128.gromit.mechanisms.GroundIntake;
 import org.team3128.gromit.mechanisms.Lift;
 import org.team3128.gromit.mechanisms.LiftIntake;
 import org.team3128.gromit.mechanisms.OptimusPrime;
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;
+import org.team3128.gromit.mechanisms.Lift.LiftControlMode;
 // import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;
 import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
@@ -38,7 +41,7 @@ import edu.wpi.first.wpilibj.PowerDistributionPanel;
 
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
-
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.AnalogInput;
 
 
@@ -76,6 +79,9 @@ public class MainGromit extends NarwhalRobot{
 	public FourBar fourBar;
 	public FourBarState fourBarState;
 	public TalonSRX fourBarMotor;
+	public DigitalInput fourBarLimitSwitch;
+	public double fourBarSwitchPosition;
+	public int fourBarMaxVelocity;
 
 	// Ground Intake
 	// public GroundIntake groundIntake;
@@ -88,14 +94,15 @@ public class MainGromit extends NarwhalRobot{
 	public LiftHeightState liftState;
 	public TalonSRX liftMotorLeader;
 	public VictorSPX liftMotorFollower;
-	public DigitalInput softStopLimitSwitch;
-	public int limitSwitchLocation, liftMaxVelocity;
+	public DigitalInput liftLimitSwitch;
+	public int liftSwitchPosition, liftMaxVelocity;
 
 	// Lift Intake
 	public LiftIntake liftIntake;
 	public LiftIntakeState liftIntakeState;
 	public VictorSPX liftIntakeMotorLeader, liftIntakeMotorFollower;
 	public Piston demogorgonPiston;
+	public DigitalInput cargoBumperSwitch;
 
 	// Optimus Prime!
 	public OptimusPrime optimusPrime;
@@ -165,7 +172,7 @@ public class MainGromit extends NarwhalRobot{
 		fourBarState = FourBarState.LOW;
 		fourBarMotor = new TalonSRX(30);
 
-		FourBar.initialize(fourBarMotor, fourBarState);
+		FourBar.initialize(fourBarMotor, fourBarState, fourBarLimitSwitch, fourBarSwitchPosition, fourBarMaxVelocity);
 		fourBar = FourBar.getInstance();
 
 
@@ -182,10 +189,9 @@ public class MainGromit extends NarwhalRobot{
 		liftMotorLeader = new TalonSRX(20);
 		liftMotorFollower = new VictorSPX(21);
 
-		liftMotorLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
 		liftMotorFollower.follow(liftMotorLeader);
 
-		Lift.initialize(liftState, liftMotorLeader, softStopLimitSwitch, limitSwitchLocation, liftMaxVelocity);
+		Lift.initialize(liftState, liftMotorLeader, liftLimitSwitch, liftMaxVelocity);
 		lift = Lift.getInstance();
 
 
@@ -196,7 +202,7 @@ public class MainGromit extends NarwhalRobot{
 		liftIntakeMotorFollower.set(ControlMode.Follower, liftIntakeMotorLeader.getDeviceID());
 		liftIntakeMotorLeader.setInverted(true);
 
-		LiftIntake.initialize(liftIntakeMotorLeader, liftIntakeState, demogorgonPiston, false);
+		LiftIntake.initialize(liftIntakeMotorLeader, liftIntakeState, demogorgonPiston, false, cargoBumperSwitch);
 		liftIntake = LiftIntake.getInstance();
 
 
@@ -228,6 +234,18 @@ public class MainGromit extends NarwhalRobot{
 		rightJoystick = new Joystick(0);
 		listenerRight = new ListenerManager(rightJoystick);
 		addListenerManager(listenerRight);
+
+		NarwhalDashboard.addButton("fourbar_high", (boolean down) -> {
+			if (down) {
+				fourBar.setState(FourBarState.HIGH);
+			}
+		});
+
+		NarwhalDashboard.addButton("fourbar_low", (boolean down) -> {
+			if (down) {
+				fourBar.setState(FourBarState.LOW);
+			}
+		});
     }
 
     @Override
@@ -337,11 +355,13 @@ public class MainGromit extends NarwhalRobot{
 		listenerLeft.nameControl(ControllerExtreme3D.JOYY, "ManualContol");
         listenerLeft.addListener("ManualContol", (double joy) -> {
             if (manualControMode == ManualControlMode.FOUR_BAR) {
-                fourBar.override = true;
-                fourBar.powerControl(joy * 0.5);
+				fourBar.override = override;
+				lift.powerControl(0);
+                fourBar.powerControl(joy);
             }
             else {
-                lift.override = override;
+				lift.override = override;
+				fourBar.powerControl(0);
                 lift.powerControl(joy);
             }
 		});
@@ -352,16 +372,16 @@ public class MainGromit extends NarwhalRobot{
                 case 8:
                 case 1:
                 case 2:
-                    liftIntakeMotorLeader.set(ControlMode.PercentOutput, +0.5);
-                    break;
+					liftIntake.setState(LiftIntakeState.CARGO_OUTTAKE);
+					break;
                 case 4:
                 case 5:
                 case 6:
-                    liftIntakeMotorLeader.set(ControlMode.PercentOutput, -0.5);
-                    break;
+					liftIntake.setState(LiftIntakeState.CARGO_INTAKE);
+					break;
                 default:
-                    liftIntakeMotorLeader.set(ControlMode.PercentOutput, 0);
-                    break;
+					liftIntake.setState(LiftIntakeState.STOPPED);
+					break;
             }
 		});
 		
@@ -407,9 +427,8 @@ public class MainGromit extends NarwhalRobot{
 
 		listenerLeft.nameControl(new Button(8), "SetFourBarBase");
 		listenerLeft.addButtonDownListener("SetFourBarBase", () -> {
-			fourBar.setAngle(-90 * Angle.DEGREES);
+			fourBar.setCurrentAngle(-90 * Angle.DEGREES);
 		});
-
 	}
 	
 	@Override
@@ -445,6 +464,15 @@ public class MainGromit extends NarwhalRobot{
 	@Override
 	protected void updateDashboard()
 	{	
-		
+		SmartDashboard.putBoolean("Lift: Can Raise", lift.canRaise);
+		SmartDashboard.putBoolean("Lift: Can Lower", lift.canLower);
+
+		SmartDashboard.putNumber("Lift Height (inches)", lift.getCurrentHeight() / Length.in);
+
+
+		SmartDashboard.putBoolean("FourBar: Can Raise", fourBar.canRaise);
+		SmartDashboard.putBoolean("FourBar: Can Lower", fourBar.canLower);
+
+		SmartDashboard.putNumber("FourBar Angle (degrees)", fourBar.getCurrentAngle());
 	}
 }

@@ -2,8 +2,10 @@ package org.team3128.gromit.main;
 
 
 import org.team3128.common.hardware.misc.Piston;
+import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
 
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotBase;
 
 public class MainGromitCompetition extends MainGromit {
@@ -44,13 +46,21 @@ public class MainGromitCompetition extends MainGromit {
         placeholder = new Piston(2, 5);
         placeholder.setPistonOn();
 
+        liftLimitSwitch = new DigitalInput(2);
+        liftSwitchPosition = 0;
+        liftMaxVelocity = 500;
+
+        fourBarLimitSwitch = new DigitalInput(0);
+        fourBarSwitchPosition = +90 * Angle.DEGREES;
+        fourBarMaxVelocity = 100;
+        
+        cargoBumperSwitch = new DigitalInput(3);
+
         super.constructHardware();
 
         // Lift Inverts
         liftMotorLeader.setInverted(false);
         liftMotorLeader.setSensorPhase(true);
-
-        liftMotorLeader.setSelectedSensorPosition(0);
 
         liftMotorFollower.setInverted(true);
 

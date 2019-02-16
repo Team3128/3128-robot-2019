@@ -6,7 +6,9 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.util.Log;
 
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * Control system for the mechanism controlling mechanisms 
@@ -19,7 +21,7 @@ public class LiftIntake {
     public enum LiftIntakeState
 	{
 		STOPPED(0, true, "Stopped"),
-		CARGO_INTAKE(-1.0, true, "Cargo Intake"),
+		CARGO_INTAKE(-0.6, true, "Cargo Intake"),
         CARGO_OUTTAKE(1.0, true, "Cargo Outtake"),
         HATCH_INTAKE(0.0, false, "Hatch Panel Intake");
 
@@ -46,10 +48,14 @@ public class LiftIntake {
         }
 	}
 	
-    VictorSPX intakeMotors;
+	VictorSPX intakeMotors;
+	DigitalInput cargoBumperSwitch;
+
 	private LiftIntakeState state;
 	private Piston demogorgonPiston;
 	private double invertMultiplier;
+
+	private Thread cargoThread;
 
 	private static LiftIntake instance = null;
 	public static LiftIntake getInstance() {
@@ -61,16 +67,38 @@ public class LiftIntake {
 		return null;
 	}
 
-	public static void initialize(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, boolean inverted) {
-		instance = new LiftIntake(intakeMotors, state, demogorgonPiston, inverted);
+	public static void initialize(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, boolean inverted, DigitalInput cargoBumperSwitch) {
+		instance = new LiftIntake(intakeMotors, state, demogorgonPiston, inverted, cargoBumperSwitch);
 	}
 
-	private LiftIntake(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, boolean inverted) {
+	private LiftIntake(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, boolean inverted, DigitalInput cargoBumperSwitch) {
 		this.intakeMotors = intakeMotors;
 		this.state = state;
-		this.demogorgonPiston = demogorgonPiston;		
+		this.demogorgonPiston = demogorgonPiston;
 		
 		this.invertMultiplier = (inverted) ? -1 : 1;
+
+		this.cargoBumperSwitch = cargoBumperSwitch;
+
+		cargoThread = new Thread(() -> {			
+			while (true) {
+				if (this.state.rollerPower > 0 || this.state.rollerPower < 0 && !this.getCargoBumper()) {
+					this.setIntakePower(this.state.rollerPower);
+				}
+				else {
+					this.setIntakePower(0);
+				}
+
+				SmartDashboard.putBoolean("Cargo Bumper Switch", this.getCargoBumper());
+
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		cargoThread.start();
 	}
 	
 	public void setState(LiftIntakeState newState) {
@@ -82,14 +110,16 @@ public class LiftIntake {
 				demogorgonPiston.setPistonOff();
 			}
 			
-			setIntakePower(newState.getRollerPower());
-
 			state = newState;
 		}
 	}
 	
 	private void setIntakePower(double power) {
 		intakeMotors.set(ControlMode.PercentOutput, invertMultiplier * power);
+	}
+
+	public boolean getCargoBumper() {
+		return !this.cargoBumperSwitch.get();
 	}
 
 	public class CmdSetLiftIntakeState extends Command {
