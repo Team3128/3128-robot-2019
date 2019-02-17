@@ -85,7 +85,7 @@ public class MainPrebot extends NarwhalRobot {
         leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
 
         double wheelCirc = 13.21 * Length.in;
-        double wheelBase = 68.61 * Length.in;
+        double wheelBase = 30 * Length.in;//68.61 * Length.in;
         int robotFreeSpeed = 3700;
 
         SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1.0, wheelBase, robotFreeSpeed,
