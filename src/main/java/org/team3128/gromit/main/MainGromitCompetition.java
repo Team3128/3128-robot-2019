@@ -43,8 +43,7 @@ public class MainGromitCompetition extends MainGromit {
         climbPiston = new Piston(1, 6);
         climbPiston.setPistonOff();
 
-        demogorgonPiston = new Piston(0, 7);
-        demogorgonPiston.setPistonOn();
+        demogorgonPiston = new Piston(7, 0);
 
         placeholder = new Piston(2, 5);
         placeholder.setPistonOn();

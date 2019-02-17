@@ -11,7 +11,6 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.command.Command;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * Control system for the two-stage, continuous elevator-style lift mechanism. The
@@ -24,19 +23,15 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Lift
 {
 	public enum LiftHeightState {
-		/*
-		these need to be defined better
-		*/
 		BASE(0 * Length.ft),
 
-		INTAKE_FLOOR_CARGO(6.3 * Length.in), //first raise for ball intake
-		HOLD_CARGO(12 * Length.in), //second raise for ball intake
+		INTAKE_FLOOR_CARGO(6.3 * Length.in),
 
 		LOW_CARGO(40 * Length.in),
 		MID_CARGO(75 * Length.in),
 		TOP_CARGO(78 * Length.in),
 		
-        LOW_HATCH(18.5 * Length.in), //same for rocket and cargo and loading station
+        LOW_HATCH(18.5 * Length.in),
         MID_HATCH(54 * Length.in),
 		TOP_HATCH(59 * Length.in),
 		

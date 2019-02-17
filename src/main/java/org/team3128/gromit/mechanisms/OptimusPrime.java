@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 import org.team3128.common.autonomous.primitives.CmdRunInParallel;
 import org.team3128.common.util.Log;
 import org.team3128.gromit.main.MainGromit.GameElement;
-import org.team3128.gromit.main.MainGromit.ScoreLevel;
+import org.team3128.gromit.main.MainGromit.ScoreTarget;
 import org.team3128.gromit.mechanisms.LiftIntake;
 
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;
@@ -23,21 +23,20 @@ import org.team3128.gromit.mechanisms.FourBar.FourBarState;
 
 public class OptimusPrime {
     public enum RobotState {
-        REST(LiftHeightState.BASE, FourBarState.HIGH),
+        REST(LiftHeightState.BASE, FourBarState.CARGO_HIGH),
 
         INTAKE_FLOOR_CARGO(LiftHeightState.INTAKE_FLOOR_CARGO, FourBarState.CARGO_INTAKE),
-        HOLD_CARGO(LiftHeightState.HOLD_CARGO, FourBarState.CARGO_INTAKE),
         
         DEPOSIT_LOW_HATCH(LiftHeightState.LOW_HATCH, FourBarState.ROCKET_LOW),
         DEPOSIT_MID_HATCH(LiftHeightState.MID_HATCH, FourBarState.ROCKET_LOW),
-        DEPOSIT_TOP_HATCH(LiftHeightState.TOP_HATCH, FourBarState.HIGH),
+        DEPOSIT_TOP_HATCH(LiftHeightState.TOP_HATCH, FourBarState.HATCH_HIGH),
         
         DEPOSIT_LOW_CARGO(LiftHeightState.LOW_CARGO, FourBarState.ROCKET_LOW),
         DEPOSIT_MID_CARGO(LiftHeightState.MID_CARGO, FourBarState.ROCKET_LOW),
-        DEPOSIT_TOP_CARGO(LiftHeightState.TOP_CARGO, FourBarState.HIGH),
+        DEPOSIT_TOP_CARGO(LiftHeightState.TOP_CARGO, FourBarState.CARGO_HIGH),
         
-        LOADING_SHIP_CARGO(LiftHeightState.LOADING_SHIP_CARGO, FourBarState.SHIP_LOADING),
-        LOADING_SHIP_HATCH(LiftHeightState.LOADING_SHIP_HATCH, FourBarState.SHIP_LOADING);
+        LOADING_AND_SHIP_CARGO(LiftHeightState.LOADING_SHIP_CARGO, FourBarState.SHIP_AND_LOADING),
+        LOADING_AND_SHIP_HATCH(LiftHeightState.LOADING_SHIP_HATCH, FourBarState.SHIP_AND_LOADING);
         
         public LiftHeightState targetLiftState;
         public FourBarState targetFourBarState;
@@ -48,24 +47,28 @@ public class OptimusPrime {
             this.targetFourBarState = fourBarState;
         }
 
-        public static RobotState getOptimusState(GameElement gameElement, ScoreLevel scoreLevel) {
+        public static RobotState getOptimusState(GameElement gameElement, ScoreTarget scoreLevel) {
             if (gameElement == GameElement.CARGO) {
                 switch (scoreLevel) {
-                    case LOW:
+                    case CARGO_SHIP:
+                        return LOADING_AND_SHIP_CARGO;
+                    case ROCKET_LOW:
                         return DEPOSIT_LOW_CARGO;
-                    case MID:
+                    case ROCKET_MID:
                         return DEPOSIT_MID_CARGO;
-                    case TOP:
+                    case ROCKET_TOP:
                         return DEPOSIT_TOP_CARGO;
                 }
             }
             else {
                 switch (scoreLevel) {
-                    case LOW:
+                    case CARGO_SHIP:
+                        return LOADING_AND_SHIP_HATCH;
+                    case ROCKET_LOW:
                         return DEPOSIT_LOW_HATCH;
-                    case MID:
+                    case ROCKET_MID:
                         return DEPOSIT_MID_HATCH;
-                    case TOP:
+                    case ROCKET_TOP:
                         return DEPOSIT_TOP_HATCH;
                 }
             }
@@ -108,8 +111,8 @@ public class OptimusPrime {
     public class CmdEnterIntakeMode extends CommandGroup {
         public CmdEnterIntakeMode() {      
             addSequential(new CmdRunInParallel(
-            lift.new CmdHeightControl(LiftHeightState.INTAKE_FLOOR_CARGO),
-            liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.CARGO_INTAKE))
+                lift.new CmdHeightControl(LiftHeightState.INTAKE_FLOOR_CARGO),
+                liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.CARGO_INTAKE))
             );
             // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
             addSequential(fourBar.new CmdAngleControl(FourBarState.CARGO_INTAKE));
@@ -121,8 +124,8 @@ public class OptimusPrime {
         public CmdExitIntakeMode() {
             // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
             addSequential(new CmdRunInParallel(
-            lift.new CmdHeightControl(LiftHeightState.HOLD_CARGO),
-            liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.CARGO_INTAKE))
+                lift.new CmdHeightControl(LiftHeightState.BASE),
+                liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.CARGO_INTAKE))
             );
             // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.RETRACTED));
         }

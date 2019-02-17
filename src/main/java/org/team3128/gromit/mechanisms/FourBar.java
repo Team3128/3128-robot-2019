@@ -23,7 +23,7 @@ public class FourBar
 	private final double allowableError = 2 * Angle.DEGREES;
 
     public enum FourBarState {
-		SHIP_LOADING(-55 * Angle.DEGREES),
+		SHIP_AND_LOADING(-55 * Angle.DEGREES),
 		// HATCH_DROP_SHIP_LOADING(-53 * Angle.DEGREES),
 
 		ROCKET_LOW(-67 * Angle.DEGREES), 
@@ -31,8 +31,8 @@ public class FourBar
 		
 		CARGO_INTAKE(-22 * Angle.DEGREES),
 
-		HATCH_DROP_HIGH(64 * Angle.DEGREES),
-		HIGH(67 * Angle.DEGREES);
+		HATCH_HIGH(64 * Angle.DEGREES),
+		CARGO_HIGH(67 * Angle.DEGREES);
 
 		public double targetAngle;
 
@@ -43,8 +43,8 @@ public class FourBar
 	
 	public enum FourBarControlMode {
 		PERCENT(1, "Percent Output"),
-		POSITION(1, "Position"),
-		BRAKE(0, "Brake");
+		POSITION(1, "Position");
+		// BRAKE(0, "Brake");
 
 		private int pidSlot;
 		private String name;
@@ -87,8 +87,8 @@ public class FourBar
 	int maxVelocity;
 
 	// Control Thread Variables
-	public double peakBreakPower = 0.15;
-	private double breakFudgeTrig = 0.095;
+	public double peakBrakePower = 0.15;
+	private double brakeTrigFudge = 0.095;
 
 	public double maxAngle = +90.0 * Angle.DEGREES;
 	public double minAngle = -90.0 * Angle.DEGREES;
@@ -173,7 +173,7 @@ public class FourBar
 
 							if ((Math.abs(target) < 0.0001 && this.canRaise && this.canLower)) {
 								//this.brakeControl();
-								angleControl(this.getCurrentAngle());
+								this.brake();
 							}
 						}
 					}
@@ -198,7 +198,7 @@ public class FourBar
 						this.lastTime = RobotController.getFPGATime();
 					}
 
-					if (this.controlMode != FourBarControlMode.BRAKE && Math.abs(target - setPoint) > 0.0001) {
+					if (Math.abs(target - setPoint) > 0.0001) {
 						this.fourBarMotor.set(ControlMode.PercentOutput, target);
 
 						setPoint = target;
@@ -243,7 +243,7 @@ public class FourBar
 	}
 	
 	private double getFeedForwardPower() {
-		return peakBreakPower * (breakFudgeTrig + (1 - breakFudgeTrig)*RobotMath.cos(getCurrentAngle()));
+		return peakBrakePower * (brakeTrigFudge + (1 - brakeTrigFudge)*RobotMath.cos(getCurrentAngle()));
 	}
     
 	public void powerControl(double joystick)
@@ -252,11 +252,16 @@ public class FourBar
 		
 		desiredTarget = joystick;
 	}
-	public void brakeControl(){
-		if (controlMode != FourBarControlMode.BRAKE) {
-			fourBarMotor.set(ControlMode.Position, (int) (getCurrentAngle() * ratio));
-		}
-		setControlMode(FourBarControlMode.BRAKE);
+
+	// public void brakeControl(){
+	// 	if (controlMode != FourBarControlMode.BRAKE) {
+	// 		fourBarMotor.set(ControlMode.Position, (int) (getCurrentAngle() * ratio));
+	// 	}
+	// 	setControlMode(FourBarControlMode.BRAKE);
+	// }
+
+	public void brake() {
+		angleControl(this.getCurrentAngle());
 	}
 
 	public void angleControl(double angle) {

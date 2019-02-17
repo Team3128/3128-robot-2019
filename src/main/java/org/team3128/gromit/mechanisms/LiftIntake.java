@@ -7,6 +7,7 @@ import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.util.Log;
 
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -20,18 +21,19 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class LiftIntake {
     public enum LiftIntakeState
 	{
-		STOPPED(0, true, "Stopped"),
 		CARGO_INTAKE(-0.6, true, "Cargo Intake"),
-        CARGO_OUTTAKE(1.0, true, "Cargo Outtake"),
-        HATCH_INTAKE(0.0, false, "Hatch Panel Intake");
+		CARGO_OUTTAKE(1.0, true, "Cargo Outtake"),
+		
+		DEMOGORGON_RELEASED(0.0, false, "Demogorgon Released"),
+        DEMOGORGON_HOLDING(0.0, true, "Demogorgon Holding");
 
 		private double rollerPower;
-		private boolean isClosed;
+		private boolean demogorgonPistonState;
 		private String name;
 		
-		private LiftIntakeState(double rollerPower, boolean isClosed, String name) {
+		private LiftIntakeState(double rollerPower, boolean demogorgonPistonState, String name) {
 			this.rollerPower = rollerPower;
-			this.isClosed = isClosed;
+			this.demogorgonPistonState = demogorgonPistonState;
 			this.name = name;
 		}
 
@@ -39,8 +41,8 @@ public class LiftIntake {
 			return rollerPower;
 		}
 
-		public boolean getPistonPosition() {
-			return isClosed;
+		public boolean getDemogorgonPistonState() {
+			return demogorgonPistonState;
 		}
 		
 		public String getName() {
@@ -72,21 +74,39 @@ public class LiftIntake {
 
 	private LiftIntake(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, DigitalInput cargoBumperSwitch) {
 		this.intakeMotors = intakeMotors;
-		this.state = state;
 		this.demogorgonPiston = demogorgonPiston;
 		
 		this.cargoBumperSwitch = cargoBumperSwitch;
 
-		cargoThread = new Thread(() -> {			
+		setState(state);
+
+		cargoThread = new Thread(() -> {
+			boolean wasBumped = false;
+			double bumpTime = 0;
+
+			final double holdTime = 1.0;
+
 			while (true) {
-				if (this.state.rollerPower > 0 || this.state.rollerPower < 0 && !this.getCargoBumper()) {
-					this.setIntakePower(this.state.rollerPower);
+				if (this.state == LiftIntakeState.CARGO_INTAKE) {
+					if (this.getCargoBumper()) {
+						if (!wasBumped) {
+							this.setIntakePower(0.2 * this.state.rollerPower);
+
+							bumpTime = RobotController.getFPGATime() / 1000000.0;
+							wasBumped = true;
+						}
+						else if (RobotController.getFPGATime() / 1000000.0 > bumpTime + holdTime) {
+							this.setIntakePower(0);
+						}
+					}
+					else {
+						wasBumped = false;
+						this.setIntakePower(this.state.rollerPower);
+					}
 				}
 				else {
 					this.setIntakePower(0);
 				}
-
-				SmartDashboard.putBoolean("Cargo Bumper Switch", this.getCargoBumper());
 
 				try {
 					Thread.sleep(100);
@@ -100,7 +120,7 @@ public class LiftIntake {
 	
 	public void setState(LiftIntakeState newState) {
 		if (state != newState) {			
-			if(newState.getPistonPosition()) {
+			if(newState.getDemogorgonPistonState()) {
 				demogorgonPiston.setPistonOn();
 			}
 			else {
