@@ -3,7 +3,6 @@ package org.team3128.gromit.mechanisms;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
-import org.team3128.common.autonomous.primitives.CmdRunInParallel;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.util.Log;

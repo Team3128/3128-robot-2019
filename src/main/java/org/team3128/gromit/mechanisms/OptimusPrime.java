@@ -80,6 +80,8 @@ public class OptimusPrime {
     Lift lift;
     LiftIntake liftIntake;
     FourBar fourBar;
+
+    public RobotState robotState;
     // GroundIntake groundIntake;
     
     private static OptimusPrime instance = null;
@@ -104,6 +106,8 @@ public class OptimusPrime {
     }
 
     public void setState(RobotState state) {
+        this.robotState = state;
+
         lift.setState(state.targetLiftState);
         fourBar.setState(state.targetFourBarState);
     }
@@ -125,7 +129,7 @@ public class OptimusPrime {
             // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
             addSequential(new CmdRunInParallel(
                 lift.new CmdHeightControl(LiftHeightState.BASE),
-                liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.CARGO_INTAKE))
+                liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.DEMOGORGON_HOLDING))
             );
             // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.RETRACTED));
         }

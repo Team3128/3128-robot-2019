@@ -14,7 +14,6 @@ import org.team3128.common.listener.controltypes.POV;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
-import org.team3128.common.util.Wheelbase;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
 import org.team3128.gromit.mechanisms.Climber;
@@ -24,7 +23,6 @@ import org.team3128.gromit.mechanisms.Lift;
 import org.team3128.gromit.mechanisms.LiftIntake;
 import org.team3128.gromit.mechanisms.OptimusPrime;
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;
-import org.team3128.gromit.mechanisms.Lift.LiftControlMode;
 // import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;
 import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
@@ -105,7 +103,6 @@ public class MainGromit extends NarwhalRobot{
 	public LiftIntake liftIntake;
 	public LiftIntakeState liftIntakeState;
 	public VictorSPX liftIntakeMotor;
-	//public VictorSPX liftIntakeMotorFollower;
 	public Piston demogorgonPiston;
 	public DigitalInput cargoBumperSwitch;
 
@@ -129,6 +126,8 @@ public class MainGromit extends NarwhalRobot{
 	public DriverStation ds;
 
 	private boolean groundIntaking = false;
+
+	private CommandGroup climbCommand;
 
 	// 4200
 	public double maxLiftSpeed = 0;
@@ -270,12 +269,24 @@ public class MainGromit extends NarwhalRobot{
 		// NarwhalDashboard: Driver Controls
 		NarwhalDashboard.addButton("climb_12", (boolean down) -> {
 			if (down) {
-				climber.new CmdClimb1to2().start();
+				if (climbCommand != null) climbCommand.cancel();
+
+				climbCommand = climber.new CmdClimb1to2();
+				climbCommand.start();
 			}
 		});
 		NarwhalDashboard.addButton("climb_23", (boolean down) -> {
 			if (down) {
+				if (climbCommand != null) climbCommand.cancel();
+
+				climbCommand = climber.new CmdClimb2to3();
 				climber.new CmdClimb2to3().start();
+			}
+		});
+		NarwhalDashboard.addButton("cancel_climb", (boolean down) -> {
+			if (down) {
+				if (climbCommand != null) climbCommand.cancel();
+				climbCommand = null;
 			}
 		});
 
@@ -317,6 +328,16 @@ public class MainGromit extends NarwhalRobot{
 		});
 
 		// Debug
+		NarwhalDashboard.addButton("rezero_backleg", (boolean down) -> {
+			if (down) {
+				climbMotor.set(ControlMode.PercentOutput, -0.8);
+			}
+			else {
+				climbMotor.setSelectedSensorPosition(0);
+				climbMotor.set(ControlMode.PercentOutput, 0);
+			}
+		});
+
 		NarwhalDashboard.addButton("fourbar_high", (boolean down) -> {
 			if (down) {
 				fourBar.setState(FourBarState.CARGO_HIGH);
@@ -337,7 +358,6 @@ public class MainGromit extends NarwhalRobot{
 				fourBar.setState(FourBarState.CARGO_INTAKE);
 			}
 		});
-
 
 		NarwhalDashboard.addButton("lift_base", (boolean down) -> {
 			if (down) {
@@ -411,10 +431,13 @@ public class MainGromit extends NarwhalRobot{
 				case 3:
 				case 4:
 				case 5:
-					optimusPrime.setState(RobotState.INTAKE_FLOOR_CARGO);
-					liftIntake.setState(LiftIntakeState.CARGO_INTAKE);
+					if (optimusPrime.robotState == RobotState.REST) {
+						optimusPrime.setState(RobotState.INTAKE_FLOOR_CARGO);
+						groundIntaking = true;
+					}
 
-					groundIntaking = true;
+					liftIntake.setState(LiftIntakeState.CARGO_INTAKE);
+					
 					break;
 				case 0:
 					if (groundIntaking) {
@@ -531,6 +554,16 @@ public class MainGromit extends NarwhalRobot{
             }
 		});
 
+		listenerLeft.nameControl(new Button(7), "Climb1to2");
+        listenerLeft.addButtonDownListener("Climb1to2", () -> {
+            climber.new CmdClimb1to2().start();
+        });
+
+        listenerLeft.nameControl(new Button(8), "Climb2to3");
+        listenerLeft.addButtonDownListener("Climb1to2", () -> {
+            climber.new CmdClimb2to3().start();
+        });
+
         listenerLeft.nameControl(new Button(9), "ClimbPistonExtend");
         listenerLeft.addButtonDownListener("ClimbPistonExtend", () -> {
             climbPiston.setPistonOn();
@@ -556,17 +589,6 @@ public class MainGromit extends NarwhalRobot{
                 climbMotor.set(ControlMode.PercentOutput, 0.0);
             }
         }, "BackLegDown", "BackLegUp");
-
-		listenerLeft.nameControl(new Button(7), "SetLiftZero");
-		listenerLeft.addButtonDownListener("SetLiftZero", () ->
-		{
-			liftMotorLeader.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
-		});
-
-		listenerLeft.nameControl(new Button(8), "SetFourBarBase");
-		listenerLeft.addButtonDownListener("SetFourBarBase", () -> {
-			fourBar.setCurrentAngle(-90 * Angle.DEGREES);
-		});
 	}
 
 	@Override
@@ -579,6 +601,7 @@ public class MainGromit extends NarwhalRobot{
 	protected void teleopInit()
 	{
 		fourBar.brake();
+		lift.powerControl(0);
 	}
 
 	@Override
