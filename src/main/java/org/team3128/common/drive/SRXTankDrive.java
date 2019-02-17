@@ -1084,8 +1084,13 @@ public class SRXTankDrive implements ITankDrive
 
 		@Override
 		protected void initialize() {
-			leftMotors.set(ControlMode.PercentOutput, leftSpeedScalar * power);
-			rightMotors.set(ControlMode.PercentOutput, rightSpeedScalar * power);
+			arcadeDrive(-1 * power, 0, 1.0, false);
+
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 
 		@Override

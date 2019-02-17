@@ -24,10 +24,10 @@ public class FourBar
 
     public enum FourBarState {
 		SHIP_LOADING(-55 * Angle.DEGREES),
-		HATCH_DROP_SHIP_LOADING(-53 * Angle.DEGREES),
+		// HATCH_DROP_SHIP_LOADING(-53 * Angle.DEGREES),
 
 		ROCKET_LOW(-67 * Angle.DEGREES), 
-		HATCH_DROP_ROCKET_LOW(-65 * Angle.DEGREES),
+		// HATCH_DROP_ROCKET_LOW(-65 * Angle.DEGREES),
 		
 		CARGO_INTAKE(-22 * Angle.DEGREES),
 
@@ -87,7 +87,7 @@ public class FourBar
 	int maxVelocity;
 
 	// Control Thread Variables
-	public double peakBreakPower = 0.2;
+	public double peakBreakPower = 0.15;
 	private double breakFudgeTrig = 0.095;
 
 	public double maxAngle = +90.0 * Angle.DEGREES;
@@ -172,7 +172,8 @@ public class FourBar
 							}
 
 							if ((Math.abs(target) < 0.0001 && this.canRaise && this.canLower)) {
-								this.brakeControl();
+								//this.brakeControl();
+								angleControl(this.getCurrentAngle());
 							}
 						}
 					}
@@ -180,12 +181,12 @@ public class FourBar
 						lastError = this.error;
 						this.error = desiredTarget - this.getCurrentAngle();
 
-						if (Math.abs(this.error) < 0.2) {
-							this.brakeControl();
-						}
+						// if (Math.abs(this.error) < 0.2) {
+						// 	this.brakeControl();
+						// }
 
 						if (this.error > 0) {
-							kP = 0.35;
+							kP = 0.25;
 						}
 						else {
 							kP = 0.005;

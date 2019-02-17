@@ -53,7 +53,6 @@ public class LiftIntake {
 
 	private LiftIntakeState state;
 	private Piston demogorgonPiston;
-	private double invertMultiplier;
 
 	private Thread cargoThread;
 
@@ -67,17 +66,15 @@ public class LiftIntake {
 		return null;
 	}
 
-	public static void initialize(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, boolean inverted, DigitalInput cargoBumperSwitch) {
-		instance = new LiftIntake(intakeMotors, state, demogorgonPiston, inverted, cargoBumperSwitch);
+	public static void initialize(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, DigitalInput cargoBumperSwitch) {
+		instance = new LiftIntake(intakeMotors, state, demogorgonPiston, cargoBumperSwitch);
 	}
 
-	private LiftIntake(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, boolean inverted, DigitalInput cargoBumperSwitch) {
+	private LiftIntake(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, DigitalInput cargoBumperSwitch) {
 		this.intakeMotors = intakeMotors;
 		this.state = state;
 		this.demogorgonPiston = demogorgonPiston;
 		
-		this.invertMultiplier = (inverted) ? -1 : 1;
-
 		this.cargoBumperSwitch = cargoBumperSwitch;
 
 		cargoThread = new Thread(() -> {			
@@ -115,7 +112,7 @@ public class LiftIntake {
 	}
 	
 	private void setIntakePower(double power) {
-		intakeMotors.set(ControlMode.PercentOutput, invertMultiplier * power);
+		intakeMotors.set(ControlMode.PercentOutput, power);
 	}
 
 	public boolean getCargoBumper() {

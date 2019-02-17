@@ -18,6 +18,9 @@ public class MainGromitCompetition extends MainGromit {
         driveMaxSpeed = 100;
         gearRatio = 2.9 + 54/990;
 
+        leftSpeedScalar = 1.00;
+        rightSpeedScalar = 0.97;
+
         // TODO: 6ft/s, 7ft/s
         shiftUpSpeed = 100000;
         shiftDownSpeed = -1;
@@ -64,9 +67,15 @@ public class MainGromitCompetition extends MainGromit {
 
         liftMotorFollower.setInverted(true);
 
+        // Lift Intake Invert
+        liftIntakeMotor.setInverted(false);
+
         // FourBar Invert
         fourBarMotor.setInverted(true);
         fourBarMotor.setSensorPhase(false);
+
+        // Climber Invert
+        climbMotor.setSensorPhase(true);
     }
 
     public static void main(String... args) {

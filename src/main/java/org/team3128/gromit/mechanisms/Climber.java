@@ -40,17 +40,15 @@ public class Climber {
         public CmdClimb1to2() {
             drive = SRXTankDrive.getInstance();
 
-            addSequential(drive.new CmdDriveUntilStop(0.2, 3));
-
             addSequential(new CmdDeployClimberPiston());
-            addSequential(drive.new CmdDriveUntilStop(0.2, 3));
+            addSequential(drive.new CmdDriveUntilStop(0.6, 1500));
             addSequential(new CmdRetractClimberPiston());
 
-            addSequential(new CmdSetBackLegPosition(700, 2000));
-            addSequential(new CmdRunInParallel(
-                new CmdSetBackLegPosition(0, 2000),
-                drive.new CmdDriveUntilStop(0.2, 3)
-            ));
+            addSequential(new CmdSetBackLegPosition(13600, 3000));
+
+            addSequential(drive.new CmdDriveUntilStop(0.4, 700));
+
+            addSequential(new CmdSetBackLegPosition(100, 2000));
         }
     }
 
@@ -60,17 +58,15 @@ public class Climber {
         public CmdClimb2to3() {
             drive = SRXTankDrive.getInstance();
 
-            addSequential(drive.new CmdDriveUntilStop(0.2, 3000));
-
             addSequential(new CmdDeployClimberPiston());
-            addSequential(drive.new CmdDriveUntilStop(0.2, 3000));
+            addSequential(drive.new CmdDriveUntilStop(0.6, 1000));
             addSequential(new CmdRetractClimberPiston());
 
-            addSequential(new CmdSetBackLegPosition(500, 2000));
-            addSequential(new CmdRunInParallel(
-                new CmdSetBackLegPosition(0, 2000),
-                drive.new CmdDriveUntilStop(0.2, 3)
-            ));
+            addSequential(new CmdSetBackLegPosition(18500, 5000));
+
+            addSequential(drive.new CmdDriveUntilStop(0.3, 3000));
+
+            addSequential(new CmdSetBackLegPosition(100, 2000));
         }
     }
 
@@ -114,11 +110,11 @@ public class Climber {
             super(timeoutMs / 1000.0);
 
             this.desiredPosition = desiredPosition;
-            extending = desiredPosition > backLegMotor.getSelectedSensorPosition();
         }
 
         @Override
         protected void initialize() {
+            extending = desiredPosition > backLegMotor.getSelectedSensorPosition();
             backLegMotor.set(ControlMode.PercentOutput, (extending) ? 1.0 : -1.0);
         }
 
@@ -126,7 +122,7 @@ public class Climber {
         protected boolean isFinished() {
             currentPosition = backLegMotor.getSelectedSensorPosition();
 
-            if (extending  && currentPosition > desiredPosition) return true;
+            if ( extending && currentPosition > desiredPosition) return true;
             if (!extending && currentPosition < desiredPosition) return true;
 
             return isTimedOut();

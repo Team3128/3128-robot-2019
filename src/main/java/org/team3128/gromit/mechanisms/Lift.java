@@ -32,13 +32,13 @@ public class Lift
 		INTAKE_FLOOR_CARGO(6.3 * Length.in), //first raise for ball intake
 		HOLD_CARGO(12 * Length.in), //second raise for ball intake
 
-		LOW_CARGO(36 * Length.in),
-		MID_CARGO(59 * Length.in),
-		TOP_CARGO(64 * Length.in),
+		LOW_CARGO(40 * Length.in),
+		MID_CARGO(75 * Length.in),
+		TOP_CARGO(78 * Length.in),
 		
-        LOW_HATCH(0 * Length.ft), //same for rocket and cargo and loading station
-        MID_HATCH(0 * Length.ft),
-		TOP_HATCH(0 * Length.ft),
+        LOW_HATCH(18.5 * Length.in), //same for rocket and cargo and loading station
+        MID_HATCH(54 * Length.in),
+		TOP_HATCH(59 * Length.in),
 		
         LOADING_SHIP_CARGO(0 * Length.ft),
         LOADING_SHIP_HATCH(0 * Length.ft);
@@ -191,7 +191,10 @@ public class Lift
 							}
 
 							if ((Math.abs(target) < 0.1 && this.getCurrentHeight() >= 3 * Length.in)) {
-								target = this.brakePower;
+								// this.setControlMode(LiftControlMode.POSITION_UP);
+								// this.liftMotor.set(ControlMode.MotionMagic, this.getCurrentHeight() * ratio);
+
+								target = brakePower;
 							}
 
 							if (Math.abs(target - this.setPoint) > 0.0001) {
@@ -232,7 +235,7 @@ public class Lift
 	{
 		heightState = liftState;
 
-		if (Math.abs(getCurrentHeight() - heightState.targetHeight) > 4 * Length.in) {
+		if (Math.abs(getCurrentHeight() - heightState.targetHeight) > 1 * Length.in) {
 			if (getCurrentHeight() < heightState.targetHeight)
 			{
 				setControlMode(LiftControlMode.POSITION_UP);

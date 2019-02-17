@@ -3,6 +3,7 @@ package org.team3128.gromit.main;
 import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.SRXInvertCallback;
 import org.team3128.common.drive.SRXTankDrive;
+import org.team3128.common.drive.callibrationutility.DriveCallibrationUtility;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
 import org.team3128.common.listener.ListenerManager;
@@ -13,8 +14,10 @@ import org.team3128.common.listener.controltypes.POV;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
+import org.team3128.common.util.Wheelbase;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
+import org.team3128.gromit.mechanisms.Climber;
 import org.team3128.gromit.mechanisms.FourBar;
 // import org.team3128.gromit.mechanisms.GroundIntake;
 import org.team3128.gromit.mechanisms.Lift;
@@ -64,6 +67,8 @@ public class MainGromit extends NarwhalRobot{
 	
 	public SRXInvertCallback teleopInvertCallback, autoInvertCallback;
 	public double leftSpeedScalar, rightSpeedScalar;
+
+	public DriveCallibrationUtility dcu;
     
     // Drive Motors 
 	public TalonSRX leftDriveLeader;
@@ -99,7 +104,8 @@ public class MainGromit extends NarwhalRobot{
 	// Lift Intake
 	public LiftIntake liftIntake;
 	public LiftIntakeState liftIntakeState;
-	public VictorSPX liftIntakeMotorLeader, liftIntakeMotorFollower;
+	public VictorSPX liftIntakeMotor;
+	//public VictorSPX liftIntakeMotorFollower;
 	public Piston demogorgonPiston;
 	public DigitalInput cargoBumperSwitch;
 
@@ -109,6 +115,8 @@ public class MainGromit extends NarwhalRobot{
 	// Climb
 	public Piston climbPiston;
 	public TalonSRX climbMotor;
+
+	public Climber climber;
 
 	// Controls
 	public Joystick leftJoystick;
@@ -196,15 +204,26 @@ public class MainGromit extends NarwhalRobot{
 		gearshift = new TwoSpeedGearshift(false, gearshiftPiston);
 		drive.addShifter(gearshift, shiftUpSpeed, shiftDownSpeed);
 
+		// Instantiate gryoscopes
+		ahrs = new AHRS(SPI.Port.kMXP); 
+		ahrs.reset();
+		
+		gyro = new ADXRS450_Gyro();
+		gyro.calibrate();
+
+		// DCU
+		DriveCallibrationUtility.initialize(ahrs);
+		dcu = DriveCallibrationUtility.getInstance();
+
 		compressor = new Compressor();
 
 
 		// Create Four-Bar
-		fourBarState = FourBarState.HIGH;
 		fourBarMotor = new TalonSRX(30);
 
 		FourBar.initialize(fourBarMotor, fourBarState, fourBarLimitSwitch, fourBarSwitchPosition, fourBarMaxVelocity);
 		fourBar = FourBar.getInstance();
+
 
 
 		// Create Ground Intake
@@ -228,14 +247,14 @@ public class MainGromit extends NarwhalRobot{
 
 		// Create Lift Intake
 		liftIntakeState = LiftIntake.LiftIntakeState.STOPPED;
-		liftIntakeMotorLeader = new VictorSPX(31);
-		liftIntakeMotorFollower = new VictorSPX(32);
-		liftIntakeMotorFollower.set(ControlMode.Follower, liftIntakeMotorLeader.getDeviceID());
-		liftIntakeMotorLeader.setInverted(true);
+		liftIntakeMotor = new VictorSPX(31);
+		//liftIntakeMotorFollower = new VictorSPX(32);
+		//liftIntakeMotorFollower.set(ControlMode.Follower, liftIntakeMotorLeader.getDeviceID());
+		liftIntakeMotor.setInverted(true);
 
-		LiftIntake.initialize(liftIntakeMotorLeader, liftIntakeState, demogorgonPiston, false, cargoBumperSwitch);
+		LiftIntake.initialize(liftIntakeMotor, liftIntakeState, demogorgonPiston, cargoBumperSwitch);
 		liftIntake = LiftIntake.getInstance();
-
+		demogorgonPiston.setPistonOff();
 
 		// Create Optimus Prime
 		OptimusPrime.initialize();
@@ -243,19 +262,14 @@ public class MainGromit extends NarwhalRobot{
 
 		// Create the Climber
 		climbMotor = new TalonSRX(40);
-		climbMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
+		
+		Climber.initialize(climbPiston, climbMotor);
+		climber = Climber.getInstance();
 
 		// Instantiate PDP
 		powerDistPanel = new PowerDistributionPanel();
 
 		ds = DriverStation.getInstance();
-
-		// Instantiate gryoscopes
-        ahrs = new AHRS(SPI.Port.kMXP); 
-		ahrs.reset();
-		
-		gyro = new ADXRS450_Gyro();
-		gyro.calibrate();
 
 		// Setup listeners
         leftJoystick = new Joystick(1);
@@ -314,6 +328,21 @@ public class MainGromit extends NarwhalRobot{
 				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreLevel.TOP).targetLiftState);
 			}
 		});
+
+		
+		NarwhalDashboard.addButton("climb_12", (boolean down) -> {
+			if (down) {
+				climber.new CmdClimb1to2().start();
+			}
+		});
+
+		NarwhalDashboard.addButton("climb_23", (boolean down) -> {
+			if (down) {
+				climber.new CmdClimb2to3().start();
+			}
+		});		
+
+		dcu.initNarwhalDashboard();
     }
 
     @Override
@@ -341,6 +370,10 @@ public class MainGromit extends NarwhalRobot{
 		listenerRight.addListener("IntakePOV", (POVValue pov) ->
 		{
 			switch (pov.getDirectionValue()) {
+				case 1:
+				case 7:
+				case 8:
+					liftIntake.setState(LiftIntakeState.CARGO_OUTTAKE);
 				case 3:
 				case 4:
 				case 5:
@@ -349,11 +382,14 @@ public class MainGromit extends NarwhalRobot{
 					enterIntake = (optimusPrime.new CmdEnterIntakeMode());
 					enterIntake.start();
 					break;
-				default:
+				case 0:
 					if (enterIntake != null) enterIntake.cancel();
 
 					exitIntake = (optimusPrime.new CmdExitIntakeMode());
 					exitIntake.start();
+					break;
+
+				default:
 					break;
 			}
 		});
@@ -447,16 +483,21 @@ public class MainGromit extends NarwhalRobot{
             switch (povVal.getDirectionValue()) {
                 case 8:
                 case 1:
-                case 2:
+                case 7:
 					liftIntake.setState(LiftIntakeState.CARGO_OUTTAKE);
 					break;
+                case 3:
                 case 4:
                 case 5:
-                case 6:
 					liftIntake.setState(LiftIntakeState.CARGO_INTAKE);
+					break;
+				case 2:
+				case 6:
+					demogorgonPiston.setPistonOn();
 					break;
                 default:
 					liftIntake.setState(LiftIntakeState.STOPPED);
+					demogorgonPiston.setPistonOff();
 					break;
             }
 		});
@@ -516,7 +557,7 @@ public class MainGromit extends NarwhalRobot{
 	@Override
 	protected void teleopInit()
 	{
-
+		fourBar.brakeControl();
 	}
 	
 	@Override
@@ -551,6 +592,8 @@ public class MainGromit extends NarwhalRobot{
 
 		SmartDashboard.putNumber("Four Bar Angle (degrees)", fourBar.getCurrentAngle());
 
+		SmartDashboard.putNumber("Back Leg Position (nu)", climbMotor.getSelectedSensorPosition());
+
 		maxLiftSpeed = Math.max(maxLiftSpeed, liftMotorLeader.getSelectedSensorVelocity());
 		SmartDashboard.putNumber("Max Upward Lift Speed", maxLiftSpeed);
 
@@ -560,5 +603,7 @@ public class MainGromit extends NarwhalRobot{
 
 		NarwhalDashboard.put("scoring_height", (targetStructure == ScoreStructure.CARGO_SHIP) ? "ship" : targetScoreLevel.getName());
 		NarwhalDashboard.put("game_element", currentGameElement.getName());
+
+		dcu.tickNarwhalDashboard();
 	}
 }
