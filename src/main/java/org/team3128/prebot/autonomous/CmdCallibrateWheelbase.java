@@ -15,7 +15,7 @@ import org.team3128.common.util.Wheelbase;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class CmdCallibrateWheelbase extends CommandGroup {
-    public CmdCallibrateWheelbase(AHRS ahrs, double duration, double leftSpeed, double rightSpeed,
+    public CmdCallibrateWheelbase(AHRS ahrs, double duration, double leftPower, double rightPower,
             Wheelbase wheelbase) {
         List<Wheelbase> calculatedWheelbases = new ArrayList<Wheelbase>();
         int numSamples = 1;
@@ -23,7 +23,7 @@ public class CmdCallibrateWheelbase extends CommandGroup {
         for (int i = 0; i < numSamples; i++) {
             Wheelbase wb = new Wheelbase();
 
-            addSequential(SRXTankDrive.getInstance().new CmdDetermineWheelbase(ahrs, duration, leftSpeed, rightSpeed, wb));
+            addSequential(SRXTankDrive.getInstance().new CmdCalculateWheelbase(leftPower, rightPower, ahrs, duration));
             addSequential(new CmdDelay(1.0));
             addSequential(new CmdLog("" + wb.wheelbase));
 

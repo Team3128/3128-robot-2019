@@ -1,5 +1,7 @@
 package org.team3128.common.drive;
 
+import org.team3128.prebot.autonomous.CmdObtainG.*;
+import edu.wpi.first.wpilibj.DriverStation;
 import org.team3128.common.drive.routemaker.Routemaker;
 import org.team3128.common.drive.routemaker.ProfilePoint;
 import org.team3128.common.drive.routemaker.Waypoint;
@@ -1223,7 +1225,7 @@ public class SRXTankDrive implements ITankDrive {
 		double voltage;
 		double w;
 
-		double vL, vR;
+		double vL, vR, gL, gR;
 
 		AHRS ahrs;
 
@@ -1231,9 +1233,13 @@ public class SRXTankDrive implements ITankDrive {
 
 		double time;
 		double angle;
-		public CmdPlotG(Wrapper wrapper, AHRS ahrs, double leftWheelPower, double rightWheelPower) {
+
+		Wrapper wrapper;
+		public CmdPlotG(Wrapper wrapper, AHRS ahrs, double leftWheelPower, double rightWheelPower, int duration) {
+			super(duration);
 			this.leftWheelPower = leftWheelPower;
 			this.rightWheelPower = rightWheelPower;
+			this.wrapper = wrapper;
 		}
 
 		@Override
@@ -1263,13 +1269,13 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected boolean isFinished() {
-			return isTimedOut;
+			return isTimedOut();
 		}
 
 		@Override
 		protected void end() {
 			tankDrive(0,0);
-			wrapper.csv += "\n" + String.valueOf(w/timesRun) + "," + String.valueOf(gL/timeRun) + "," + String.valueOf(gR/timesRun);
+			wrapper.csv += "\n" + String.valueOf(w/timesRun) + "," + String.valueOf(gL/timesRun) + "," + String.valueOf(gR/timesRun);
 		}
 	}
 }

@@ -7,13 +7,14 @@ import org.team3128.common.drive.SRXTankDrive.CmdPlotG;
 import org.team3128.common.util.Log;
 import com.kauailabs.navx.frc.AHRS;
 
-
 import edu.wpi.first.wpilibj.command.CommandGroup;
-public class Wrapper {
-    String csv = "angular velocity, gL, gR";
-}
-public class CmdFancyCalibrateWheelBase extends CommandGroup {
-    public CmdFancyCalibrateWheelBase(AHRS ahrs) {    
+
+public class CmdObtainG extends CommandGroup {
+    public class Wrapper {
+        public String csv = "angular velocity, gL, gR";
+    }
+    
+    public CmdObtainG(AHRS ahrs) {    
         Wrapper data = new Wrapper();
         SRXTankDrive drive = SRXTankDrive.getInstance();
         addSequential(drive.new CmdPlotG(data,ahrs,1.0,0.8,3));
@@ -24,5 +25,6 @@ public class CmdFancyCalibrateWheelBase extends CommandGroup {
         addSequential(drive.new CmdPlotG(data,ahrs,0.6,1.0,3));
         addSequential(drive.new CmdPlotG(data,ahrs,0.4,1.0,3));
         addSequential(drive.new CmdPlotG(data,ahrs,0.2,1.0,3));
+        Log.info("CmdObtainG", data.csv);
     }
 }
