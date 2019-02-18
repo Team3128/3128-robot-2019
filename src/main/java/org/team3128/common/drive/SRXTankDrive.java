@@ -1178,7 +1178,6 @@ public class SRXTankDrive implements ITankDrive {
 		@Override
 		protected void initialize() {
 			tankDrive(leftWheelPower, rightWheelPower);
-
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -1207,6 +1206,7 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void end() {
+			tankDrive(0,0);
 			b = b/timesRun;
 			Log.info("CmdCalculateWheelBase", b + "");
 		}
