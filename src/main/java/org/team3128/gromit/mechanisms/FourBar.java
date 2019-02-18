@@ -32,7 +32,7 @@ public class FourBar
 		CARGO_INTAKE(-22 * Angle.DEGREES),
 
 		HATCH_HIGH(64 * Angle.DEGREES),
-		CARGO_HIGH(67 * Angle.DEGREES);
+		CARGO_HIGH(68 * Angle.DEGREES);
 
 		public double targetAngle;
 

@@ -94,10 +94,10 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	public final double wheelBase;
 
-	/**
-	 * Ratio between turns of the wheels to turns of the encoder
-	 */
-	private double gearRatio;
+	// /**
+	//  * Ratio between turns of the wheels to turns of the encoder
+	//  */
+	// private double gearRatio;
 
 	/**
 	 * The maxiumum measured speed of the drive motors, in native units
@@ -128,15 +128,15 @@ public class SRXTankDrive implements ITankDrive
 	private PIDConstants leftMotionProfilePID, leftVelocityPID;
 	private PIDConstants rightMotionProfilePID, rightVelocityPID;
 
-	public double getGearRatio()
-	{
-		return gearRatio;
-	}
+	// public double getGearRatio()
+	// {
+	// 	return gearRatio;
+	// }
 
-	public void setGearRatio(double gearRatio)
-	{
-		this.gearRatio = gearRatio;
-	}
+	// public void setGearRatio(double gearRatio)
+	// {
+	// 	this.gearRatio = gearRatio;
+	// }
 
 	// Singelton methods
 	private static SRXTankDrive instance = null;
@@ -160,7 +160,7 @@ public class SRXTankDrive implements ITankDrive
 	 * @param rightMotors
 	 *            The "lead" Talon SRX on the right side.
 	 * @param wheelCircumfrence
-	 *            The circumference of the wheel
+	 *            The amount of units of length the robot travels per rotation of the encoder stage
 	 * @param gearRatio
 	 *            The gear ratio of the turns of the wheels per turn of the
 	 *            encoder shaft
@@ -173,18 +173,18 @@ public class SRXTankDrive implements ITankDrive
 	 *            in native units per 100ms, of the robot driving on the ground at
 	 *            100% throttle
 	 */
-	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert) {
-		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, gearRatio, wheelBase, robotMaxSpeed, teleopInvert, autoInvert);
+	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert) {
+		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, wheelBase, robotMaxSpeed, teleopInvert, autoInvert);
 	}
 
-	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert)
+	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert)
 	{
 		this.leftMotors = leftMotors;
 		this.rightMotors = rightMotors;
 
 		this.wheelCircumfrence = wheelCircumfrence;
 		this.wheelBase = wheelBase;
-		this.gearRatio = gearRatio;
+		//this.gearRatio = gearRatio;
 		this.robotMaxSpeed = robotMaxSpeed;
 
 		leftSpeedScalar = 1;
@@ -201,10 +201,10 @@ public class SRXTankDrive implements ITankDrive
 
 		sendPIDConstants();
 
-		if (gearRatio <= 0)
-		{
-			throw new IllegalArgumentException("Invalid gear ratio");
-		}
+		// if (gearRatio <= 0)
+		// {
+		// 	throw new IllegalArgumentException("Invalid gear ratio");
+		// }
 	}
 
 	private void setBrakeNeutralMode()
@@ -275,8 +275,8 @@ public class SRXTankDrive implements ITankDrive
 		joyY *= throttle;
 		joyX *= throttle;
 
-		spdR = RobotMath.clampPosNeg1(joyY + joyX);
-		spdL = RobotMath.clampPosNeg1(joyY - joyX);
+		spdR = rightSpeedScalar * RobotMath.clampPosNeg1(joyY + joyX);
+		spdL = leftSpeedScalar *  RobotMath.clampPosNeg1(joyY - joyX);
 
 		// Log.debug("SRXTankDrive", "x1: " + joyX + " throttle: " + throttle +
 		// " spdR: " + spdR + " spdL: " + spdL);
@@ -575,7 +575,7 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	public double cmToEncDegrees(double cm)
 	{
-		return (cm * 360) / (wheelCircumfrence * gearRatio);
+		return (cm * 360) / (wheelCircumfrence);
 	}
 
 	/**
@@ -586,7 +586,7 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	public double encDistanceToCm(double encDistance)
 	{
-		return (encDistance / 360) * wheelCircumfrence * gearRatio;
+		return (encDistance / 360) * wheelCircumfrence;
 	}
 
 	/**
@@ -712,8 +712,8 @@ public class SRXTankDrive implements ITankDrive
 			Log.debug("CmdMotionMagicMove",
 				  "\n"
 				+ "  Distances\n"
-				+ "    L: " + leftAngle / Angle.CTRE_MAGENC_NU  + " rot\n"
-				+ "    R: " + rightAngle / Angle.CTRE_MAGENC_NU + " rot\n"
+				+ "    L: " + leftAngle / Angle.CTRE_MAGENC_NU  + " nu\n"
+				+ "    R: " + rightAngle / Angle.CTRE_MAGENC_NU + " nu\n"
 				+ "  Speeds\n"
 				+ "    L: " + leftSpeed  + " RPM"
 				+ "    R: " + rightSpeed + " RPM"
@@ -845,7 +845,7 @@ public class SRXTankDrive implements ITankDrive
 		 * @param power - The fractional power to drive the robot (from 0 to 1)
 		 * @param timeoutMs - The maximum time to run the move (in milliseconds)
 		 */
-		public CmdArcTurn(double radius, float angle, Direction dir, double power, int timeoutMs)
+		public CmdArcTurn(double radius, double angle, Direction dir, double power, int timeoutMs)
 		{
 			super(MoveEndMode.BOTH, 0, 0, power, false, timeoutMs);
 

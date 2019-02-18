@@ -62,7 +62,7 @@ public class MainPrebot extends NarwhalRobot {
 
     public Wheelbase calculatedWheelbase;
 
-    public Limelight limelight = new Limelight(26 * Length.in, 6.15 * Length.in, 28.5 * Length.in, 14.5 * Length.in);
+    public Limelight limelight = new Limelight(0 * Length.in, 26 * Length.in, 6.15 * Length.in, 28.5 * Length.in, 14.5 * Length.in);
 	@Override
 	protected void constructHardware()
 	{
@@ -88,7 +88,7 @@ public class MainPrebot extends NarwhalRobot {
         double wheelBase = 30 * Length.in;//68.61 * Length.in;
         int robotFreeSpeed = 3700;
 
-        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, 1.0, wheelBase, robotFreeSpeed,
+        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, wheelBase, robotFreeSpeed,
             () -> {
                 Log.info("SRXTankDrive", "Inverting for teleop.");
 

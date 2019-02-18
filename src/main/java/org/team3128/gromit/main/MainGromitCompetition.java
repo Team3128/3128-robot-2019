@@ -13,28 +13,37 @@ public class MainGromitCompetition extends MainGromit {
 
     @Override
     protected void constructHardware() {
-        wheelCirc = 1 * Length.mi;
-        wheelbase = 50 * Length.cm;
-        driveMaxSpeed = 100;
-        gearRatio = 2.9 + 54/990;
+        wheelbase = 37 * Length.in;
+        driveMaxSpeed = 5800;
+        //gearRatio = 2.9 + 54/990;
+        wheelCirc = 6.55 * Length.in;
 
         leftSpeedScalar = 1.00;
-        rightSpeedScalar = 0.97;
+        rightSpeedScalar = 1.00;
 
         // TODO: 6ft/s, 7ft/s
         shiftUpSpeed = 100000;
         shiftDownSpeed = -1;
 
         teleopInvertCallback = () -> {
-            leftDriveLeader.setInverted(true);
-            leftDriveFollower.setInverted(true);
+            leftDriveLeader.setInverted(false);
+            leftDriveFollower.setInverted(false);
+            leftDriveLeader.setSensorPhase(false);
 
-            rightDriveLeader.setInverted(true);
-            rightDriveFollower.setInverted(true);
+            rightDriveLeader.setInverted(false);
+            rightDriveFollower.setInverted(false);
+            rightDriveLeader.setSensorPhase(true);
         };
 
         autoInvertCallback = () -> {
-            
+            leftDriveLeader.setInverted(true);
+            leftDriveFollower.setInverted(true);
+            leftDriveLeader.setSensorPhase(true);
+
+            rightDriveLeader.setInverted(false);
+            rightDriveFollower.setInverted(false);
+            rightDriveLeader.setSensorPhase(true);
+
         };
 
         gearshiftPiston = new Piston(3, 4);

@@ -4,6 +4,7 @@ import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.SRXInvertCallback;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.drive.callibrationutility.DriveCallibrationUtility;
+import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
 import org.team3128.common.listener.ListenerManager;
@@ -14,8 +15,10 @@ import org.team3128.common.listener.controltypes.POV;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
+import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
+import org.team3128.gromit.cvcommands.CmdSimpleCVServo;
 import org.team3128.gromit.mechanisms.Climber;
 import org.team3128.gromit.mechanisms.FourBar;
 // import org.team3128.gromit.mechanisms.GroundIntake;
@@ -59,7 +62,7 @@ public class MainGromit extends NarwhalRobot{
 	public double shiftUpSpeed, shiftDownSpeed;
 
     public double wheelCirc;
-    public double gearRatio;
+    //public double gearRatio;
     public double wheelbase;
 	public int driveMaxSpeed;
 
@@ -126,8 +129,13 @@ public class MainGromit extends NarwhalRobot{
 	public DriverStation ds;
 
 	private boolean groundIntaking = false;
+	private boolean isOutaking = false;
 
 	private CommandGroup climbCommand;
+
+	// CV!!!!!!
+	public Limelight limelight;
+
 
 	// 4200
 	public double maxLiftSpeed = 0;
@@ -142,7 +150,7 @@ public class MainGromit extends NarwhalRobot{
 	ManualControlMode manualControMode = ManualControlMode.LIFT;
 
 	public enum GameElement {
-		NONE("none"),
+		//NONE("none"),
 		CARGO("cargo"),
 		HATCH_PANEL("hatch_panel");
 
@@ -177,10 +185,10 @@ public class MainGromit extends NarwhalRobot{
     @Override
     protected void constructHardware() {
 		// Construct and Configure Drivetrain
-		leftDriveLeader = new TalonSRX(10);
-		leftDriveFollower = new VictorSPX(11);
-		rightDriveLeader = new TalonSRX(15);
-		rightDriveFollower = new VictorSPX(16);
+		leftDriveLeader = new TalonSRX(15);
+		leftDriveFollower = new VictorSPX(16);
+		rightDriveLeader = new TalonSRX(10);
+		rightDriveFollower = new VictorSPX(11);
 
 		leftDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
 		leftDriveFollower.follow(leftDriveLeader);
@@ -188,7 +196,7 @@ public class MainGromit extends NarwhalRobot{
         rightDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
 		rightDriveFollower.follow(rightDriveLeader);
 
-		SRXTankDrive.initialize(rightDriveLeader, leftDriveLeader, wheelCirc, 1, wheelbase, driveMaxSpeed, teleopInvertCallback, autoInvertCallback);
+		SRXTankDrive.initialize(rightDriveLeader, leftDriveLeader, wheelCirc, wheelbase, driveMaxSpeed, teleopInvertCallback, autoInvertCallback);
         drive = SRXTankDrive.getInstance();
 
 		drive.setLeftSpeedScalar(leftSpeedScalar);
@@ -266,6 +274,8 @@ public class MainGromit extends NarwhalRobot{
 		listenerRight = new ListenerManager(rightJoystick);
 		addListenerManager(listenerRight);
 
+		limelight = new Limelight(7 * Length.in, 26 * Length.in, 6.15 * Length.in, 28.5 * Length.in, 14.5 * Length.in);
+
 		// NarwhalDashboard: Driver Controls
 		NarwhalDashboard.addButton("climb_12", (boolean down) -> {
 			if (down) {
@@ -321,11 +331,11 @@ public class MainGromit extends NarwhalRobot{
 				currentGameElement = GameElement.HATCH_PANEL;
 			}
 		});
-		NarwhalDashboard.addButton("setElement_none", (boolean down) -> {
-			if (down) {
-				currentGameElement = GameElement.NONE;
-			}
-		});
+		// NarwhalDashboard.addButton("setElement_none", (boolean down) -> {
+		// 	if (down) {
+		// 		currentGameElement = GameElement.NONE;
+		// 	}
+		// });
 
 		// Debug
 		NarwhalDashboard.addButton("rezero_backleg", (boolean down) -> {
@@ -385,6 +395,22 @@ public class MainGromit extends NarwhalRobot{
 			}
 		});
 
+		NarwhalDashboard.addButton("arc_90_r_40", (boolean down) -> {
+			if (down) {
+				drive.new CmdArcTurn(40 * Length.in, 90 * Angle.DEGREES, Direction.RIGHT, 0.8, 5000).start();;
+			}
+		});
+		NarwhalDashboard.addButton("arc_90_r_30", (boolean down) -> {
+			if (down) {
+				drive.new CmdArcTurn(30 * Length.in, 90 * Angle.DEGREES, Direction.RIGHT, 0.8, 5000).start();;
+			}
+		});
+		NarwhalDashboard.addButton("simplecv", (boolean down) -> {
+			if (down) {
+				new CmdSimpleCVServo(limelight).start();
+			}
+		});
+
 		dcu.initNarwhalDashboard();
     }
 
@@ -402,23 +428,19 @@ public class MainGromit extends NarwhalRobot{
 			double y = listenerRight.getAxis("MoveTurn");
 			double t = listenerRight.getAxis("Throttle") * -1;
 
-			drive.arcadeDrive(x, -0.8 * y, t, true);
+			drive.arcadeDrive(x, 0.8 * y, t, true);
 		}, "MoveForwards", "MoveTurn", "Throttle");
 
 		listenerRight.nameControl(new Button(2), "Gearshift");
 		listenerRight.addButtonDownListener("Gearshift", drive::shift);
 
 		// Intake/Outtake Controls
-		listenerLeft.nameControl(new Button(5), "DemogorgonGrab");
-        listenerLeft.addButtonDownListener("DemogorgonGrab", () -> {
-			liftIntake.setState(LiftIntakeState.DEMOGORGON_HOLDING);
-			currentGameElement = GameElement.HATCH_PANEL;
-		});
-
-        listenerLeft.nameControl(new Button(6), "DemogorgonRelease");
-        listenerLeft.addButtonDownListener("DemogorgonRelease", () -> {
+		listenerRight.nameControl(new Button(5), "DemogorgonGrab");
+        listenerRight.addButtonDownListener("DemogorgonGrab", () -> {
 			liftIntake.setState(LiftIntakeState.DEMOGORGON_RELEASED);
-			currentGameElement = GameElement.NONE;
+		});
+		listenerRight.addButtonUpListener("DemogorgonGrab", () -> {
+			liftIntake.setState(LiftIntakeState.DEMOGORGON_HOLDING);
 		});
 
 		listenerRight.nameControl(new POV(0), "IntakePOV");
@@ -426,26 +448,23 @@ public class MainGromit extends NarwhalRobot{
 		{
 			switch (pov.getDirectionValue()) {
 				case 8:
+				case 1:
+				case 7:
 					liftIntake.setState(LiftIntakeState.CARGO_OUTTAKE);
+
 					break;
 				case 3:
 				case 4:
 				case 5:
-					if (optimusPrime.robotState == RobotState.REST) {
+					if (optimusPrime.robotState != RobotState.LOADING_AND_SHIP_HATCH) {
 						optimusPrime.setState(RobotState.INTAKE_FLOOR_CARGO);
-						groundIntaking = true;
 					}
 
 					liftIntake.setState(LiftIntakeState.CARGO_INTAKE);
 					
 					break;
 				case 0:
-					if (groundIntaking) {
-						optimusPrime.setState(RobotState.REST);
-						liftIntake.setState(LiftIntakeState.DEMOGORGON_HOLDING);
-
-						groundIntaking = false;
-					}
+					liftIntake.setState(LiftIntakeState.DEMOGORGON_HOLDING);
 
 					break;
 				default:
@@ -460,6 +479,11 @@ public class MainGromit extends NarwhalRobot{
 			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreTarget));
 		});
 		listenerRight.addButtonUpListener("SetHeight", () -> {
+			optimusPrime.setState(RobotState.REST);
+		});
+
+		listenerRight.nameControl(new Button(6), "RestState");
+		listenerRight.addButtonDownListener("RestState" , () -> {
 			optimusPrime.setState(RobotState.REST);
 		});
 
@@ -594,22 +618,40 @@ public class MainGromit extends NarwhalRobot{
 	@Override
 	protected void constructAutoPrograms()
 	{
-
+		NarwhalDashboard.addAuto("90 In Place", drive.new CmdInPlaceTurn(90, Direction.RIGHT, 1.0, 5000));
 	}
 
 	@Override
 	protected void teleopInit()
 	{
+		drive.shiftToLow();
+
 		fourBar.brake();
 		lift.powerControl(0);
 	}
 
 	@Override
+	protected void autonomousInit() {
+		drive.shiftToLow();
+	}
+
+
+	private GameElement lastAutoGameElement = null;
+	@Override
 	protected void teleopPeriodic() {
-		if (currentGameElement == GameElement.CARGO) {
-			if (!liftIntake.getCargoBumper()) currentGameElement = GameElement.NONE;
+		if (getCurrentGameElement() != lastAutoGameElement) {
+			currentGameElement = getCurrentGameElement();
+			lastAutoGameElement = currentGameElement;
 		}
-		else if (liftIntake.getCargoBumper()) currentGameElement = GameElement.CARGO;
+	}
+
+	public GameElement getCurrentGameElement() {
+		if (liftIntake.currentState == LiftIntakeState.CARGO_INTAKE || liftIntake.getCargoBumper() || liftIntake.bumped) {
+			return GameElement.CARGO;
+		}
+		else {
+			return GameElement.HATCH_PANEL;
+		}
 	}
 
 
@@ -620,6 +662,7 @@ public class MainGromit extends NarwhalRobot{
 		SmartDashboard.putBoolean("Lift: Can Lower", lift.canLower);
 
 		SmartDashboard.putNumber("Lift Height (inches)", lift.getCurrentHeight() / Length.in);
+		SmartDashboard.putNumber("Lift Position", liftMotorLeader.getSelectedSensorPosition() / Length.in);
 
 
 		SmartDashboard.putBoolean("Four Bar: Can Raise", fourBar.canRaise);
@@ -635,9 +678,14 @@ public class MainGromit extends NarwhalRobot{
 		minLiftSpeed = Math.min(minLiftSpeed, liftMotorLeader.getSelectedSensorVelocity());
 		SmartDashboard.putNumber("Min Lift Speed", minLiftSpeed);
 
+		SmartDashboard.putNumber("Left Position (nu)", leftDriveLeader.getSelectedSensorPosition());
+		SmartDashboard.putNumber("Right Position (nu)", rightDriveLeader.getSelectedSensorPosition());
+
 
 		NarwhalDashboard.put("scoring_target", currentScoreTarget.getName());
 		NarwhalDashboard.put("game_element", currentGameElement.getName());
+
+		NarwhalDashboard.put("gear", drive.isInHighGear());
 
 		dcu.tickNarwhalDashboard();
 	}

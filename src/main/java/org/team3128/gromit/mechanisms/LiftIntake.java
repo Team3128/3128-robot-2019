@@ -21,7 +21,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class LiftIntake {
     public enum LiftIntakeState
 	{
-		CARGO_INTAKE(-0.6, true, "Cargo Intake"),
+		CARGO_INTAKE(-1.0, true, "Cargo Intake"),
 		CARGO_OUTTAKE(1.0, true, "Cargo Outtake"),
 		
 		DEMOGORGON_RELEASED(0.0, false, "Demogorgon Released"),
@@ -53,10 +53,15 @@ public class LiftIntake {
 	VictorSPX intakeMotors;
 	DigitalInput cargoBumperSwitch;
 
-	private LiftIntakeState state;
+	private LiftIntakeState newState;
+	public LiftIntakeState currentState;
+
 	private Piston demogorgonPiston;
 
 	private Thread cargoThread;
+
+	public boolean bumped = false;
+
 
 	private static LiftIntake instance = null;
 	public static LiftIntake getInstance() {
@@ -79,34 +84,53 @@ public class LiftIntake {
 		this.cargoBumperSwitch = cargoBumperSwitch;
 
 		setState(state);
-
-		cargoThread = new Thread(() -> {
-			boolean wasBumped = false;
-			double bumpTime = 0;
-
-			final double holdTime = 1.0;
-
+		
+		cargoThread = new Thread(() -> {			
 			while (true) {
-				if (this.state == LiftIntakeState.CARGO_INTAKE) {
-					if (this.getCargoBumper()) {
-						if (!wasBumped) {
-							this.setIntakePower(0.2 * this.state.rollerPower);
-
-							bumpTime = RobotController.getFPGATime() / 1000000.0;
-							wasBumped = true;
+				if (this.newState == null) {
+					if (this.currentState == LiftIntakeState.CARGO_INTAKE) {
+						if (this.getCargoBumper()) {
+							bumped = true;
+							this.setIntakePower(-0.2);
 						}
-						else if (RobotController.getFPGATime() / 1000000.0 > bumpTime + holdTime) {
-							this.setIntakePower(0);
+						else {
+							this.setIntakePower(-0.6);
 						}
 					}
-					else {
-						wasBumped = false;
-						this.setIntakePower(this.state.rollerPower);
+					else if (this.currentState == LiftIntakeState.DEMOGORGON_HOLDING && bumped) {
+						if (this.getCargoBumper()) {
+							this.setIntakePower(-0.2);
+						}
+						else {
+							this.setIntakePower(-0.6);
+						}
 					}
 				}
 				else {
-					this.setIntakePower(0);
+					if (this.newState == LiftIntakeState.CARGO_INTAKE) {
+						this.setIntakePower(this.newState.getRollerPower());
+						bumped = false;
+					}
+					else if (this.newState == LiftIntakeState.CARGO_OUTTAKE) {
+						this.setIntakePower(this.newState.rollerPower);
+						bumped = false;
+					}
+					else if (this.newState == LiftIntakeState.DEMOGORGON_HOLDING && bumped) {
+						if (this.getCargoBumper()) {
+							this.setIntakePower(-0.2);
+						}
+						else {
+							this.setIntakePower(-0.6);
+						}
+					}
+					else {
+						this.setIntakePower(this.newState.rollerPower);
+					}
+
+					this.currentState = this.newState;
+					this.newState = null;
 				}
+				
 
 				try {
 					Thread.sleep(100);
@@ -116,10 +140,11 @@ public class LiftIntake {
 			}
 		});
 		cargoThread.start();
+	
 	}
 	
 	public void setState(LiftIntakeState newState) {
-		if (state != newState) {			
+		if (this.currentState != newState) {			
 			if(newState.getDemogorgonPistonState()) {
 				demogorgonPiston.setPistonOn();
 			}
@@ -127,7 +152,7 @@ public class LiftIntake {
 				demogorgonPiston.setPistonOff();
 			}
 			
-			state = newState;
+			this.newState = newState;
 		}
 	}
 	

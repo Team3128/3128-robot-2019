@@ -24,8 +24,8 @@ public class Lift
 {
 	public enum LiftHeightState {
 		BASE(0 * Length.ft),
-
-		INTAKE_FLOOR_CARGO(6.3 * Length.in),
+		//6.3
+		INTAKE_FLOOR_CARGO(7 * Length.in),
 
 		LOW_CARGO(40 * Length.in),
 		MID_CARGO(75 * Length.in),
@@ -35,8 +35,8 @@ public class Lift
         MID_HATCH(54 * Length.in),
 		TOP_HATCH(59 * Length.in),
 		
-        LOADING_SHIP_CARGO(0 * Length.ft),
-        LOADING_SHIP_HATCH(0 * Length.ft);
+        LOADING_SHIP_CARGO(57.5 * Length.in),
+        LOADING_SHIP_HATCH(18.5 * Length.in);
 
 		public double targetHeight;
 
@@ -154,12 +154,14 @@ public class Lift
 		liftThread = new Thread(() ->
 		{
 			double target = 0;
+			boolean previousSwitchState = false;
 
 			while (true)
 			{
-				if (this.getLimitSwitch())
+				if (this.getLimitSwitch() != previousSwitchState)
 				{
-					this.liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
+					this.liftMotor.setSelectedSensorPosition(limitSwitchLocation, 170, Constants.CAN_TIMEOUT);
+					previousSwitchState = this.getLimitSwitch();
 				}
 
 				if (this.disabled)

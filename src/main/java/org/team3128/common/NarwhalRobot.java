@@ -18,6 +18,7 @@ import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.NotifierJNI;
 
 import edu.wpi.first.wpilibj.Watchdog;
+import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -383,7 +384,7 @@ public abstract class NarwhalRobot extends RobotBase {
 	
 	private void runAutoProgram()
 	{
-		CommandGroup autoProgram = null;
+		Command autoProgram = null;
 
 		autoProgram = NarwhalDashboard.getSelectedAuto();
 

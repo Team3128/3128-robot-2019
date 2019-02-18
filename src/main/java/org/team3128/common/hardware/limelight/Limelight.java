@@ -18,11 +18,13 @@ public class Limelight
     public double cameraHeight;
     public double targetHeight;
     public double targetWidth;
+    public double centerDist;
 
     public NetworkTable limelightTable, calcValsTable;
     public NetworkTableEntry nd, nd0, nd1, ntheta, ntheta0, ntheta1, ndeltax, ndeltay, camtran;
     
-    public Limelight(double cameraAngle, double cameraHeight, double targetHeight, double targetWidth){
+    public Limelight(double centerDist, double cameraAngle, double cameraHeight, double targetHeight, double targetWidth) {
+        this.centerDist = centerDist;
         this.cameraAngle = cameraAngle;
         this.cameraHeight = cameraHeight;
         this.targetHeight = targetHeight;

@@ -35,6 +35,7 @@ public class DriveCallibrationUtility {
         maxRightSpeed = 0;
 
         calculatedWheelbase = new Wheelbase();
+        this.ahrs = ahrs;
 
         drive = SRXTankDrive.getInstance();
     }
@@ -57,7 +58,7 @@ public class DriveCallibrationUtility {
         calculatedWheelbase = new Wheelbase();
         NarwhalDashboard.addButton("wheelbase", (boolean down) -> {
             if (down) {
-                (new CmdCallibrateWheelbase(ahrs, 5000, 1000, 1500, calculatedWheelbase)).start();;
+                (new CmdCallibrateWheelbase(ahrs, 5000, 2500, 1000, calculatedWheelbase)).start();;
             }
         });
         

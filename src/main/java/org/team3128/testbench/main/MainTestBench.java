@@ -71,13 +71,13 @@ public class MainTestBench extends NarwhalRobot {
 	protected void constructHardware()
 	{
         newLine = "";
-        limelight = new Limelight(camAngle, camHeight, lowerTargetHeight, w);
+        limelight = new Limelight(0 * Length.in, camAngle, camHeight, lowerTargetHeight, w);
         newLine = "tx,ty,ts,ta,thoriz,tvert,tshort,tlong,deltax,deltay,theta,calculatedDist,theta0,theta1,d0,d1\n";
         NarwhalDashboard.put("counter", String.valueOf(counter));
         boi1 = new TalonSRX(1);
         boi2 = new TalonSRX(2);
 
-        SRXTankDrive.initialize(boi1, boi2, wheelCirc, 1, 25.25 * Length.in, lowGearMaxSpeed, () -> {}, () -> {});
+        SRXTankDrive.initialize(boi1, boi2, wheelCirc, 25.25 * Length.in, lowGearMaxSpeed, () -> {}, () -> {});
         drive = SRXTankDrive.getInstance();
         
         leftJoystick = new Joystick(0);

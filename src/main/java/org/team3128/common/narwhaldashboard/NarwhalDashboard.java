@@ -11,6 +11,7 @@ import org.java_websocket.server.WebSocketServer;
 
 import org.team3128.common.util.Log;
 
+import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class NarwhalDashboard extends WebSocketServer {
@@ -21,7 +22,7 @@ public class NarwhalDashboard extends WebSocketServer {
     }
 
     private static HashMap<String, String> data = new HashMap<String, String>();
-    private static LinkedHashMap<String, CommandGroup> autoPrograms = new LinkedHashMap<String, CommandGroup>();
+    private static LinkedHashMap<String, Command> autoPrograms = new LinkedHashMap<String, Command>();
 
     private static HashMap<String, DashButtonCallback> buttons = new HashMap<String, DashButtonCallback>();
     private static HashMap<String, NumericalDataCallback> numDataCallbacks = new HashMap<String, NumericalDataCallback>();
@@ -70,7 +71,7 @@ public class NarwhalDashboard extends WebSocketServer {
      * Clears the list of autonomous programs.
      */
     public static void clearAutos() {
-        autoPrograms = new LinkedHashMap<String, CommandGroup>();
+        autoPrograms = new LinkedHashMap<String, Command>();
     }
 
     /**
@@ -79,7 +80,7 @@ public class NarwhalDashboard extends WebSocketServer {
      * @param name - The human-readable name of the autonomous program
      * @param program - The auto program to run if this element is chosen
      */
-    public static void addAuto(String name, CommandGroup program) {
+    public static void addAuto(String name, Command program) {
         autoPrograms.put(name, program);
     }
 
@@ -93,7 +94,7 @@ public class NarwhalDashboard extends WebSocketServer {
     /**
      * Returns the currently selected auto program
      */
-    public static CommandGroup getSelectedAuto() {
+    public static Command getSelectedAuto() {
         if (selectedAuto == null) return null;
 
         if (!autoPrograms.containsKey(selectedAuto)) {
