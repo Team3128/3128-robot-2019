@@ -4,35 +4,42 @@ import org.team3128.common.drive.routemaker.Routemaker;
 import org.team3128.common.drive.routemaker.ProfilePoint;
 import org.team3128.common.drive.routemaker.Waypoint;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
+import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Assert;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
+import org.team3128.common.util.Wheelbase;
+import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.AngularSpeed;
-import org.team3128.common.util.units.Length;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.ctre.phoenix.motion.MotionProfileStatus;
 import com.ctre.phoenix.motion.TrajectoryPoint;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.can.SlotConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import com.kauailabs.navx.frc.AHRS;
+import edu.wpi.first.wpilibj.SPI;
+
+//import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * Class which represents a tank drive powered by Talon SRXs on a robot.
- * 
+ *
  * Uses positional PID for high-accuracy autonomous moves. Make sure that the
  * SRXs have quadrature encoders attached, have FeedbackDevice set, and that are
  * configured to the correct number of counts per revolution.
- * 
+ *
  * CALIBRATION PROCEDURE:
  * -------------------------------------------------------------------------------------------------
  * Get the PID constants to ballpark. EACH DAY OF EACH COMPETITION: - Run the
@@ -40,8 +47,8 @@ import edu.wpi.first.wpilibj.command.Command;
  * for the competition autos - Adjust feedforward on each side until the robot
  * drives straight - Adjust the wheel diameter until the distance is correct to
  * the inch
- * 
- * @author Jamie
+ *
+ * @author Jamie, Ronak
  *
  */
 public class SRXTankDrive implements ITankDrive
@@ -71,10 +78,11 @@ public class SRXTankDrive implements ITankDrive
 	private double shiftDownSpeed;
 
 	/**
-	 * True if the talons are set in PercentVbus mode for teleop driving, false
-	 * if they are in position PID mode for auto.
+	 * How the drive should stop. Brake if the drive motors should apply power to
+	 * stop the robot (typically set for teleop). Coast if the drive motors
+	 * should not react when power is set to 0 (typically set for auto).
 	 */
-	private boolean configuredForTeleop;
+	private NeutralMode neutralMode;
 
 	/**
 	 * circumference of wheels in cm
@@ -86,20 +94,10 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	public final double wheelBase;
 
-	/**
-	 * distance between front and back wheels
-	 */
-	public final double track;
-
-	/**
-	 * Circumference of the turning circle when in-place turning
-	 */
-	public final double turningCircleCircumference;
-
-	/**
-	 * Ratio between turns of the wheels to turns of the encoder
-	 */
-	private double gearRatio;
+	// /**
+	//  * Ratio between turns of the wheels to turns of the encoder
+	//  */
+	// private double gearRatio;
 
 	/**
 	 * The maxiumum measured speed of the drive motors, in native units
@@ -113,15 +111,32 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	private double leftSpeedScalar, rightSpeedScalar;
 
-	public double getGearRatio()
-	{
-		return gearRatio;
-	}
+	/**
+	 * Callbacks to be executed when the robot is switched between
+	 * operator control and autonomous control to ensure all drive
+	 * motors are driving forward.
+	 */
+	private SRXInvertCallback teleopInvertCallback, autoInvertCallback;
+	private boolean invertedForTeleop;
 
-	public void setGearRatio(double gearRatio)
-	{
-		this.gearRatio = gearRatio;
-	}
+
+	/**
+	 * FPID constants for both left and righ drive sides in both
+	 * Motion Magic/Motion Profile control mode as well as velocity
+	 * control mode.
+	 */
+	private PIDConstants leftMotionProfilePID, leftVelocityPID;
+	private PIDConstants rightMotionProfilePID, rightVelocityPID;
+
+	// public double getGearRatio()
+	// {
+	// 	return gearRatio;
+	// }
+
+	// public void setGearRatio(double gearRatio)
+	// {
+	// 	this.gearRatio = gearRatio;
+	// }
 
 	// Singelton methods
 	private static SRXTankDrive instance = null;
@@ -130,21 +145,22 @@ public class SRXTankDrive implements ITankDrive
 		if (instance != null) {
 			return instance;
 		}
-		
+
 		Log.fatal("SRXTankDrive", "Attempted to get instance before initializtion! Call initialize(...) first.");
 		return null;
 	}
 
 	/**
-	 * If there is more than one motor per side, configure each additional Talon
-	 * to follow the one with the encoder using Follower mode.
-	 * 
+	 * The "lead" Talon SRX on each drive side is the motor with a connected encoder. 
+	 * Configure each non-leader Talon of both drive sides to follow their respective
+	 * "lead" Talon using Follower mode.
+	 *
 	 * @param leftMotors
-	 *            The "lead" NarwhalSRX on the left side.
+	 *            The "lead" Talon SRX on the left side.
 	 * @param rightMotors
-	 *            The "lead" NarwhalSRX on the right side.
+	 *            The "lead" Talon SRX on the right side.
 	 * @param wheelCircumfrence
-	 *            The circumference of the wheel
+	 *            The amount of units of length the robot travels per rotation of the encoder stage
 	 * @param gearRatio
 	 *            The gear ratio of the turns of the wheels per turn of the
 	 *            encoder shaft
@@ -152,55 +168,62 @@ public class SRXTankDrive implements ITankDrive
 	 *            The distance between the front and back wheel on a side
 	 * @param track
 	 *            distance across between left and right wheels
-	 * @param robotFreeSpeed
-	 *            The maxiumum measured speed of the drive motors, in native units
-	 *            per 100ms, of the robot driving on the ground at 100% throttle
+	 * @param robotMaxSpeed
+	 *            The lesser of the maxiumum measured speeds for both drive sides,
+	 *            in native units per 100ms, of the robot driving on the ground at
+	 *            100% throttle
 	 */
-	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, int robotFreeSpeed) {
-		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, gearRatio, wheelBase, track, robotFreeSpeed);
+	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert) {
+		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, wheelBase, robotMaxSpeed, teleopInvert, autoInvert);
 	}
-	
-	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, int robotFreeSpeed)
+
+	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert)
 	{
 		this.leftMotors = leftMotors;
 		this.rightMotors = rightMotors;
 
 		this.wheelCircumfrence = wheelCircumfrence;
 		this.wheelBase = wheelBase;
-		this.track = track;
-		this.gearRatio = gearRatio;
-		this.robotMaxSpeed = robotFreeSpeed;
-
-		double turningCircleDiameter = Math.sqrt(RobotMath.square(track) + RobotMath.square(wheelBase)); // pythagorean theorem
-		
-		turningCircleCircumference = turningCircleDiameter * Math.PI;
+		//this.gearRatio = gearRatio;
+		this.robotMaxSpeed = robotMaxSpeed;
 
 		leftSpeedScalar = 1;
 		rightSpeedScalar = 1;
 
-		if (gearRatio <= 0)
-		{
-			throw new IllegalArgumentException("Invalid gear ratio");
-		}
+		setTeleopInvert(teleopInvert);
+		setAutoInvert(autoInvert);
+
+		invertedForTeleop = true;
+		teleopInvertCallback.invertMotors();
+
+		loadSRXPIDConstants();
+		setupDashboardPIDListener();
+
+		sendPIDConstants();
+
+		// if (gearRatio <= 0)
+		// {
+		// 	throw new IllegalArgumentException("Invalid gear ratio");
+		// }
 	}
 
-	private void configureForTeleop()
+	private void setBrakeNeutralMode()
 	{
-		if (!configuredForTeleop)
+		if (neutralMode != NeutralMode.Brake)
 		{
 			leftMotors.setNeutralMode(NeutralMode.Brake);
 			rightMotors.setNeutralMode(NeutralMode.Brake);
 
-			configuredForTeleop = true;
+			neutralMode = NeutralMode.Brake;
 		}
 	}
 
-	private void configureForAuto()
+	private void setCoastNeutralMode()
 	{
 		leftMotors.setNeutralMode(NeutralMode.Coast);
 		rightMotors.setNeutralMode(NeutralMode.Coast);
 
-		configuredForTeleop = false;
+		neutralMode = NeutralMode.Coast;
 	}
 
 	// threshold below which joystick movements are ignored.
@@ -208,7 +231,7 @@ public class SRXTankDrive implements ITankDrive
 
 	/**
 	 * Update the motor outputs with the given control values.
-	 * 
+	 *
 	 * @param joyX
 	 *            horizontal control input
 	 * @param joyY
@@ -220,7 +243,11 @@ public class SRXTankDrive implements ITankDrive
 	@Override
 	public void arcadeDrive(double joyX, double joyY, double throttle, boolean fullSpeed)
 	{
-		configureForTeleop();
+		if (!invertedForTeleop) {
+			teleopInvertCallback.invertMotors();
+			invertedForTeleop = true;
+		}
+		setBrakeNeutralMode();
 
 		double spdL, spdR;
 
@@ -248,8 +275,8 @@ public class SRXTankDrive implements ITankDrive
 		joyY *= throttle;
 		joyX *= throttle;
 
-		spdR = RobotMath.clampPosNeg1(joyY + joyX);
-		spdL = RobotMath.clampPosNeg1(joyY - joyX);
+		spdR = rightSpeedScalar * RobotMath.clampPosNeg1(joyY + joyX);
+		spdL = leftSpeedScalar *  RobotMath.clampPosNeg1(joyY - joyX);
 
 		// Log.debug("SRXTankDrive", "x1: " + joyX + " throttle: " + throttle +
 		// " spdR: " + spdR + " spdL: " + spdL);
@@ -276,9 +303,17 @@ public class SRXTankDrive implements ITankDrive
 		rightSpeedScalar = scalar;
 	}
 
+	public void setTeleopInvert(SRXInvertCallback callback) {
+		teleopInvertCallback = callback;
+	}
+
+	public void setAutoInvert(SRXInvertCallback callback) {
+		autoInvertCallback = callback;
+	}
+
 	/**
 	 * Drive by providing motor powers for each side.
-	 * 
+	 *
 	 * @param powL
 	 *            the left side power.
 	 * @param powR
@@ -286,7 +321,7 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	public void tankDrive(double powL, double powR)
 	{
-		configureForTeleop();
+		setBrakeNeutralMode();
 		leftMotors.set(ControlMode.PercentOutput, powL);
 		rightMotors.set(ControlMode.PercentOutput, powR);
 	}
@@ -300,17 +335,13 @@ public class SRXTankDrive implements ITankDrive
 	@Override
 	public void stopMovement()
 	{
-		// not sure about the best way to do this
-		// we can disable the motors, but then we have to reenable them later
-		// so I do it this way instead
-
-		configureForTeleop();
+		setBrakeNeutralMode();
 		tankDrive(0, 0);
 	}
 
 	/**
-	 * Adds a two-speed gearshift to the robot drive.
-	 * 
+	 * Adds a two-speed gearshift with auto-shifting to the robot drive.
+	 *
 	 * @param gearshift
 	 *            Two-speed gearshift object
 	 * @param shiftUpSpeed
@@ -372,7 +403,7 @@ public class SRXTankDrive implements ITankDrive
 		else
 		{
 			Log.fatal("SRXTankDrive",
-					"There is only one gear. The robot doesn't actually have a gearshift. The code that involves this is probably bad news.");
+					"There is only one gear. The robot doesn't actually have a gearshift.");
 			return false;
 		}
 	}
@@ -381,11 +412,8 @@ public class SRXTankDrive implements ITankDrive
 	{
 		if (gearshift != null)
 		{
-			int rightSpeedNative = rightMotors.getSelectedSensorVelocity(0);
-			int leftSpeedNative = rightMotors.getSelectedSensorVelocity(0);
-
-			double rightSpeed = rightSpeedNative / AngularSpeed.NATIVE_UNITS_PER_100MS;
-			double leftSpeed = leftSpeedNative / AngularSpeed.NATIVE_UNITS_PER_100MS;
+			double rightSpeed = rightMotors.getSelectedSensorVelocity(0) / AngularSpeed.NATIVE_UNITS_PER_100MS;
+			double leftSpeed = leftMotors.getSelectedSensorVelocity(0) / AngularSpeed.NATIVE_UNITS_PER_100MS;
 
 			if (gearshift.isInHighGear() && (rightSpeed < 0 && leftSpeed > 0) || (rightSpeed > 0 && leftSpeed < 0))
 			{
@@ -409,9 +437,9 @@ public class SRXTankDrive implements ITankDrive
 	/**
 	 * Get the estimated angle that the robot has turned since the encoders were
 	 * last reset, based on the relative distances of each side.
-	 * 
+	 *
 	 * Range: [0, 360) 0 degrees is straight ahead.
-	 * 
+	 *
 	 * @return
 	 */
 	public double getRobotAngle()
@@ -421,250 +449,149 @@ public class SRXTankDrive implements ITankDrive
 
 		double difference = leftDist - rightDist;
 
-		return RobotMath.normalizeAngle((difference / turningCircleCircumference) * Angle.ROTATIONS);
+		return RobotMath.normalizeAngle((difference / (Math.PI * wheelBase)) * Angle.ROTATIONS);
 	}
 
-	public class CmdRealtimeRouteDrive extends CmdMotionProfileMove {
-		private Waypoint[] waypoints;
-		private double power, smoothness;
+	/**
+	 * Loads stored PID constants from the drive Talon SRXs.
+	 */
+	public void loadSRXPIDConstants() {
+		SlotConfiguration configs = new SlotConfiguration();
 
-		private Thread PBFRFA;
+		leftMotors.getSlotConfigs(configs, 0, Constants.CAN_TIMEOUT);
+		leftMotionProfilePID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Left MP: " + leftMotionProfilePID);
 
-		private ADXRS450_Gyro gyro;
+		leftMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
+		leftVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Left V: " + leftVelocityPID);
 
-		private MotionProfileStatus leftStatus, rightStatus;
-		private ProfilePoint point;
+		rightMotors.getSlotConfigs(configs, 0, Constants.CAN_TIMEOUT);
+		rightMotionProfilePID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Right MP: " + rightMotionProfilePID);
 
-		private double x0, y0, x1, y1;
-
-		private TrajectoryPoint trajPoint = new TrajectoryPoint();
-
-		private boolean done = false;
-
-		private final double accelerationDistance = 2 * Length.ft;
-
-		private double startDist, endDist;
-
-		public CmdRealtimeRouteDrive(ADXRS450_Gyro gyro, double power, double smoothness, double timeoutMs, Waypoint... waypoints) {
-			super(timeoutMs / 1000.0);
-
-			this.gyro = gyro;
-
-			this.waypoints = waypoints;
-
-			this.power = power;
-			this.smoothness = smoothness;
-
-			trajPoint.profileSlotSelect0 = 0;
-			trajPoint.timeDur = Routemaker.durationMs;
-			trajPoint.zeroPos = false;
-			trajPoint.isLastPoint = false;
-
-			x0 = waypoints[0].x;
-			y0 = waypoints[0].y;
-
-			x1 = waypoints[waypoints.length - 1].x;
-			y1 = waypoints[waypoints.length - 1].y;
-		}
-
-		@Override
-		protected void initialize() {
-			super.initialize();
-
-			leftMotors.changeMotionControlFramePeriod(1);
-			rightMotors.changeMotionControlFramePeriod(1);
-			
-			// Generate the initial path
-			Odometer.initialize(gyro, 0, 0, 0);
-			Routemaker.initialize(power, smoothness, waypoints);
-
-			// Start the motion profile mode
-			leftMotors.set(ControlMode.MotionProfile, 1);
-			rightMotors.set(ControlMode.MotionProfile, 1);
-
-			// Start a thread for handling the PBFRFRA calculations and odometery readings
-			PBFRFA = new Thread(() -> {
-				final double accelFactor = 0.1;
-
-				double lastUpdateTimeMs = 0;
-				double processStartTimeMs = 0;
-
-				double spdFrac = accelFactor;
-				while (true) {
-					Odometer.getInstance().update();
-
-					if (1000.0 * Timer.getFPGATimestamp() - lastUpdateTimeMs > Routemaker.durationMs - 2) {
-						processStartTimeMs = 1000.0 * Timer.getFPGATimestamp();
-						point = Routemaker.getInstance().getNextPoint(spdFrac);
-
-						trajPoint.isLastPoint = point.last;
-
-						trajPoint.position = point.leftDistance;
-						trajPoint.velocity = point.leftSpeed;
-						leftMotors.pushMotionProfileTrajectory(trajPoint);
-
-						trajPoint.position = point.rightDistance;
-						trajPoint.velocity = point.rightSpeed;
-						rightMotors.pushMotionProfileTrajectory(trajPoint);
-
-						leftMotors.processMotionProfileBuffer();
-						rightMotors.processMotionProfileBuffer();
-
-						lastUpdateTimeMs = 1000.0 * Timer.getFPGATimestamp();
-
-						Log.info("CmdRealtimeRouteDrive", "Start-to-stop Time: " + (lastUpdateTimeMs - processStartTimeMs) + "ms.");
-
-						startDist = RobotMath.distance(x0, y0, Odometer.getInstance().getX(), Odometer.getInstance().getY());
-						endDist = RobotMath.distance(x1, y1, Odometer.getInstance().getX(), Odometer.getInstance().getY());
-
-						spdFrac = Math.min(1.0, 0.1 + startDist/accelerationDistance);
-						spdFrac = Math.min(1.0, endDist/accelerationDistance);
-
-						if (trajPoint.isLastPoint) {
-							this.done = true;
-							break;
-						}
-					}
-
-					try {
-						Thread.sleep(1);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-
-				Log.info("CmdRealtimeRouteDrive", "Motion complete.");
-			});
-			PBFRFA.start();
-		}
-
-		@Override
-		protected boolean isFinished() {
-			return this.isTimedOut() || done;
-		}
+		rightMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
+		rightVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Right V: " + rightVelocityPID);
 	}
 
-	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
-		private List<ProfilePoint> points;
-		private MotionProfileStatus leftStatus, rightStatus;
+	public void setLeftPID() {
+		Log.info("SRXTankDrive", "Setting left PID constants.");
 
-		public CmdStaticRouteDrive(List<ProfilePoint> points, double timeoutMs) {
-			super(timeoutMs / 1000.0);
+		leftMotors.config_kF(0, leftMotionProfilePID.kF);
+		leftMotors.config_kP(0, leftMotionProfilePID.kP);
+		leftMotors.config_kI(0, leftMotionProfilePID.kI);
+		leftMotors.config_kD(0, leftMotionProfilePID.kD);
 
-			this.points = points;
-		}
+		leftMotors.config_kF(1, leftVelocityPID.kF);
+		leftMotors.config_kP(1, leftVelocityPID.kP);
+		leftMotors.config_kI(1, leftVelocityPID.kI);
+		leftMotors.config_kD(1, leftVelocityPID.kD);
 
-		@Override
-		protected void initialize() {
-			super.initialize();
-			
-			leftMotors.changeMotionControlFramePeriod(Routemaker.durationMs / 2);
-			rightMotors.changeMotionControlFramePeriod(Routemaker.durationMs / 2);
-
-			TrajectoryPoint point = new TrajectoryPoint();
-			point.profileSlotSelect0 = 0;
-			point.timeDur = Routemaker.durationMs;
-			point.zeroPos = false;
-			point.isLastPoint = false;
-				
-			for (int i = 0; i < points.size(); i++) {
-				if (i == 0) 
-					point.zeroPos = true;
-				if (i == points.size() - 1)
-					point.isLastPoint = true;
-
-				point.position = points.get(i).leftDistance;
-				point.velocity = points.get(i).leftSpeed;
-				leftMotors.pushMotionProfileTrajectory(point);
-
-				point.position = points.get(i).rightDistance;
-				point.velocity = points.get(i).rightSpeed;
-				rightMotors.pushMotionProfileTrajectory(point);
-			}
-
-			new Notifier(() -> {
-				leftMotors.processMotionProfileBuffer();
-				rightMotors.processMotionProfileBuffer();
-			}).startPeriodic(Routemaker.durationSec / 2);
-
-			leftMotors.set(ControlMode.MotionProfile, 1);
-			rightMotors.set(ControlMode.MotionProfile, 1);
-		}
-
-		@Override
-		protected synchronized boolean isFinished() {
-			leftMotors.getMotionProfileStatus(leftStatus);
-			rightMotors.getMotionProfileStatus(rightStatus);
-
-			return this.isTimedOut() || leftStatus.isLast && rightStatus.isLast;
-		}
+		sendPIDConstants();
 	}
 
-	public abstract class CmdMotionProfileMove extends Command {
-		public CmdMotionProfileMove(double timeoutMs) {
-			super(timeoutMs / 1000.0);
-		}
+	public void setRightPID() {
+		Log.info("SRXTankDrive", "Setting right PID constants.");
 
-		protected void initialize() {
-			leftMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
-			rightMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
+		rightMotors.config_kF(0, rightMotionProfilePID.kF);
+		rightMotors.config_kP(0, rightMotionProfilePID.kP);
+		rightMotors.config_kI(0, rightMotionProfilePID.kI);
+		rightMotors.config_kD(0, rightMotionProfilePID.kD);
 
-			leftMotors.clearMotionProfileTrajectories();
-			rightMotors.clearMotionProfileTrajectories();
+		rightMotors.config_kF(1, rightVelocityPID.kF);
+		rightMotors.config_kP(1, rightVelocityPID.kP);
+		rightMotors.config_kI(1, rightVelocityPID.kI);
+		rightMotors.config_kD(1, rightVelocityPID.kD);
 
-			leftMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
-			rightMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
+		sendPIDConstants();
+	}
 
-			leftMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
-			rightMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+	/**
+	 * Sets up listeners to update drive PID constants when sent from
+	 * NarwhalDashboard
+	 */
+	public void setupDashboardPIDListener() {
+		NarwhalDashboard.addNumDataListener("leftPID", (double constants[]) -> {
+			this.leftMotionProfilePID.kF = constants[0];
+			this.leftMotionProfilePID.kP = constants[1];
+			this.leftMotionProfilePID.kI = constants[2];
+			this.leftMotionProfilePID.kD = constants[3];
 
-			// Fill and feed
-		}
+			this.leftVelocityPID.kF = constants[0];
+			this.leftVelocityPID.kP = constants[4];
+			this.leftVelocityPID.kI = constants[5];
+			this.leftVelocityPID.kD = constants[6];
 
-		@Override
-		protected void execute() {
-			// Don't think anything needs to happen here
-			// In theory, for a very large trajectory, the points would
-			// need to be fed in chunks while running.
-		}
+			this.setLeftPID();
+		});
 
-		@Override
-		protected boolean isFinished() {
-			return this.isTimedOut();
-		}
+		NarwhalDashboard.addNumDataListener("rightPID", (double constants[]) -> {
+			this.rightMotionProfilePID.kF = constants[0];
+			this.rightMotionProfilePID.kP = constants[1];
+			this.rightMotionProfilePID.kI = constants[2];
+			this.rightMotionProfilePID.kD = constants[3];
 
-		@Override
-		protected void end() {
-			leftMotors.clearMotionProfileTrajectories();
-			rightMotors.clearMotionProfileTrajectories();
-		}
+			this.rightVelocityPID.kF = constants[0];
+			this.rightVelocityPID.kP = constants[4];
+			this.rightVelocityPID.kI = constants[5];
+			this.rightVelocityPID.kD = constants[6];
+
+			this.setRightPID();
+		});
+	}
+
+	/**
+	 * Sends PID constants to NarwhalDashboard
+	 */
+	public void sendPIDConstants() {
+		NarwhalDashboard.put("l_f", leftMotionProfilePID.kF);
+
+		NarwhalDashboard.put("l_mp_p", leftMotionProfilePID.kP);
+		NarwhalDashboard.put("l_mp_i", leftMotionProfilePID.kI);
+		NarwhalDashboard.put("l_mp_d", leftMotionProfilePID.kD);
+
+		NarwhalDashboard.put("l_v_p", leftVelocityPID.kP);
+		NarwhalDashboard.put("l_v_i", leftVelocityPID.kI);
+		NarwhalDashboard.put("l_v_d", leftVelocityPID.kD);
+
+
+		NarwhalDashboard.put("r_f", rightMotionProfilePID.kF);
+
+		NarwhalDashboard.put("r_mp_p", rightMotionProfilePID.kP);
+		NarwhalDashboard.put("r_mp_i", rightMotionProfilePID.kI);
+		NarwhalDashboard.put("r_mp_d", rightMotionProfilePID.kD);
+
+		NarwhalDashboard.put("r_v_p", leftVelocityPID.kP);
+		NarwhalDashboard.put("r_v_i", leftVelocityPID.kI);
+		NarwhalDashboard.put("r_v_d", leftVelocityPID.kD);
 	}
 
 	/**
 	 * Convert cm of robot movement to encoder movement in degrees
-	 * 
+	 *
 	 * @param cm
 	 * @return
 	 */
 	public double cmToEncDegrees(double cm)
 	{
-		return (cm * 360) / (wheelCircumfrence * gearRatio);
+		return (cm * 360) / (wheelCircumfrence);
 	}
 
 	/**
 	 * Convert cm of robot movement to encoder rotations
-	 * 
+	 *
 	 * @param cm
 	 * @return
 	 */
 	public double encDistanceToCm(double encDistance)
 	{
-		return (encDistance / 360) * wheelCircumfrence * gearRatio;
+		return (encDistance / 360) * wheelCircumfrence;
 	}
 
 	/**
 	 * Enum for how CmdMoveDistance determines when to end a move command.
-	 * 
+	 *
 	 * @author Jamie
 	 *
 	 */
@@ -676,140 +603,121 @@ public class SRXTankDrive implements ITankDrive
 	}
 
 	/**
-	 * Command to move each side of the drivetrain a specified distance.
-	 * 
+	 * Command to move each side of the drivetrain a specified distance, using the MotionMagic control mode.
+	 *
 	 * Common logic shared by all of the autonomous movement commands
 	 */
-	public class CmdMoveDistance extends Command
+	public class CmdMotionMagicMove extends Command
 	{
-		// when the wheels' angular distance get within this threshold of the
-		// correct value, that side is considered done
-		final static double MOVEMENT_ERROR_THRESHOLD = 70 * Angle.DEGREES;
-		// okay so it's kind of huge, but for Power Up, we needed no precision and lots of speed
-		
+		final static double MOVEMENT_ERROR_THRESHOLD = 360 * Angle.DEGREES;
+		final static double ERROR_PLATEAU_THRESHOLD = 0.01 * Angle.DEGREES;
+
+		final static int ERROR_PLATEAU_COUNT = 25;
 
 		protected double power;
 
-		protected double leftDist, rightDist;
-
-		protected int correctDistanceCount = 0;
+		protected double leftAngle, rightAngle;
 
 		protected MoveEndMode endMode;
 
-		boolean leftDone;
-		boolean rightDone;
+		boolean leftDone, rightDone;
+		int leftCount, rightCount;
+		double lastLeftError, lastRightError;
+
+		double leftError, rightError;
+
+		boolean isInZone;
 
 		boolean useScalars;
-		boolean smooth;
-		
+
 		/**
-		 * @param leftDist - Degrees to spin the left wheel
-		 * @param rightDist - Degrees to spin the right wheel
+		 * @param endMode - The MoveEndMode for this command.
+		 * @param leftAngle - Degrees to rotate the left wheel
+		 * @param rightAngle - Degrees to rotate the right wheel
 		 * @param power - fractional power to move drive wheels at from 0 to 1
-		 * @param useScalars - Whether or not to scale output left and right powers
+		 * @param useScalars - whether or not to scale output left and right powers
 		 * @param timeoutMs - The maximum time (in milliseconds) to run the command for
 		 */
-		public CmdMoveDistance(MoveEndMode endMode, double leftDist, double rightDist, double power, boolean useScalars,
+		public CmdMotionMagicMove(MoveEndMode endMode, double leftAngle, double rightAngle, double power, boolean useScalars,
 				double timeoutMs)
 		{
 			super(timeoutMs / 1000.0);
 
 			this.power = power;
-			this.leftDist = leftDist;
-			this.rightDist = rightDist;
-			
-			this.smooth = false;
-			
-			this.endMode = endMode;
-			this.useScalars = useScalars;
+			this.leftAngle = leftAngle;
+			this.rightAngle = rightAngle;
 
-		}
-		
-		/**
-		 * @param leftDist - Degrees to spin the left wheel
-		 * @param rightDist - Degrees to spin the right wheel
-		 * @param smooth - Should the move terminate at speed = 0 (false) or continue to drift (true)
-		 * @param power - fractional power to move drive wheels at from 0 to 1
-		 * @param useScalars - Whether or not to scale output left and right powers
-		 * @param timeoutMs - The maximum time (in milliseconds) to run the command for
-		 */
-		public CmdMoveDistance(MoveEndMode endMode, double leftDist, double rightDist, boolean smooth, double power, boolean useScalars,
-				double timeout)
-		{
-			super(timeout / 1000.0);
-
-			this.power = power;
-			this.leftDist = leftDist;
-			this.rightDist = rightDist;
-			
-			this.smooth = smooth;
-			
 			this.endMode = endMode;
 			this.useScalars = useScalars;
 		}
 
 		protected void initialize()
 		{
-			Log.info("CmdMoveDistance", "Initializing");
-			
+			Log.info("CmdMotionMagicMove", "Initializing...");
+
 			clearEncoders();
-			configureForAuto();
+			setCoastNeutralMode();
 
-			Log.debug("2-Power", Double.toString(power));
+			leftMotors.selectProfileSlot(0, 0);
+			rightMotors.selectProfileSlot(0, 0);
 
+			autoInvertCallback.invertMotors();
+			invertedForTeleop = false;
+
+			// Coast speed measured in nu/100ms
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
 			double rightSpeed = (robotMaxSpeed * power * ((useScalars) ? rightSpeedScalar : 1.0));
 
-			if (leftDist == 0) {
+			if (leftAngle == 0) {
 				leftSpeed = 0;
 			}
-			else if (rightDist == 0) {
+			else if (rightAngle == 0) {
 				rightSpeed = 0;
 			}
-			else if (leftDist > rightDist) {
-				rightSpeed *= rightDist / leftDist;
+			else if (Math.abs(leftAngle) > Math.abs(rightAngle)) {
+				rightSpeed *= Math.abs(rightAngle / leftAngle);
 			}
-			else if (leftDist < rightDist) {
-				leftSpeed *= leftDist / rightDist;
+			else if (Math.abs(leftAngle) < Math.abs(rightAngle)) {
+				leftSpeed *= Math.abs(leftAngle / rightAngle);
 			}
-			
+
 			ControlMode leftMode = ControlMode.MotionMagic;
 			ControlMode rightMode = ControlMode.MotionMagic;
 
-			// ControlMode leftMode = ControlMode.Position;
-			// ControlMode rightMode = ControlMode.Position;
-
 			if (useScalars)
 			{
-				Log.info("SRXTankDrive", "Using scalars.");
+				Log.info("CmdMotionMagicMove", "Using scalars.");
 			}
 
 			// motion magic does not work well when the distance is 0
-			if (leftDist == 0)
+			if (leftAngle == 0)
 			{
 				leftMode = ControlMode.Position;
 			}
-			if (rightDist == 0)
+			if (rightAngle == 0)
 			{
 				rightMode = ControlMode.Position;
 			}
-			
-			double smooth_multiplier = (smooth) ? 1.05 : 1.00;
 
 			leftMotors.configMotionCruiseVelocity((int) leftSpeed, Constants.CAN_TIMEOUT);
 			leftMotors.configMotionAcceleration((int) (leftSpeed), Constants.CAN_TIMEOUT);
 
-			leftMotors.set(leftMode, smooth_multiplier * leftDist / Angle.CTRE_MAGENC_NU);
+			leftMotors.set(leftMode, leftAngle / Angle.CTRE_MAGENC_NU);
 
 			rightMotors.configMotionCruiseVelocity((int) rightSpeed, Constants.CAN_TIMEOUT);
 			rightMotors.configMotionAcceleration((int) (rightSpeed), Constants.CAN_TIMEOUT);
 
-			rightMotors.set(rightMode, smooth_multiplier * rightDist / Angle.CTRE_MAGENC_NU);
+			rightMotors.set(rightMode, rightAngle / Angle.CTRE_MAGENC_NU);
 
-			Log.debug("CmdMoveDistance",
-					"Smooth Multiplier: " + smooth_multiplier + " Distances -L: " + leftDist / Angle.CTRE_MAGENC_NU + " rot; R: "
-							+ rightDist / Angle.CTRE_MAGENC_NU + " rot\nSpeeds-L: " + leftSpeed + " RPM, R: "
-							+ rightSpeed + " RPM");
+			Log.debug("CmdMotionMagicMove",
+				  "\n"
+				+ "  Distances\n"
+				+ "    L: " + leftAngle / Angle.CTRE_MAGENC_NU  + " nu\n"
+				+ "    R: " + rightAngle / Angle.CTRE_MAGENC_NU + " nu\n"
+				+ "  Speeds\n"
+				+ "    L: " + leftSpeed  + " RPM"
+				+ "    R: " + rightSpeed + " RPM"
+			);
 
 			try
 			{
@@ -825,254 +733,79 @@ public class SRXTankDrive implements ITankDrive
 		// execute()
 		protected boolean isFinished()
 		{
-			double leftError = leftMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - leftDist;
-			double rightError = rightMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - rightDist;
-
-			Log.debug("CmdMoveDistance",
-					"left pos: " + leftMotors.getSelectedSensorPosition(0) + " err: " + leftError
-							+ " deg, right pos: " + rightMotors.getSelectedSensorPosition(0) + " err: " + rightError + " deg.");
-
-			leftDone = leftDist == 0 || Math.abs(leftError) < MOVEMENT_ERROR_THRESHOLD;
-			rightDone = rightDist == 0 || Math.abs(rightError) < MOVEMENT_ERROR_THRESHOLD;
-
 			if (isTimedOut())
 			{
-				Log.unusual("CmdMoveDistance", "Autonomous Move Overtime");
+				Log.unusual("CmdMotionMagicMove", "Autonomous Move Overtime.");
 				return true;
 			}
 
-			boolean isInZone;
+			leftError = leftMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - leftAngle;
+			rightError = rightMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - rightAngle;
 
-			if (smooth) {
-				if (leftDist < 0) {
-					isInZone = leftError <= 0;
-				}
-				else {
-					isInZone = leftError >= 0;
-				}
-				
-				if (rightDist < 0) {
-					isInZone = isInZone && rightError <= 0;
-				}
-				else {
-					isInZone = isInZone && rightError >= 0;
-				}
-			}
-			else {
-				switch (endMode)
-				{
-				case BOTH:
-					isInZone = leftDone && rightDone;
-					break;
-				case EITHER:
-				default:
-					isInZone = leftDone || rightDone;
-					break;
-				}
-			}
-			
-			if (isInZone)
-			{
-				++correctDistanceCount;
-			}
-			else
-			{
-				correctDistanceCount = 0;
+			Log.debug("CmdMotionMagicMove",
+					  "L=" + leftMotors.getSelectedSensorPosition(0)  + "nu; err=" + leftError  + "deg, "
+					+ "R=" + rightMotors.getSelectedSensorPosition(0) + "nu; err=" + rightError + "deg.");
+
+			if (leftError < -MOVEMENT_ERROR_THRESHOLD || rightError < -MOVEMENT_ERROR_THRESHOLD) {
+				return false;
 			}
 
-			if (smooth) {
-				return correctDistanceCount > 1;
+			if (leftAngle == 0) {
+				leftCount = ERROR_PLATEAU_COUNT + 1;
+			}
+			else if (Math.abs(leftError - lastLeftError) < ERROR_PLATEAU_THRESHOLD) {
+				leftCount += 1;
 			}
 			else {
-				return correctDistanceCount > 25;
+				leftCount = 0;
 			}
+			lastLeftError = leftError;
+			leftDone = leftCount > ERROR_PLATEAU_COUNT;
 			
+			if (rightAngle == 0) {
+				rightCount = ERROR_PLATEAU_COUNT + 1;
+			}
+			else if (Math.abs(rightError - lastRightError) < ERROR_PLATEAU_THRESHOLD) {
+				rightCount += 1;
+			}
+			else {
+				rightCount = 0;
+			}
+			lastRightError = rightError;
+			rightDone = rightCount > ERROR_PLATEAU_COUNT;
+
+			switch (endMode)
+			{
+			case BOTH:
+				isInZone = leftDone && rightDone;
+				break;
+			case EITHER:
+			default:
+				isInZone = leftDone || rightDone;
+				break;
+			}
+
+			return isInZone;
 		}
 
 		// Called once after isFinished returns true
 		protected void end()
 		{
-			Log.info("CmdMoveDistance", "Ending");
+			Log.info("CmdMotionMagicMove", "Ending normally.");
+			Log.debug("CmdMotionMagicMove", "Final Errors:\n" + 
+					  "  L=" + leftError  + "deg\n"
+					+ "  R=" + rightError + "deg");
 
-			// Now encapsulated in ininitialize() because of CTRE Pheonix (v5)
-
-			// if(leftDist == 0)
-			// {
-			// leftMotors.changeControlMode(TalonControlMode.MotionMagic);
-			// }
-			// if(rightDist == 0)
-			// {
-			// rightMotors.changeControlMode(TalonControlMode.MotionMagic);
-			// }
-
-			stopMovement();			
+			stopMovement();
 		}
 
 		// Called when another command which requires one or more of the same
 		// subsystems is scheduled to run
 		protected void interrupted()
 		{
+			Log.info("CmdMotionMagicMove", "Interrupted.");
+
 			stopMovement();
-		}
-
-		@Override
-		protected void execute()
-		{
-			// do nothing
-		}
-	}
-
-	/**
-	 * Command to to an arc turn in the specified amount of degrees.
-	 * 
-	 * Runs the opposite motors from the direction provided, so turning LEFT
-	 * would set the RIGHT motors.
-	 * 
-	 * NOTE: currently requires that the front or back wheels be omni wheels for
-	 * accurate turning.
-	 */
-	public class CmdArcTurn extends CmdMoveDistance
-	{
-
-		/**
-		 * @param degs - the distance to turn in degrees. Accepts negative values.
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 */
-		public CmdArcTurn(float degs, int msec, Direction dir)
-		{
-			this(degs, msec, dir, .5);
-		}
-
-		// it seems like the math is consistently off by about 6%
-		final static double FUDGE_FACTOR = 1.06;
-
-		/**
-		 * @param degs - the distance to turn in degrees. Accepts negative values.
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 * @param power - The relative speed to drive the turn at (from 0 to 1)
-		 */
-		public CmdArcTurn(float degs, int msec, Direction dir, double power)
-		{
-			super(MoveEndMode.BOTH, 0, 0, power, false, msec);
-
-			// this formula is explained on the info repository wiki
-			double wheelAngularDist = cmToEncDegrees((2 * Math.PI * track) * (degs / 360)) * FUDGE_FACTOR;
-
-			if (dir == Direction.RIGHT)
-			{
-				leftDist = wheelAngularDist;
-			}
-			else
-			{
-				rightDist = wheelAngularDist;
-			}
-		}
-	}
-
-	/**
-	 * Command to turn in an arc with a certain radius for the specified amount
-	 * of degrees.
-	 * 
-	 * Unlike standard arc turn, it doesn't actually require omni wheels because
-	 * the slippage is even less than an in place turn, so it's actually more accurate.
-	 * 
-	 * Try to use this as frequently as you can, unless another method is quicker.
-	 */
-	public class CmdFancyArcTurn extends CmdMoveDistance
-	{
-		// it seems like the math is consistently off by about 6%
-		final static double FUDGE_FACTOR = 1.06;
-				
-		/**
-		 * @param radius - The radius that the robot should drive the arc at.
-		 * @param degs - The distance to turn in degrees. Accepts negative values.
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 */
-		public CmdFancyArcTurn(double radius, float degs, int msec, Direction dir)
-		{
-			this(radius, degs, msec, dir, .5, false);
-		}
-		
-		/**
-		 * @param radius - The radius that the robot should drive the arc at.
-		 * @param degs - The distance to turn in degrees. Accepts negative values.
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 * @param power - The relative speed to drive the turn at (from 0 to 1)
-		 */
-		public CmdFancyArcTurn(double radius, float degs, int msec, Direction dir, double power)
-		{
-			this(radius, degs, msec, dir, power, false);
-		}
-		
-		/**
-		 * @param radius - The radius that the robot should drive the arc at.
-		 * @param degs - The distance to turn in degrees. Accepts negative values.
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 * @param power - The relative speed to drive the turn at (from 0 to 1)
-		 * @param smooth - Should the move terminate at speed = 0 (false) or continue to drift (true)
-		 */
-		public CmdFancyArcTurn(double radius, float degs, int msec, Direction dir, double power, boolean smooth)
-		{
-			super(MoveEndMode.BOTH, 0, 0, smooth, power, false, msec);
-
-			// this formula is explained on the info repository wiki
-			double innerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius - 0.5 * track)) * FUDGE_FACTOR;
-			double outerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius + 0.5 * track)) * FUDGE_FACTOR;
-
-			if (dir == Direction.RIGHT)
-			{
-				rightDist = innerAngularDist;
-				leftDist = outerAngularDist;
-			}
-			else
-			{
-				rightDist = outerAngularDist;
-				leftDist = innerAngularDist;
-			}
-		}
-	}
-
-	/**
-	 * Command to to an arc turn in the specified amount of degrees.
-	 * 
-	 * Sets the opposite motors from the direction provided, so turning LEFT
-	 * would set the RIGHT motors.
-	 */
-	public class CmdInPlaceTurn extends CmdMoveDistance
-	{
-		/**
-		 * @param degs - The distance to turn in degrees. Accepts negative values.
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 */
-		public CmdInPlaceTurn(float degs, int msec, Direction dir)
-		{
-			this(degs, .5, msec, dir);
-		}
-
-		/**
-		 * @param degs - The distance to turn in degrees. Accepts negative values.
-		 * @param power - The relative speed to drive the turn at (from 0 to 1)
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 */
-		public CmdInPlaceTurn(float degs, double power, int msec, Direction dir)
-		{
-			// the encoder counts are an in-depth calculation, so we don't set
-			// them until after the super constructor
-			super(MoveEndMode.BOTH, 0, 0, power, true, msec);
-
-			// this formula is explained in the info repository wiki
-			double wheelAngularDist = cmToEncDegrees(turningCircleCircumference * (degs / 360.0));
-
-			if (dir == Direction.RIGHT)
-			{
-				leftDist = wheelAngularDist;
-				rightDist = -wheelAngularDist;
-			}
-			else
-			{
-				leftDist = -wheelAngularDist;
-				rightDist = wheelAngularDist;
-			}
 		}
 	}
 
@@ -1080,55 +813,407 @@ public class SRXTankDrive implements ITankDrive
 	 * Command to move forward the given amount of centimeters. Drives straight,
 	 * if you've set up your speed multipliers properly.
 	 */
-	public class CmdMoveForward extends CmdMoveDistance
+	public class CmdDriveStraight extends CmdMotionMagicMove
 	{
 		/**
-		 * @param d - The distance to drive forward (in centimeters)
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 * @param fullSpeed - Should the robot drive at maximum power
-		 */
-		public CmdMoveForward(double d, int msec, boolean fullSpeed)
-		{
-			super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), fullSpeed ? 1 : .50, true, msec);
-		}
-
-		
-		/**
-		 * @param d - The distance to drive forward (in centimeters)
-		 * @param msec - The maximum time to run the move (in milliseconds)
+		 * @param distance - The linear distance to drive forward
 		 * @param power - fractional power to move drive wheels at from 0 to 1
+		 * @param timeoutMs - The maximum time to run the move (in milliseconds)
 		 */
-		public CmdMoveForward(double d, int msec, double power)
+		public CmdDriveStraight(double distance, double power, int timeoutMs)
 		{
-			super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), power, true, msec);
+			super(MoveEndMode.BOTH, cmToEncDegrees(distance), cmToEncDegrees(distance), power, false, timeoutMs);
 
 		}
-		
+	}
+
+	/**
+	 * Command to turn in an arc with a certain radius for the specified amount
+	 * of degrees.
+	 *
+	 * Unlike standard arc turn, it doesn't actually require omni wheels because
+	 * the slippage is even less than an in place turn, so it's actually more accurate.
+	 *
+	 * Try to use this as frequently as you can, unless another method is quicker.
+	 */
+	public class CmdArcTurn extends CmdMotionMagicMove
+	{
 		/**
-		 * @param d - The distance to drive forward (in centimeters)
-		 * @param msec - The maximum time to run the move (in milliseconds)
-		 * @param smooth - Should the move terminate at speed = 0 (false) or continue to drift (true)
-		 * @param power - fractional power to move drive wheels at from 0 to 1
+		 * @param radius - The radius that the robot should drive the arc at.
+		 * @param angle - The distance to turn in degrees. Accepts negative values.
+		 * @param dir - The direction to turn towards.
+		 * @param power - The fractional power to drive the robot (from 0 to 1)
+		 * @param timeoutMs - The maximum time to run the move (in milliseconds)
 		 */
-		public CmdMoveForward(double d, int msec, boolean smooth, double power)
+		public CmdArcTurn(double radius, double angle, Direction dir, double power, int timeoutMs)
 		{
-			super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), smooth, power, true, msec);
+			super(MoveEndMode.BOTH, 0, 0, power, false, timeoutMs);
+
+			// this formula is explained on the info repository wiki
+			double innerAngularDist = cmToEncDegrees((angle * Math.PI / 180.0) * (radius - 0.5 * wheelBase));
+			double outerAngularDist = cmToEncDegrees((angle * Math.PI / 180.0) * (radius + 0.5 * wheelBase));
+
+			if (dir == Direction.RIGHT)
+			{
+				rightAngle = innerAngularDist;
+				leftAngle = outerAngularDist;
+			}
+			else
+			{
+				rightAngle = outerAngularDist;
+				leftAngle = innerAngularDist;
+			}
+		}
+	}
+
+	/**
+	 * Command to to an arc turn in the specified amount of degrees.
+	 *
+	 * Sets the opposite motors from the direction provided, so turning LEFT
+	 * would set the RIGHT motors.
+	 */
+	public class CmdInPlaceTurn extends CmdMotionMagicMove
+	{
+		/**
+		 * @param angle - The angle to turn in degrees. Accepts negative values.
+		 * @param dir - The direction to turn towards.
+		 * @param power - The relative speed to drive the turn at (from 0 to 1)
+		 * @param timeoutMs - The maximum time to run the move (in milliseconds)
+		 */
+		public CmdInPlaceTurn(double angle, Direction dir, double power, int timeoutMs)
+		{
+			// the encoder counts are an in-depth calculation, so we don't set
+			// them until after the super constructor
+			super(MoveEndMode.BOTH, 0, 0, power, false, timeoutMs);
+
+			// this formula is explained in the info repository wiki
+			double wheelAngularDist = cmToEncDegrees((Math.PI * wheelBase) * (angle / 360.0));
+
+			if (dir == Direction.RIGHT)
+			{
+				leftAngle = wheelAngularDist;
+				rightAngle = -wheelAngularDist;
+			}
+			else
+			{
+				leftAngle = -wheelAngularDist;
+				rightAngle = wheelAngularDist;
+			}
+		}
+	}
+
+	public abstract class CmdMotionProfileMove extends Command {
+		public CmdMotionProfileMove(double timeoutMs) {
+			super(timeoutMs / 1000.0);
+
+			autoInvertCallback.invertMotors();
+			invertedForTeleop = false;
+		}
+
+		protected void initialize() {
+			leftMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
+			rightMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
+
+			leftMotors.clearMotionProfileTrajectories();
+			rightMotors.clearMotionProfileTrajectories();
+
+			leftMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
+			rightMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
+
+			leftMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+			rightMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+		}
+
+		@Override
+		protected void execute() {
+		}
+
+		@Override
+		protected boolean isFinished() {
+			return this.isTimedOut();
+		}
+
+		@Override
+		public void interrupted() {
+			leftMotors.clearMotionProfileTrajectories();
+			rightMotors.clearMotionProfileTrajectories();
+
+			tankDrive(0, 0);
+		}
+
+		@Override
+		protected void end() {
+			leftMotors.clearMotionProfileTrajectories();
+			rightMotors.clearMotionProfileTrajectories();
+
+			tankDrive(0, 0);
+		}
+	}
+
+	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
+		private MotionProfileStatus leftStatus, rightStatus;
+		private Waypoint[] waypoints;
+		private double power;
+
+		private Notifier processNotifier;
+
+		public CmdStaticRouteDrive(double power, double timeoutMs, Waypoint... waypoints) {
+			super(timeoutMs);
+
+			this.power = power;
+			this.waypoints = waypoints;
+
+			leftStatus = new MotionProfileStatus();
+			leftStatus.isLast = false;
+			rightStatus = new MotionProfileStatus();
+			rightStatus.isLast = false;
+
+			processNotifier = new Notifier(() -> {
+				leftMotors.processMotionProfileBuffer();
+				rightMotors.processMotionProfileBuffer();
+			});
+		}
+
+		@Override
+		protected void initialize() {
+			super.initialize();
+
+			leftMotors.selectProfileSlot(0, 0);
+			rightMotors.selectProfileSlot(0, 0);
+
+			leftMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
+			rightMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
+
+			Routemaker rm = new Routemaker(power, waypoints);
+
+			double speed;
+
+			TrajectoryPoint trajPoint = new TrajectoryPoint();
+			trajPoint.profileSlotSelect0 = 0;
+			trajPoint.zeroPos = true;
+			trajPoint.isLastPoint = false;
+
+			ProfilePoint profilePoint;
+
+			boolean first = true;
+
+			do {
+				speed = 1.0;
+				if (rm.s < 0.2) {
+					speed = (0.1 + rm.s) / 0.3;
+				}
+				else if (rm.s > 0.8) {
+					speed = (1.1 - rm.s) / 0.7;
+				}
+
+				profilePoint = rm.getNextPoint(speed);
+				// System.out.println(profilePoint.x + "," + profilePoint.y + " (" + profilePoint.durationMs + ")");
+				System.out.println(profilePoint.leftDistance + "," + profilePoint.rightDistance);
+
+				SmartDashboard.putNumber("Desired Left", profilePoint.leftDistance);
+				SmartDashboard.putNumber("Desired Right", profilePoint.rightDistance);
+
+				if (profilePoint.last)
+					trajPoint.isLastPoint = true;
+
+				trajPoint.timeDur = profilePoint.durationMs;
+
+				trajPoint.position = profilePoint.leftDistance;
+				trajPoint.velocity = profilePoint.leftSpeed;
+				leftMotors.pushMotionProfileTrajectory(trajPoint);
+
+				//System.out.println("left: " + trajPoint.position);
+
+				trajPoint.position = profilePoint.rightDistance;
+				trajPoint.velocity = profilePoint.rightSpeed;
+				rightMotors.pushMotionProfileTrajectory(trajPoint);
+
+				//System.out.println("right: " + trajPoint.position);
+				//System.out.println("");
+
+
+				if (first) {
+					processNotifier.startPeriodic(Routemaker.durationSec / 2);
+
+					leftMotors.set(ControlMode.MotionProfile, 1);
+					rightMotors.set(ControlMode.MotionProfile, 1);
+
+					first = false;
+				}
+
+			} while (!profilePoint.last);
+		}
+
+		@Override
+		protected synchronized boolean isFinished() {
+			leftMotors.getMotionProfileStatus(leftStatus);
+			rightMotors.getMotionProfileStatus(rightStatus);
+
+			if (super.isFinished()) {
+				Log.info("CmdStaticRouteDrive", "Timed out.");
+			}
+
+			return super.isFinished() /* || leftStatus.isLast && rightStatus.isLast */;
+		}
+
+		@Override
+		public void interrupted() {
+			end();
+
+			Log.info("CmdStaticRouteDrive", "Interrupted.");
 
 		}
 
 		@Override
-		public void end()
-		{
+		protected synchronized void end() {
 			super.end();
+
+			processNotifier.close();
+			Log.info("CmdStaticRouteDrive", "Finished.");
 		}
 	}
 
-	public class CmdFeedForwardFineTune extends CmdMoveDistance
-	{
-		public CmdFeedForwardFineTune(double power, boolean useScalars, double timeout)
-		{
-			super(MoveEndMode.BOTH, 100 * Length.in, 100 * Length.in, power, false, timeout);
+	public class CmdDriveUntilStop extends Command {
+		double power;
+
+		public CmdDriveUntilStop(double power, int timeoutMs) {
+			super(timeoutMs / 1000.0);
+
+			this.power = power;
 		}
 
+		@Override
+		protected void initialize() {
+			arcadeDrive(-1 * power, 0, 1.0, false);
+
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		protected boolean isFinished() {
+			return Math.abs(leftMotors.getSelectedSensorVelocity()) < 200 && Math.abs(rightMotors.getSelectedSensorVelocity()) < 200 || isTimedOut();
+		}
+
+		@Override
+		protected void end() {
+			leftMotors.set(ControlMode.PercentOutput, 0);
+			rightMotors.set(ControlMode.PercentOutput, 0);
+
+			if (isTimedOut()) {
+				Log.unusual("CmdDriveUntilStopped", "Timed out.");
+			}
+		}
+
+		@Override
+		protected void interrupted() {
+			end();
+		}
+	}
+
+	/**
+	 * Callibration command to determine effective wheelbase of the robot. This is to account for the field material scrubbing against the wheels,
+	 * resisting a turning motion.
+	 *
+	 * The effective wheelbase should always be larger than the measured wheelbase, but it will differ by a different factor for each
+	 * robot. For instance, a 6-wheel tank drive with corner omnis will have a relatively small factor of difference, while a tank drive
+	 * with pneumatic wheels will have a very large difference.
+	 */
+	public class CmdDetermineWheelbase extends Command {
+		double leftSpeed, rightSpeed;
+
+		AHRS ahrs;
+
+		double leftDistance, rightDistance;
+
+		double theta0, theta1;
+		double dTheta;
+
+		double leftWheelbase, rightWheelbase;
+
+		Wheelbase calculatedWheelbase;
+
+		double leftSquareErrorSum, rightSquareErrorSum;
+		int errorSampleCount;
+
+		/**
+		 * @param durationMs - The amount of time for which the robot should coast.
+		 * @param leftSpeed - The coast velocity of the left drive wheels.
+		 * @param rightSpeed - The coast velocity of the right drive wheels.
+		 * @param calculatedWheelbase - The Double wrapper object that the finished command should stick the calculated wheelbase in.
+		 */
+		public CmdDetermineWheelbase(AHRS ahrs, double durationMs, double leftSpeed, double rightSpeed, Wheelbase calculatedWheelbase) {
+			super(durationMs / 1000.0);
+
+			this.ahrs = ahrs;
+
+			this.leftSpeed = leftSpeed;
+			this.rightSpeed = rightSpeed;
+
+			this.calculatedWheelbase = calculatedWheelbase;
+		}
+
+		@Override
+		protected void initialize() {
+			leftMotors.selectProfileSlot(1, 0);
+			rightMotors.selectProfileSlot(1, 0);
+
+			autoInvertCallback.invertMotors();
+			invertedForTeleop = false;
+
+			leftSquareErrorSum = 0;
+			rightSquareErrorSum = 0;
+
+			errorSampleCount = 0;
+
+			for(int i = 0; i <= 10000 ; i++) {
+				getLeftMotors().set(ControlMode.Velocity, leftSpeed * i/10000);
+				getRightMotors().set(ControlMode.Velocity, rightSpeed * i/10000);
+			}
+
+			getLeftMotors().setSelectedSensorPosition(0);
+			getRightMotors().setSelectedSensorPosition(0);
+
+			theta0 = ahrs.getAngle()*(Math.PI/180);
+		}
+
+		@Override
+		protected void execute() {
+			
+		}
+
+		@Override
+		protected boolean isFinished() {
+			leftSquareErrorSum += RobotMath.square(leftSpeed - leftMotors.getSelectedSensorVelocity());
+			rightSquareErrorSum += RobotMath.square(rightSpeed - rightMotors.getSelectedSensorVelocity());
+
+			SmartDashboard.putNumber("Left Velocity", leftMotors.getSelectedSensorVelocity());
+
+			errorSampleCount += 1;
+
+			return this.isTimedOut();
+		}
+
+		@Override
+		protected void end() {
+			theta1 = ahrs.getAngle()*(Math.PI/180);
+			dTheta = theta1 - theta0;
+
+			leftDistance = (wheelCircumfrence * getLeftMotors().getSelectedSensorPosition() / 4096);
+			rightDistance = (wheelCircumfrence * getRightMotors().getSelectedSensorPosition() / 4096);
+
+			stopMovement();
+
+			leftWheelbase = 2 * (leftDistance/dTheta) - 2 * (leftDistance + rightDistance) / (2 * dTheta);
+			rightWheelbase = -2 * (rightDistance/dTheta) + 2 * (leftDistance + rightDistance) / (2 * dTheta);
+
+			calculatedWheelbase.wheelbase = (leftWheelbase + rightWheelbase)/2;
+
+			calculatedWheelbase.leftVelocityError = Math.sqrt(leftSquareErrorSum / errorSampleCount);
+			calculatedWheelbase.rightVelocityError = Math.sqrt(rightSquareErrorSum / errorSampleCount);
+		}
 	}
 }

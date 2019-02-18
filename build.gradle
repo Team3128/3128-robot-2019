@@ -1,9 +1,13 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2019.1.1"
+    id "edu.wpi.first.GradleRIO" version "2019.2.1"
 }
 
-def ROBOT_MAIN_CLASS = "org.team3128.prebot.main.MainPrebot"
+//def ROBOT_MAIN_CLASS = "org.team3128.testbench.main.MainTestBench"
+//def ROBOT_MAIN_CLASS = "org.team3128.prebot.main.MainPrebot"
+def ROBOT_MAIN_CLASS = "org.team3128.gromit.main.MainGromitCompetition"
+// def ROBOT_MAIN_CLASS = "org.team3128.prebot.main.MainPrebot"
+
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project EmbeddedTools.

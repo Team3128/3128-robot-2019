@@ -102,7 +102,7 @@ public class PIDCalculator
 		// add the time segment ending now to the integral
 		pastValues.enqueue(new Pair<Integer, Double>(deltaTime, error));
 		
-		double output = error * constants.getkP() + calculateIntegral() * constants.getkI() + derivative * constants.getkP();
+		double output = error * constants.kP + calculateIntegral() * constants.kI + derivative * constants.kP;
 		
 		// move one step forward
 		previousError = error;
