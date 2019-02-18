@@ -4,6 +4,12 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import org.team3128.common.hardware.misc.Piston;
+import org.team3128.common.util.Log;
+
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * Control system for the mechanism controlling mechanisms 
@@ -15,84 +21,168 @@ import org.team3128.common.hardware.misc.Piston;
 public class LiftIntake {
     public enum LiftIntakeState
 	{
-		STOPPED(0, true, "Stopped"),
-		BALL_INTAKE(-1.0, true, "Ball intake"),
-        BALL_OUTTAKE(1.0, true, "Ball outtake"),
-        HATCH_INTAKE(0.0, false, "Hatch intake");
+		CARGO_INTAKE(-1.0, true, "Cargo Intake"),
+		CARGO_OUTTAKE(1.0, true, "Cargo Outtake"),
+		
+		DEMOGORGON_RELEASED(0.0, false, "Demogorgon Released"),
+        DEMOGORGON_HOLDING(0.0, true, "Demogorgon Holding");
 
 		private double rollerPower;
-		private boolean isClosed;
+		private boolean demogorgonPistonState;
 		private String name;
 		
-		private LiftIntakeState(double rollerPower, boolean isClosed, String name) {
+		private LiftIntakeState(double rollerPower, boolean demogorgonPistonState, String name) {
 			this.rollerPower = rollerPower;
-			this.isClosed = isClosed;
-			this.name= name;
+			this.demogorgonPistonState = demogorgonPistonState;
+			this.name = name;
 		}
 
 		public double getRollerPower() {
 			return rollerPower;
 		}
-		public boolean getPistonPosition() {
-			return isClosed;
+
+		public boolean getDemogorgonPistonState() {
+			return demogorgonPistonState;
 		}
 		
 		public String getName() {
 			return name;
         }
-    }
-    VictorSPX intakeMotors;
-	//private DigitalInput limSwitch;
-	private LiftIntakeState state, newState;
-	private Piston piston;
-	private double invertMultiplier;
+	}
+	
+	VictorSPX intakeMotors;
+	DigitalInput cargoBumperSwitch;
 
-	//constructor
-	public LiftIntake(VictorSPX intakeMotors, LiftIntakeState state, Piston piston, boolean inverted) {
+	private LiftIntakeState newState;
+	public LiftIntakeState currentState;
+
+	private Piston demogorgonPiston;
+
+	private Thread cargoThread;
+
+	public boolean bumped = false;
+
+
+	private static LiftIntake instance = null;
+	public static LiftIntake getInstance() {
+		if (instance != null) {
+			return instance;
+		}
+
+		Log.fatal("LiftIntake", "Attempted to get instance before initializtion! Call initialize(...) first.");
+		return null;
+	}
+
+	public static void initialize(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, DigitalInput cargoBumperSwitch) {
+		instance = new LiftIntake(intakeMotors, state, demogorgonPiston, cargoBumperSwitch);
+	}
+
+	private LiftIntake(VictorSPX intakeMotors, LiftIntakeState state, Piston demogorgonPiston, DigitalInput cargoBumperSwitch) {
 		this.intakeMotors = intakeMotors;
-		//this.limSwitch = limSwitch;
-		this.state = state;
-		this.piston = piston;		
+		this.demogorgonPiston = demogorgonPiston;
 		
-		this.invertMultiplier = (inverted) ? -1 : 1;
+		this.cargoBumperSwitch = cargoBumperSwitch;
+
+		setState(state);
 		
-		this.state = LiftIntakeState.BALL_OUTTAKE;
-		setState(LiftIntakeState.STOPPED);
+		cargoThread = new Thread(() -> {			
+			while (true) {
+				if (this.newState == null) {
+					if (this.currentState == LiftIntakeState.CARGO_INTAKE) {
+						if (this.getCargoBumper()) {
+							bumped = true;
+							this.setIntakePower(-0.2);
+						}
+						else {
+							this.setIntakePower(-0.6);
+						}
+					}
+					else if (this.currentState == LiftIntakeState.DEMOGORGON_HOLDING && bumped) {
+						if (this.getCargoBumper()) {
+							this.setIntakePower(-0.2);
+						}
+						else {
+							this.setIntakePower(-0.6);
+						}
+					}
+				}
+				else {
+					if (this.newState == LiftIntakeState.CARGO_INTAKE) {
+						this.setIntakePower(this.newState.getRollerPower());
+						bumped = false;
+					}
+					else if (this.newState == LiftIntakeState.CARGO_OUTTAKE) {
+						this.setIntakePower(this.newState.rollerPower);
+						bumped = false;
+					}
+					else if (this.newState == LiftIntakeState.DEMOGORGON_HOLDING && bumped) {
+						if (this.getCargoBumper()) {
+							this.setIntakePower(-0.2);
+						}
+						else {
+							this.setIntakePower(-0.6);
+						}
+					}
+					else {
+						this.setIntakePower(this.newState.rollerPower);
+					}
+
+					this.currentState = this.newState;
+					this.newState = null;
+				}
+				
+
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		cargoThread.start();
+	
 	}
 	
 	public void setState(LiftIntakeState newState) {
-		if (state != newState) {
-			this.newState = newState;
-			
-			if(newState.getPistonPosition()) {
-				piston.setPistonOn();
+		if (this.currentState != newState) {			
+			if(newState.getDemogorgonPistonState()) {
+				demogorgonPiston.setPistonOn();
 			}
 			else {
-				piston.setPistonOff();
+				demogorgonPiston.setPistonOff();
 			}
 			
-			Thread intakeThread = new Thread(() -> {
-				if (this.state.equals(LiftIntakeState.BALL_INTAKE) && this.newState.equals(LiftIntakeState.STOPPED)) {
-					try
-					{
-						Thread.sleep(1000);
-					}
-					catch (InterruptedException e)
-					{
-						e.printStackTrace();
-					}
-				}
-				
-				setIntakePower(this.newState.getRollerPower());
-				this.state = this.newState;
-			});
-			intakeThread.start();
-			
-			
+			this.newState = newState;
 		}
 	}
 	
-	public synchronized void setIntakePower(double power) {
-		intakeMotors.set(ControlMode.PercentOutput, invertMultiplier * power);
-	}    
+	private void setIntakePower(double power) {
+		intakeMotors.set(ControlMode.PercentOutput, power);
+	}
+
+	public boolean getCargoBumper() {
+		return !this.cargoBumperSwitch.get();
+	}
+
+	public class CmdSetLiftIntakeState extends Command {
+		LiftIntakeState desiredState;
+
+		public CmdSetLiftIntakeState(LiftIntakeState state) {
+			super(0.1);
+
+			desiredState = state;
+		}
+
+		@Override
+		protected void initialize()
+		{
+			setState(desiredState);
+		}
+
+		@Override
+		protected boolean isFinished()
+		{
+			return isTimedOut();
+		}
+	}
 }

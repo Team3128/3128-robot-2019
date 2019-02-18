@@ -3,7 +3,6 @@ package org.team3128.gromit.mechanisms;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.units.Length;
-import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 
 //import org.team3128.gromit.mechanisms.Intake.IntakeState;
 
@@ -14,7 +13,8 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.command.Command;
 
 /**
- * Control system for the lift mechanism 
+ * Control system for the two-stage, continuous elevator-style lift mechanism. The
+ * {@link FourBar} is mounted to the first stage of the list.
  * 
  * @author Chris, Jude, Tygan
  * 
@@ -22,45 +22,31 @@ import edu.wpi.first.wpilibj.command.Command;
 
 public class Lift
 {
-	/**
-	 * The ratio of the number of native units that results in a forkift
-	 * movement of 1 centimeter.
-	 * 
-	 * MAX ENCODER POSITION = 20,000 MAX HEIGHT = 12ft
-	 */
-	public final double ratio = 19100.0 / (76 * Length.in); //to be calculated
-	final double tolerance = 5 * Length.in; //to be calculated
+	public enum LiftHeightState {
+		BASE(0 * Length.ft),
+		//6.3
+		INTAKE_FLOOR_CARGO(7 * Length.in),
 
-	public double error, currentPosition;
-
-	//private IntakeState intakeState;
-
-	public enum LiftState
-	{
-		/*
-		these need to be deifined better
-		*/
-		GROUND(0 * Length.ft),
-		BALL_INTAKE_LOW(1.5 * Length.ft), //first raise for ball intake
-		BALL_INTAKE_HIGH(2.5 * Length.ft), //second raise for ball intake
-		BOT_BALL(3 * Length.ft),
-		MID_BALL(59 * Length.in),
-        TOP_BALL(64 * Length.in),
-        BOT_HATCH(0 * Length.ft), //same for rocket and cargo and loading station
-        MID_HATCH(0 * Length.ft),
-        TOP_HATCH(0 * Length.ft),
-        CARGO_BALL(0 * Length.ft);
+		LOW_CARGO(40 * Length.in),
+		MID_CARGO(75 * Length.in),
+		TOP_CARGO(78 * Length.in),
+		
+        LOW_HATCH(18.5 * Length.in),
+        MID_HATCH(54 * Length.in),
+		TOP_HATCH(59 * Length.in),
+		
+        LOADING_SHIP_CARGO(57.5 * Length.in),
+        LOADING_SHIP_HATCH(18.5 * Length.in);
 
 		public double targetHeight;
 
-		private LiftState(double height)
+		private LiftHeightState(double height)
 		{
 			this.targetHeight = height;
 		}
 	}
 
-	public enum LiftControlMode
-	{
+	public enum LiftControlMode {
 		PERCENT(2, "Percent Output"),
 		POSITION_UP(0, "Position (Up)"),
 		POSITION_DOWN(1, "Position (Down)");
@@ -86,31 +72,41 @@ public class Lift
 
 	}
 
-	public void setControlMode(LiftControlMode mode)
-	{
+	public void setControlMode(LiftControlMode mode) {
 		if (mode != controlMode)
 		{
 			controlMode = mode;
-			Log.debug("setControlMode", "Setting to " + mode.name());
+			Log.debug("Lift", "Setting control mode to " + mode.getName() + ", with PID slot " + mode.getPIDSlot());
 			liftMotor.selectProfileSlot(mode.getPIDSlot(), 0);
-			System.out.println(mode.getPIDSlot());
 		}
 	}
 
-	LiftIntake liftIntake;
+	/**
+	 * The native units that results in lift movement of 1 centimeter.
+	 * 
+	 * MAX ENCODER POSITION = 51,745 native units
+	 * MAX HEIGHT = 78.5 inches
+	 */
+	public final double ratio = 51745 / (78.8 * Length.in);
+	public double error;
+
+	// Physical Components
 	TalonSRX liftMotor;
-	DigitalInput softStopLimitSwitch;
-	Thread depositCubeThread, depositingRollerThread;
+	DigitalInput limitSwitch;
 
 	public LiftControlMode controlMode;
-	public LiftState state;
+	public LiftHeightState heightState;
 
-	int limitSwitchLocation, LiftMaxVelocity;
+	int limitSwitchLocation, liftMaxVelocity;
+
+	// Lift Thread
+	Thread liftThread;
 
 	public double brakePower = 0.15;
-	public double brakeHeight = 0.5 * Length.ft;
 
-	public double maxHeight;
+	public double controlBuffer = 2 * Length.in;
+
+	public double maxHeight = 78 * Length.in;
 
 	public boolean disabled = false;
 
@@ -121,6 +117,10 @@ public class Lift
 	private double setPoint = 0;
 
 	public boolean override = false;
+
+	private boolean cmdControlled = false;
+
+	private double lastHeight;
 
 
 	private static Lift instance = null;
@@ -133,37 +133,35 @@ public class Lift
 		return null;
 	}
 
-	public static void initialize(LiftState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch,
-	int limitSwitchLocation, int LiftMaxVelocity) {
-        //instance = new Lift();
-		instance = new Lift(state, liftMotor, softStopLimitSwitch, limitSwitchLocation, LiftMaxVelocity);
+	public static void initialize(LiftHeightState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int liftMaxVelocity) {
+		instance = new Lift(state, liftMotor, softStopLimitSwitch, liftMaxVelocity);
 	}
 
-	public Lift(LiftState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch,
-			int limitSwitchLocation, int LiftMaxVelocity)
-	{
-		//this.intake = Intake.getInstance();
+	private Lift(LiftHeightState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int liftMaxVelocity) {
 		this.liftMotor = liftMotor;
-		this.softStopLimitSwitch = softStopLimitSwitch;
-		this.limitSwitchLocation = limitSwitchLocation;
-		this.state = state;
+		this.heightState = state;
 
-		controlMode = LiftControlMode.PERCENT;
+		this.limitSwitch = softStopLimitSwitch;
+		this.liftMaxVelocity = liftMaxVelocity;
 
-		liftMotor.configMotionCruiseVelocity(2000, Constants.CAN_TIMEOUT);
-		liftMotor.configMotionAcceleration(4000, Constants.CAN_TIMEOUT);
+		setControlMode(LiftControlMode.PERCENT);
 
-		liftMotor.selectProfileSlot(0, 0);
+		liftMotor.configMotionCruiseVelocity((int) (0.9 * liftMaxVelocity), Constants.CAN_TIMEOUT);
+		liftMotor.configMotionAcceleration((int) (1.5 * liftMaxVelocity), Constants.CAN_TIMEOUT);
 
 		liftMotor.configOpenloopRamp(0.2, Constants.CAN_TIMEOUT);
 
-		depositingRollerThread = new Thread(() ->
+		liftThread = new Thread(() ->
 		{
+			double target = 0;
+			boolean previousSwitchState = false;
+
 			while (true)
 			{
-				if (this.getLiftSwitch())
+				if (this.getLimitSwitch() != previousSwitchState)
 				{
-					this.liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
+					this.liftMotor.setSelectedSensorPosition(limitSwitchLocation, 170, Constants.CAN_TIMEOUT);
+					previousSwitchState = this.getLimitSwitch();
 				}
 
 				if (this.disabled)
@@ -171,16 +169,15 @@ public class Lift
 					this.liftMotor.set(ControlMode.PercentOutput, 0);
 				}
 				else {
-					double target = 0;
+					target = 0;
 
-					this.canRaise = this.liftMotor.getSelectedSensorPosition(0) < this.maxHeight;
-					this.canLower = this.liftMotor.getSelectedSensorPosition(0) > 100;
+					this.canRaise = this.getCurrentHeight() < this.maxHeight - this.controlBuffer;
+					this.canLower = this.getCurrentHeight() > 0;
 
 					if (this.controlMode == LiftControlMode.PERCENT) {
 						if (this.override) {
 							target = this.desiredTarget;
 							this.liftMotor.set(ControlMode.PercentOutput, target);
-
 						}
 						else {
 							if (this.desiredTarget > 0 && this.canRaise) {
@@ -190,9 +187,11 @@ public class Lift
 								target = 0.7 * this.desiredTarget;
 							}
 
-							if ((Math.abs(target) < 0.1
-									&& this.liftMotor.getSelectedSensorPosition(0) / ratio >= this.brakeHeight)) {
-								target = this.brakePower;
+							if ((Math.abs(target) < 0.1 && this.getCurrentHeight() >= 3 * Length.in)) {
+								// this.setControlMode(LiftControlMode.POSITION_UP);
+								// this.liftMotor.set(ControlMode.MotionMagic, this.getCurrentHeight() * ratio);
+
+								target = brakePower;
 							}
 
 							if (Math.abs(target - this.setPoint) > 0.0001) {
@@ -202,15 +201,13 @@ public class Lift
 							}
 						}
 					}
-
-
+					// else if (!this.cmdControlled) {
+					// 	if (Math.abs(getCurrentHeight() - heightState.targetHeight) < 4 * Length.in && 
+					// 	    Math.abs(getCurrentHeight() - lastHeight) < 0.1 * Length.in) {
+					// 		powerControl(0);
+					// 	}
+					// }
 				}
-
-
-				this.currentPosition = liftMotor.getSelectedSensorPosition(0) / ratio;
-				double targetHeight = this.state.targetHeight;
-
-				this.error = Math.abs(currentPosition - targetHeight);
 
 				try
 				{
@@ -224,24 +221,30 @@ public class Lift
 			}
 		});
 
-		depositingRollerThread.start();
+		liftThread.start();
 	}
 
-	public void setState(LiftState liftState)
+	public double getCurrentHeight() {
+		return liftMotor.getSelectedSensorPosition(0) / ratio;
+	}
+
+	public void setState(LiftHeightState liftState)
 	{
-		if (state != liftState)
-		{
-			if (liftState.targetHeight < state.targetHeight)
-			{
-				setControlMode(LiftControlMode.POSITION_DOWN);
-			}
-			else
+		heightState = liftState;
+
+		if (Math.abs(getCurrentHeight() - heightState.targetHeight) > 1 * Length.in) {
+			if (getCurrentHeight() < heightState.targetHeight)
 			{
 				setControlMode(LiftControlMode.POSITION_UP);
 			}
-			state = liftState;
-			Log.info("Lift and Intake", "Going to " + state.targetHeight + " inches.");
-			liftMotor.set(ControlMode.MotionMagic, state.targetHeight * ratio);
+			else
+			{
+				setControlMode(LiftControlMode.POSITION_DOWN);
+			}
+	
+			lastHeight = getCurrentHeight();
+			Log.info("Lift", "Setting height to " + heightState.targetHeight + " cm.");
+			liftMotor.set(ControlMode.MotionMagic, heightState.targetHeight * ratio);
 		}
 	}
 
@@ -252,38 +255,52 @@ public class Lift
 		desiredTarget = joystick;
 	}
 
-	public boolean getLiftSwitch()
+	public boolean getLimitSwitch()
 	{
-		return !softStopLimitSwitch.get();
+		return !limitSwitch.get();
 	}
 
-	public class CmdZeroLift extends Command {
-		private boolean done = false;
-
-		public CmdZeroLift() {
-			super(0.5);
+	public class CmdZero extends Command {
+		public CmdZero() {
+			super(0.2);
 		}
 
 		@Override
 		protected void initialize() {
-			liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
-			state = LiftState.GROUND;
-
-			done = true;
+			override = true;
+			powerControl(-0.2);
 		}
 
 		@Override
 		protected boolean isFinished()
 		{
-			return true || isTimedOut();
+			return getLimitSwitch() || isTimedOut();
+		}
+
+		@Override
+		protected void end() {
+			override = false;
+			liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
+		}
+
+		@Override
+		protected void interrupted() {
+			end();
 		}
 	}
 
-	public class CmdSetLiftPosition extends Command
+	public class CmdHeightControl extends Command
 	{
-		LiftState heightState;
+		final static double MOVEMENT_ERROR_THRESHOLD = 6 * Length.in;
+		final static double ERROR_PLATEAU_THRESHOLD = 0.01 * Length.in;
 
-		public CmdSetLiftPosition(LiftState heightState)
+		final static int ERROR_PLATEAU_COUNT = 10;
+
+		int plateauCount;
+
+		LiftHeightState heightState;
+
+		public CmdHeightControl(LiftHeightState heightState)
 		{
 			super(3);
 			this.heightState = heightState;
@@ -292,86 +309,45 @@ public class Lift
 		@Override
 		protected void initialize()
 		{
+			cmdControlled = true;
+
 			setState(heightState);
 			Log.debug("CmdSetLiftPosition", "Changing state to " + heightState.name());
-			Log.debug("CmdSetLiftPosition", "Target: " + liftMotor.getClosedLoopTarget(0));
-		}
-
-
-		@Override
-		protected void execute() {
-			Log.debug("CmdSetLiftPosition", "Error: " + (liftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)));
 		}
 
 		@Override
 		protected void end() {
 			powerControl(0);
-			Log.debug("CmdSetLiftPosition", "Lift at desired height of " + heightState.targetHeight);
+			cmdControlled = false;
+			Log.debug("CmdSetLiftPosition", "Lift at desired height of " + (heightState.targetHeight / Length.in) + " inches.");
 		}
 
 		@Override
 		protected void interrupted()
 		{
-			Log.debug("Lift and Intake", "Ending, was interrupted.");
-			end();
+			powerControl(0);
+			cmdControlled = false;
+			Log.debug("CmdSetLiftPosition", "Interrupted. Final height = " + (getCurrentHeight() / Length.in) + " inches.");
 		}
 
 		@Override
 		protected boolean isFinished()
 		{
-			return isTimedOut() || Math.abs(liftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
-		}
-	}
+			error = getCurrentHeight() - heightState.targetHeight;
 
-	public class CmdRunLiftIntake extends Command
-	{
-		boolean timesOut;
-		LiftIntakeState state;
+			Log.debug("CmdSetLiftPosition", "Error: " + (error / Length.in) + " inches");
 
-		public CmdRunLiftIntake(LiftIntakeState state)
-		{
-			super(0.5);
+			if (Math.abs(error) > 6 * Length.in) return false;
 
-			timesOut = false;
+			if (Math.abs(error) < MOVEMENT_ERROR_THRESHOLD) {
+				plateauCount += 1;
+			}
+			else {
+				plateauCount = 0;
+			}
 
-			this.state = state;
-		}
+			if (plateauCount > ERROR_PLATEAU_COUNT) return true;
 
-		public CmdRunLiftIntake(LiftIntakeState state, int msec) {
-			super(msec / 1000.0);
-
-			timesOut = true;
-
-			this.state = state;
-		}
-
-		@Override
-		protected void initialize()
-		{
-			liftIntake.setState(state); //error will be resolved once LiftIntake Mechanism is created
-		}
-
-
-		@Override
-		protected void execute() {
-		}
-
-		@Override
-		protected void end() {
-
-			if (timesOut) liftIntake.setState(LiftIntakeState.STOPPED); //error will be resolved once LiftIntake Mechanism is created
-		}
-
-		@Override
-		protected void interrupted()
-		{
-			Log.debug("CmdRunIntake", "Ending, was interrupted.");
-			end();
-		}
-
-		@Override
-		protected boolean isFinished()
-		{
 			return isTimedOut();
 		}
 	}

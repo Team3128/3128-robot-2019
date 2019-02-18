@@ -4,11 +4,16 @@ import org.team3128.common.drive.routemaker.Routemaker;
 import org.team3128.common.drive.routemaker.ProfilePoint;
 import org.team3128.common.drive.routemaker.Waypoint;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
+import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Assert;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.Wheelbase;
+<<<<<<< HEAD
+=======
+import org.team3128.common.util.datatypes.PIDConstants;
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.AngularSpeed;
@@ -20,15 +25,21 @@ import com.ctre.phoenix.motion.MotionProfileStatus;
 import com.ctre.phoenix.motion.TrajectoryPoint;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.can.SlotConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
+<<<<<<< HEAD
 import edu.wpi.first.wpilibj.DriverStation;
+=======
+
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 //import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * Class which represents a tank drive powered by Talon SRXs on a robot.
@@ -90,10 +101,10 @@ public class SRXTankDrive implements ITankDrive {
 	 */
 	public final double wheelBase;
 
-	/**
-	 * Ratio between turns of the wheels to turns of the encoder
-	 */
-	private double gearRatio;
+	// /**
+	//  * Ratio between turns of the wheels to turns of the encoder
+	//  */
+	// private double gearRatio;
 
 	/**
 	 * The maxiumum measured speed of the drive motors, in native units per 100ms,
@@ -106,6 +117,7 @@ public class SRXTankDrive implements ITankDrive {
 	 */
 	private double leftSpeedScalar, rightSpeedScalar;
 
+<<<<<<< HEAD
 	public double getGearRatio() {
 		return gearRatio;
 	}
@@ -113,6 +125,34 @@ public class SRXTankDrive implements ITankDrive {
 	public void setGearRatio(double gearRatio) {
 		this.gearRatio = gearRatio;
 	}
+=======
+	/**
+	 * Callbacks to be executed when the robot is switched between
+	 * operator control and autonomous control to ensure all drive
+	 * motors are driving forward.
+	 */
+	private SRXInvertCallback teleopInvertCallback, autoInvertCallback;
+	private boolean invertedForTeleop;
+
+
+	/**
+	 * FPID constants for both left and righ drive sides in both
+	 * Motion Magic/Motion Profile control mode as well as velocity
+	 * control mode.
+	 */
+	private PIDConstants leftMotionProfilePID, leftVelocityPID;
+	private PIDConstants rightMotionProfilePID, rightVelocityPID;
+
+	// public double getGearRatio()
+	// {
+	// 	return gearRatio;
+	// }
+
+	// public void setGearRatio(double gearRatio)
+	// {
+	// 	this.gearRatio = gearRatio;
+	// }
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 
 	// Singelton methods
 	private static SRXTankDrive instance = null;
@@ -131,6 +171,7 @@ public class SRXTankDrive implements ITankDrive {
 	 * encoder. Configure each non-leader Talon of both drive sides to follow their
 	 * respective "lead" Talon using Follower mode.
 	 *
+<<<<<<< HEAD
 	 * @param leftMotors        The "lead" Talon SRX on the left side.
 	 * @param rightMotors       The "lead" Talon SRX on the right side.
 	 * @param wheelCircumfrence The circumference of the wheel
@@ -150,20 +191,64 @@ public class SRXTankDrive implements ITankDrive {
 
 	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio,
 			double wheelBase, int robotMaxSpeed) {
+=======
+	 * @param leftMotors
+	 *            The "lead" Talon SRX on the left side.
+	 * @param rightMotors
+	 *            The "lead" Talon SRX on the right side.
+	 * @param wheelCircumfrence
+	 *            The amount of units of length the robot travels per rotation of the encoder stage
+	 * @param gearRatio
+	 *            The gear ratio of the turns of the wheels per turn of the
+	 *            encoder shaft
+	 * @param wheelBase
+	 *            The distance between the front and back wheel on a side
+	 * @param track
+	 *            distance across between left and right wheels
+	 * @param robotMaxSpeed
+	 *            The lesser of the maxiumum measured speeds for both drive sides,
+	 *            in native units per 100ms, of the robot driving on the ground at
+	 *            100% throttle
+	 */
+	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert) {
+		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, wheelBase, robotMaxSpeed, teleopInvert, autoInvert);
+	}
+
+	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert)
+	{
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 		this.leftMotors = leftMotors;
 		this.rightMotors = rightMotors;
 
 		this.wheelCircumfrence = wheelCircumfrence;
 		this.wheelBase = wheelBase;
-		this.gearRatio = gearRatio;
+		//this.gearRatio = gearRatio;
 		this.robotMaxSpeed = robotMaxSpeed;
 
 		leftSpeedScalar = 1;
 		rightSpeedScalar = 1;
 
+<<<<<<< HEAD
 		if (gearRatio <= 0) {
 			throw new IllegalArgumentException("Invalid gear ratio");
 		}
+=======
+		setTeleopInvert(teleopInvert);
+		setAutoInvert(autoInvert);
+
+		invertedForTeleop = true;
+		teleopInvertCallback.invertMotors();
+
+		loadSRXPIDConstants();
+		setupDashboardPIDListener();
+
+		sendPIDConstants();
+
+		// if (gearRatio <= 0)
+		// {
+		// 	throw new IllegalArgumentException("Invalid gear ratio");
+		// }
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 	}
 
 	private void setBrakeNeutralMode() {
@@ -194,7 +279,16 @@ public class SRXTankDrive implements ITankDrive {
 	 *                 0 is 50%, 1.0 is 100%)
 	 */
 	@Override
+<<<<<<< HEAD
 	public void arcadeDrive(double joyX, double joyY, double throttle, boolean fullSpeed) {
+=======
+	public void arcadeDrive(double joyX, double joyY, double throttle, boolean fullSpeed)
+	{
+		if (!invertedForTeleop) {
+			teleopInvertCallback.invertMotors();
+			invertedForTeleop = true;
+		}
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 		setBrakeNeutralMode();
 
 		double spdL, spdR;
@@ -217,8 +311,8 @@ public class SRXTankDrive implements ITankDrive {
 		joyY *= throttle;
 		joyX *= throttle;
 
-		spdR = RobotMath.clampPosNeg1(joyY + joyX);
-		spdL = RobotMath.clampPosNeg1(joyY - joyX);
+		spdR = rightSpeedScalar * RobotMath.clampPosNeg1(joyY + joyX);
+		spdL = leftSpeedScalar *  RobotMath.clampPosNeg1(joyY - joyX);
 
 		// Log.debug("SRXTankDrive", "x1: " + joyX + " throttle: " + throttle +
 		// " spdR: " + spdR + " spdL: " + spdL);
@@ -241,6 +335,14 @@ public class SRXTankDrive implements ITankDrive {
 	public void setRightSpeedScalar(double scalar) {
 		Assert.inRange(scalar, 0, 1);
 		rightSpeedScalar = scalar;
+	}
+
+	public void setTeleopInvert(SRXInvertCallback callback) {
+		teleopInvertCallback = callback;
+	}
+
+	public void setAutoInvert(SRXInvertCallback callback) {
+		autoInvertCallback = callback;
 	}
 
 	/**
@@ -348,6 +450,7 @@ public class SRXTankDrive implements ITankDrive {
 		return RobotMath.normalizeAngle((difference / (Math.PI * wheelBase)) * Angle.ROTATIONS);
 	}
 
+<<<<<<< HEAD
 	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
 		private MotionProfileStatus leftStatus, rightStatus;
 		private Waypoint[] waypoints;
@@ -404,82 +507,127 @@ public class SRXTankDrive implements ITankDrive {
 				profilePoint = rm.getNextPoint(speed);
 				// System.out.println(profilePoint.x + "," + profilePoint.y + " (" +
 				// profilePoint.durationMs + ")");
+=======
+	/**
+	 * Loads stored PID constants from the drive Talon SRXs.
+	 */
+	public void loadSRXPIDConstants() {
+		SlotConfiguration configs = new SlotConfiguration();
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 
-				if (profilePoint.last)
-					trajPoint.isLastPoint = true;
+		leftMotors.getSlotConfigs(configs, 0, Constants.CAN_TIMEOUT);
+		leftMotionProfilePID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Left MP: " + leftMotionProfilePID);
 
-				trajPoint.timeDur = profilePoint.durationMs;
+		leftMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
+		leftVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Left V: " + leftVelocityPID);
 
-				trajPoint.position = profilePoint.leftDistance;
-				trajPoint.velocity = profilePoint.leftSpeed;
-				leftMotors.pushMotionProfileTrajectory(trajPoint);
+		rightMotors.getSlotConfigs(configs, 0, Constants.CAN_TIMEOUT);
+		rightMotionProfilePID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Right MP: " + rightMotionProfilePID);
 
-				trajPoint.position = profilePoint.rightDistance;
-				trajPoint.velocity = profilePoint.rightSpeed;
-				rightMotors.pushMotionProfileTrajectory(trajPoint);
+		rightMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
+		rightVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		Log.info("SRXTankDrive", "Right V: " + rightVelocityPID);
+	}
 
-				if (first) {
-					processNotifier.startPeriodic(Routemaker.durationSec / 2);
+	public void setLeftPID() {
+		Log.info("SRXTankDrive", "Setting left PID constants.");
 
-					leftMotors.set(ControlMode.MotionProfile, 1);
-					rightMotors.set(ControlMode.MotionProfile, 1);
+		leftMotors.config_kF(0, leftMotionProfilePID.kF);
+		leftMotors.config_kP(0, leftMotionProfilePID.kP);
+		leftMotors.config_kI(0, leftMotionProfilePID.kI);
+		leftMotors.config_kD(0, leftMotionProfilePID.kD);
 
-					first = false;
-				}
+		leftMotors.config_kF(1, leftVelocityPID.kF);
+		leftMotors.config_kP(1, leftVelocityPID.kP);
+		leftMotors.config_kI(1, leftVelocityPID.kI);
+		leftMotors.config_kD(1, leftVelocityPID.kD);
 
-			} while (!profilePoint.last);
-		}
+		sendPIDConstants();
+	}
 
-		@Override
-		protected synchronized boolean isFinished() {
-			leftMotors.getMotionProfileStatus(leftStatus);
-			rightMotors.getMotionProfileStatus(rightStatus);
+	public void setRightPID() {
+		Log.info("SRXTankDrive", "Setting right PID constants.");
 
+<<<<<<< HEAD
 			System.out.println(leftStatus.topBufferCnt + " " + leftStatus.btmBufferCnt);
 			return super.isFinished() || leftStatus.isLast && rightStatus.isLast;
 		}
+=======
+		rightMotors.config_kF(0, rightMotionProfilePID.kF);
+		rightMotors.config_kP(0, rightMotionProfilePID.kP);
+		rightMotors.config_kI(0, rightMotionProfilePID.kI);
+		rightMotors.config_kD(0, rightMotionProfilePID.kD);
 
-		@Override
-		protected synchronized void end() {
-			super.end();
-			processNotifier.close();
-			Log.info("CmdStaticRouteDrive", "Finished.");
-		}
+		rightMotors.config_kF(1, rightVelocityPID.kF);
+		rightMotors.config_kP(1, rightVelocityPID.kP);
+		rightMotors.config_kI(1, rightVelocityPID.kI);
+		rightMotors.config_kD(1, rightVelocityPID.kD);
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
+
+		sendPIDConstants();
 	}
 
-	public abstract class CmdMotionProfileMove extends Command {
-		public CmdMotionProfileMove(double timeoutMs) {
-			super(timeoutMs / 1000.0);
-		}
+	/**
+	 * Sets up listeners to update drive PID constants when sent from
+	 * NarwhalDashboard
+	 */
+	public void setupDashboardPIDListener() {
+		NarwhalDashboard.addNumDataListener("leftPID", (double constants[]) -> {
+			this.leftMotionProfilePID.kF = constants[0];
+			this.leftMotionProfilePID.kP = constants[1];
+			this.leftMotionProfilePID.kI = constants[2];
+			this.leftMotionProfilePID.kD = constants[3];
 
-		protected void initialize() {
-			leftMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
-			rightMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
+			this.leftVelocityPID.kF = constants[0];
+			this.leftVelocityPID.kP = constants[4];
+			this.leftVelocityPID.kI = constants[5];
+			this.leftVelocityPID.kD = constants[6];
 
-			leftMotors.clearMotionProfileTrajectories();
-			rightMotors.clearMotionProfileTrajectories();
+			this.setLeftPID();
+		});
 
-			leftMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
-			rightMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
+		NarwhalDashboard.addNumDataListener("rightPID", (double constants[]) -> {
+			this.rightMotionProfilePID.kF = constants[0];
+			this.rightMotionProfilePID.kP = constants[1];
+			this.rightMotionProfilePID.kI = constants[2];
+			this.rightMotionProfilePID.kD = constants[3];
 
-			leftMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
-			rightMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
-		}
+			this.rightVelocityPID.kF = constants[0];
+			this.rightVelocityPID.kP = constants[4];
+			this.rightVelocityPID.kI = constants[5];
+			this.rightVelocityPID.kD = constants[6];
 
-		@Override
-		protected void execute() {
-		}
+			this.setRightPID();
+		});
+	}
 
-		@Override
-		protected boolean isFinished() {
-			return this.isTimedOut();
-		}
+	/**
+	 * Sends PID constants to NarwhalDashboard
+	 */
+	public void sendPIDConstants() {
+		NarwhalDashboard.put("l_f", leftMotionProfilePID.kF);
 
-		@Override
-		protected void end() {
-			leftMotors.clearMotionProfileTrajectories();
-			rightMotors.clearMotionProfileTrajectories();
-		}
+		NarwhalDashboard.put("l_mp_p", leftMotionProfilePID.kP);
+		NarwhalDashboard.put("l_mp_i", leftMotionProfilePID.kI);
+		NarwhalDashboard.put("l_mp_d", leftMotionProfilePID.kD);
+
+		NarwhalDashboard.put("l_v_p", leftVelocityPID.kP);
+		NarwhalDashboard.put("l_v_i", leftVelocityPID.kI);
+		NarwhalDashboard.put("l_v_d", leftVelocityPID.kD);
+
+
+		NarwhalDashboard.put("r_f", rightMotionProfilePID.kF);
+
+		NarwhalDashboard.put("r_mp_p", rightMotionProfilePID.kP);
+		NarwhalDashboard.put("r_mp_i", rightMotionProfilePID.kI);
+		NarwhalDashboard.put("r_mp_d", rightMotionProfilePID.kD);
+
+		NarwhalDashboard.put("r_v_p", leftVelocityPID.kP);
+		NarwhalDashboard.put("r_v_i", leftVelocityPID.kI);
+		NarwhalDashboard.put("r_v_d", leftVelocityPID.kD);
 	}
 
 	/**
@@ -488,8 +636,14 @@ public class SRXTankDrive implements ITankDrive {
 	 * @param cm
 	 * @return
 	 */
+<<<<<<< HEAD
 	public double cmToEncDegrees(double cm) {
 		return (cm * 360) / (wheelCircumfrence * gearRatio);
+=======
+	public double cmToEncDegrees(double cm)
+	{
+		return (cm * 360) / (wheelCircumfrence);
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 	}
 
 	/**
@@ -498,8 +652,14 @@ public class SRXTankDrive implements ITankDrive {
 	 * @param cm
 	 * @return
 	 */
+<<<<<<< HEAD
 	public double encDistanceToCm(double encDistance) {
 		return (encDistance / 360) * wheelCircumfrence * gearRatio;
+=======
+	public double encDistanceToCm(double encDistance)
+	{
+		return (encDistance / 360) * wheelCircumfrence;
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 	}
 
 	/**
@@ -520,21 +680,33 @@ public class SRXTankDrive implements ITankDrive {
 	 *
 	 * Common logic shared by all of the autonomous movement commands
 	 */
+<<<<<<< HEAD
 	public class CmdMotionMagicMove extends Command {
 		// when the wheels' angular distance get within this threshold of the
 		// correct value, that side is considered done
 		final static double MOVEMENT_ERROR_THRESHOLD = 70 * Angle.DEGREES;
+=======
+	public class CmdMotionMagicMove extends Command
+	{
+		final static double MOVEMENT_ERROR_THRESHOLD = 360 * Angle.DEGREES;
+		final static double ERROR_PLATEAU_THRESHOLD = 0.01 * Angle.DEGREES;
+
+		final static int ERROR_PLATEAU_COUNT = 25;
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 
 		protected double power;
 
 		protected double leftAngle, rightAngle;
 
-		protected int correctDistanceCount = 0;
-
 		protected MoveEndMode endMode;
 
-		boolean leftDone;
-		boolean rightDone;
+		boolean leftDone, rightDone;
+		int leftCount, rightCount;
+		double lastLeftError, lastRightError;
+
+		double leftError, rightError;
+
+		boolean isInZone;
 
 		boolean useScalars;
 
@@ -563,6 +735,12 @@ public class SRXTankDrive implements ITankDrive {
 
 			clearEncoders();
 			setCoastNeutralMode();
+
+			leftMotors.selectProfileSlot(0, 0);
+			rightMotors.selectProfileSlot(0, 0);
+
+			autoInvertCallback.invertMotors();
+			invertedForTeleop = false;
 
 			// Coast speed measured in nu/100ms
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
@@ -594,21 +772,35 @@ public class SRXTankDrive implements ITankDrive {
 			}
 
 			leftMotors.configMotionCruiseVelocity((int) leftSpeed, Constants.CAN_TIMEOUT);
-			leftMotors.configMotionAcceleration((int) (leftSpeed / 2), Constants.CAN_TIMEOUT);
+			leftMotors.configMotionAcceleration((int) (leftSpeed), Constants.CAN_TIMEOUT);
 
 			leftMotors.set(leftMode, leftAngle / Angle.CTRE_MAGENC_NU);
 
 			rightMotors.configMotionCruiseVelocity((int) rightSpeed, Constants.CAN_TIMEOUT);
-			rightMotors.configMotionAcceleration((int) (rightSpeed / 2), Constants.CAN_TIMEOUT);
+			rightMotors.configMotionAcceleration((int) (rightSpeed), Constants.CAN_TIMEOUT);
 
 			rightMotors.set(rightMode, rightAngle / Angle.CTRE_MAGENC_NU);
 
 			Log.debug("CmdMotionMagicMove",
+<<<<<<< HEAD
 					"\n" + "  Distances\n" + "    L: " + leftAngle / Angle.CTRE_MAGENC_NU + " rot\n" + "    R: "
 							+ rightAngle / Angle.CTRE_MAGENC_NU + " rot\n" + "  Speeds\n" + "    L: " + leftSpeed
 							+ " RPM" + "    R: " + rightSpeed + " RPM");
 
 			try {
+=======
+				  "\n"
+				+ "  Distances\n"
+				+ "    L: " + leftAngle / Angle.CTRE_MAGENC_NU  + " nu\n"
+				+ "    R: " + rightAngle / Angle.CTRE_MAGENC_NU + " nu\n"
+				+ "  Speeds\n"
+				+ "    L: " + leftSpeed  + " RPM"
+				+ "    R: " + rightSpeed + " RPM"
+			);
+
+			try
+			{
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -617,22 +809,62 @@ public class SRXTankDrive implements ITankDrive {
 
 		// Make this return true when this Command no longer needs to run
 		// execute()
+<<<<<<< HEAD
 		protected boolean isFinished() {
 			double leftError = leftMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - leftAngle;
 			double rightError = rightMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - rightAngle;
+=======
+		protected boolean isFinished()
+		{
+			if (isTimedOut())
+			{
+				Log.unusual("CmdMotionMagicMove", "Autonomous Move Overtime.");
+				return true;
+			}
+
+			leftError = leftMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - leftAngle;
+			rightError = rightMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - rightAngle;
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 
 			Log.debug("CmdMotionMagicMove", "L=" + leftMotors.getSelectedSensorPosition(0) + "nu; err=" + leftError
 					+ "deg, " + "R=" + rightMotors.getSelectedSensorPosition(0) + "nu; err=" + rightError + "deg.");
 
+<<<<<<< HEAD
 			leftDone = leftAngle == 0 || Math.abs(leftError) < MOVEMENT_ERROR_THRESHOLD;
 			rightDone = rightAngle == 0 || Math.abs(rightError) < MOVEMENT_ERROR_THRESHOLD;
 
 			if (isTimedOut()) {
 				Log.unusual("CmdMotionMagicMove", "Autonomous Move Overtime.");
 				return true;
+=======
+			if (leftError < -MOVEMENT_ERROR_THRESHOLD || rightError < -MOVEMENT_ERROR_THRESHOLD) {
+				return false;
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 			}
 
-			boolean isInZone;
+			if (leftAngle == 0) {
+				leftCount = ERROR_PLATEAU_COUNT + 1;
+			}
+			else if (Math.abs(leftError - lastLeftError) < ERROR_PLATEAU_THRESHOLD) {
+				leftCount += 1;
+			}
+			else {
+				leftCount = 0;
+			}
+			lastLeftError = leftError;
+			leftDone = leftCount > ERROR_PLATEAU_COUNT;
+			
+			if (rightAngle == 0) {
+				rightCount = ERROR_PLATEAU_COUNT + 1;
+			}
+			else if (Math.abs(rightError - lastRightError) < ERROR_PLATEAU_THRESHOLD) {
+				rightCount += 1;
+			}
+			else {
+				rightCount = 0;
+			}
+			lastRightError = rightError;
+			rightDone = rightCount > ERROR_PLATEAU_COUNT;
 
 			switch (endMode) {
 			case BOTH:
@@ -644,6 +876,7 @@ public class SRXTankDrive implements ITankDrive {
 				break;
 			}
 
+<<<<<<< HEAD
 			if (isInZone) {
 				++correctDistanceCount;
 			} else {
@@ -652,11 +885,17 @@ public class SRXTankDrive implements ITankDrive {
 
 			return correctDistanceCount > 25;
 
+=======
+			return isInZone;
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 		}
 
 		// Called once after isFinished returns true
 		protected void end() {
 			Log.info("CmdMotionMagicMove", "Ending normally.");
+			Log.debug("CmdMotionMagicMove", "Final Errors:\n" + 
+					  "  L=" + leftError  + "deg\n"
+					+ "  R=" + rightError + "deg");
 
 			stopMovement();
 		}
@@ -703,7 +942,12 @@ public class SRXTankDrive implements ITankDrive {
 		 * @param power     - The fractional power to drive the robot (from 0 to 1)
 		 * @param timeoutMs - The maximum time to run the move (in milliseconds)
 		 */
+<<<<<<< HEAD
 		public CmdArcTurn(double radius, float angle, Direction dir, double power, int timeoutMs) {
+=======
+		public CmdArcTurn(double radius, double angle, Direction dir, double power, int timeoutMs)
+		{
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 			super(MoveEndMode.BOTH, 0, 0, power, false, timeoutMs);
 
 			// this formula is explained on the info repository wiki
@@ -751,6 +995,218 @@ public class SRXTankDrive implements ITankDrive {
 		}
 	}
 
+	public abstract class CmdMotionProfileMove extends Command {
+		public CmdMotionProfileMove(double timeoutMs) {
+			super(timeoutMs / 1000.0);
+
+			autoInvertCallback.invertMotors();
+			invertedForTeleop = false;
+		}
+
+		protected void initialize() {
+			leftMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
+			rightMotors.clearMotionProfileHasUnderrun(Constants.CAN_TIMEOUT);
+
+			leftMotors.clearMotionProfileTrajectories();
+			rightMotors.clearMotionProfileTrajectories();
+
+			leftMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
+			rightMotors.configMotionProfileTrajectoryPeriod(0, Constants.CAN_TIMEOUT);
+
+			leftMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+			rightMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+		}
+
+		@Override
+		protected void execute() {
+		}
+
+		@Override
+		protected boolean isFinished() {
+			return this.isTimedOut();
+		}
+
+		@Override
+		public void interrupted() {
+			leftMotors.clearMotionProfileTrajectories();
+			rightMotors.clearMotionProfileTrajectories();
+
+			tankDrive(0, 0);
+		}
+
+		@Override
+		protected void end() {
+			leftMotors.clearMotionProfileTrajectories();
+			rightMotors.clearMotionProfileTrajectories();
+
+			tankDrive(0, 0);
+		}
+	}
+
+	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
+		private MotionProfileStatus leftStatus, rightStatus;
+		private Waypoint[] waypoints;
+		private double power;
+
+		private Notifier processNotifier;
+
+		public CmdStaticRouteDrive(double power, double timeoutMs, Waypoint... waypoints) {
+			super(timeoutMs);
+
+			this.power = power;
+			this.waypoints = waypoints;
+
+			leftStatus = new MotionProfileStatus();
+			leftStatus.isLast = false;
+			rightStatus = new MotionProfileStatus();
+			rightStatus.isLast = false;
+
+			processNotifier = new Notifier(() -> {
+				leftMotors.processMotionProfileBuffer();
+				rightMotors.processMotionProfileBuffer();
+			});
+		}
+
+		@Override
+		protected void initialize() {
+			super.initialize();
+
+			leftMotors.selectProfileSlot(0, 0);
+			rightMotors.selectProfileSlot(0, 0);
+
+			leftMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
+			rightMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
+
+			Routemaker rm = new Routemaker(power, waypoints);
+
+			double speed;
+
+			TrajectoryPoint trajPoint = new TrajectoryPoint();
+			trajPoint.profileSlotSelect0 = 0;
+			trajPoint.zeroPos = true;
+			trajPoint.isLastPoint = false;
+
+			ProfilePoint profilePoint;
+
+			boolean first = true;
+
+			do {
+				speed = 1.0;
+				if (rm.s < 0.2) {
+					speed = (0.1 + rm.s) / 0.3;
+				}
+				else if (rm.s > 0.8) {
+					speed = (1.1 - rm.s) / 0.7;
+				}
+
+				profilePoint = rm.getNextPoint(speed);
+				// System.out.println(profilePoint.x + "," + profilePoint.y + " (" + profilePoint.durationMs + ")");
+				System.out.println(profilePoint.leftDistance + "," + profilePoint.rightDistance);
+
+				SmartDashboard.putNumber("Desired Left", profilePoint.leftDistance);
+				SmartDashboard.putNumber("Desired Right", profilePoint.rightDistance);
+
+				if (profilePoint.last)
+					trajPoint.isLastPoint = true;
+
+				trajPoint.timeDur = profilePoint.durationMs;
+
+				trajPoint.position = profilePoint.leftDistance;
+				trajPoint.velocity = profilePoint.leftSpeed;
+				leftMotors.pushMotionProfileTrajectory(trajPoint);
+
+				//System.out.println("left: " + trajPoint.position);
+
+				trajPoint.position = profilePoint.rightDistance;
+				trajPoint.velocity = profilePoint.rightSpeed;
+				rightMotors.pushMotionProfileTrajectory(trajPoint);
+
+				//System.out.println("right: " + trajPoint.position);
+				//System.out.println("");
+
+
+				if (first) {
+					processNotifier.startPeriodic(Routemaker.durationSec / 2);
+
+					leftMotors.set(ControlMode.MotionProfile, 1);
+					rightMotors.set(ControlMode.MotionProfile, 1);
+
+					first = false;
+				}
+
+			} while (!profilePoint.last);
+		}
+
+		@Override
+		protected synchronized boolean isFinished() {
+			leftMotors.getMotionProfileStatus(leftStatus);
+			rightMotors.getMotionProfileStatus(rightStatus);
+
+			if (super.isFinished()) {
+				Log.info("CmdStaticRouteDrive", "Timed out.");
+			}
+
+			return super.isFinished() /* || leftStatus.isLast && rightStatus.isLast */;
+		}
+
+		@Override
+		public void interrupted() {
+			end();
+
+			Log.info("CmdStaticRouteDrive", "Interrupted.");
+
+		}
+
+		@Override
+		protected synchronized void end() {
+			super.end();
+
+			processNotifier.close();
+			Log.info("CmdStaticRouteDrive", "Finished.");
+		}
+	}
+
+	public class CmdDriveUntilStop extends Command {
+		double power;
+
+		public CmdDriveUntilStop(double power, int timeoutMs) {
+			super(timeoutMs / 1000.0);
+
+			this.power = power;
+		}
+
+		@Override
+		protected void initialize() {
+			arcadeDrive(-1 * power, 0, 1.0, false);
+
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		protected boolean isFinished() {
+			return Math.abs(leftMotors.getSelectedSensorVelocity()) < 200 && Math.abs(rightMotors.getSelectedSensorVelocity()) < 200 || isTimedOut();
+		}
+
+		@Override
+		protected void end() {
+			leftMotors.set(ControlMode.PercentOutput, 0);
+			rightMotors.set(ControlMode.PercentOutput, 0);
+
+			if (isTimedOut()) {
+				Log.unusual("CmdDriveUntilStopped", "Timed out.");
+			}
+		}
+
+		@Override
+		protected void interrupted() {
+			end();
+		}
+	}
+
 	/**
 	 * Callibration command to determine effective wheelbase of the robot. This is
 	 * to account for the field material scrubbing against the wheels, resisting a
@@ -787,11 +1243,18 @@ public class SRXTankDrive implements ITankDrive {
 		 * @param calculatedWheelbase - The Double wrapper object that the finished
 		 *                            command should stick the calculated wheelbase in.
 		 */
+<<<<<<< HEAD
 		public CmdDetermineWheelbase(double durationMs, double leftSpeed, double rightSpeed,
 				Wheelbase calculatedWheelbase) {
 			super(durationMs / 1000.0);
 
 			ahrs = new AHRS(SPI.Port.kMXP);
+=======
+		public CmdDetermineWheelbase(AHRS ahrs, double durationMs, double leftSpeed, double rightSpeed, Wheelbase calculatedWheelbase) {
+			super(durationMs / 1000.0);
+
+			this.ahrs = ahrs;
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 
 			this.leftSpeed = leftSpeed;
 			this.rightSpeed = rightSpeed;
@@ -799,15 +1262,31 @@ public class SRXTankDrive implements ITankDrive {
 			this.calculatedWheelbase = calculatedWheelbase;
 		}
 
+		@Override
 		protected void initialize() {
+<<<<<<< HEAD
+=======
+			leftMotors.selectProfileSlot(1, 0);
+			rightMotors.selectProfileSlot(1, 0);
+
+			autoInvertCallback.invertMotors();
+			invertedForTeleop = false;
+
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 			leftSquareErrorSum = 0;
 			rightSquareErrorSum = 0;
 
 			errorSampleCount = 0;
 
+<<<<<<< HEAD
 			for (int i = 0; i <= 10000; i++) {
 				getLeftMotors().set(ControlMode.Velocity, leftSpeed * i / 10000);
 				getRightMotors().set(ControlMode.Velocity, rightSpeed * i / 10000);
+=======
+			for(int i = 0; i <= 10000 ; i++) {
+				getLeftMotors().set(ControlMode.Velocity, leftSpeed * i/10000);
+				getRightMotors().set(ControlMode.Velocity, rightSpeed * i/10000);
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 			}
 
 			getLeftMotors().setSelectedSensorPosition(0);
@@ -825,7 +1304,19 @@ public class SRXTankDrive implements ITankDrive {
 		}
 
 		@Override
+		protected void execute() {
+			
+		}
+
+		@Override
 		protected boolean isFinished() {
+			leftSquareErrorSum += RobotMath.square(leftSpeed - leftMotors.getSelectedSensorVelocity());
+			rightSquareErrorSum += RobotMath.square(rightSpeed - rightMotors.getSelectedSensorVelocity());
+
+			SmartDashboard.putNumber("Left Velocity", leftMotors.getSelectedSensorVelocity());
+
+			errorSampleCount += 1;
+
 			return this.isTimedOut();
 		}
 
@@ -897,6 +1388,7 @@ public class SRXTankDrive implements ITankDrive {
 			timesRun++;
 		}
 
+<<<<<<< HEAD
 		@Override
 		protected boolean isFinished() {
 			return this.isTimedOut();
@@ -907,6 +1399,12 @@ public class SRXTankDrive implements ITankDrive {
 			stopMovement();
 			b = wheelBase/timesRun;
 			Log.info("CmdCalculateWheelBase", b + "");
+=======
+			calculatedWheelbase.wheelbase = (leftWheelbase + rightWheelbase)/2;
+
+			calculatedWheelbase.leftVelocityError = Math.sqrt(leftSquareErrorSum / errorSampleCount);
+			calculatedWheelbase.rightVelocityError = Math.sqrt(rightSquareErrorSum / errorSampleCount);
+>>>>>>> 9e5e70378a38dedce711c3cc6993ba26f09f809b
 		}
 	}
 }

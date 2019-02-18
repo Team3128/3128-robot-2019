@@ -1,97 +1,143 @@
 package org.team3128.gromit.mechanisms;
 
-import org.team3128.gromit.mechanisms.Lift.LiftState;
+import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 
-import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.command.CommandGroup;
+
+import org.team3128.common.autonomous.primitives.CmdRunInParallel;
+import org.team3128.common.util.Log;
+import org.team3128.gromit.main.MainGromit.GameElement;
+import org.team3128.gromit.main.MainGromit.ScoreTarget;
 import org.team3128.gromit.mechanisms.LiftIntake;
 
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;
-import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;;
+//import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;
 
 /**
- * Control system for the mechanism controlling mechanisms 
- * 
- * @author Chris, Jude, Tygan
- * 
- */
+* Overall mechanism wrapper to control the {@link Lift} and {@link LiftIntake}.
+* 
+* @author Chris, Jude, Tygan
+* 
+*/
 
-public class OptimusPrime{
-  public enum RobotState{
-      BALL_INTAKE_LOW(Lift.LiftState.BALL_INTAKE_LOW, FourBar.FourBarState.BALL_INTAKE),
-      BALL_INTAKE_HIGH(Lift.LiftState.BALL_INTAKE_HIGH, FourBar.FourBarState.BALL_INTAKE),
-      BOT_HATCH(Lift.LiftState.BOT_HATCH, FourBar.FourBarState.HATCH_PICKUP),
-      MID_HATCH(Lift.LiftState.MID_HATCH, FourBar.FourBarState.HATCH_PICKUP),
-      TOP_HATCH(Lift.LiftState.TOP_HATCH, FourBar.FourBarState.HIGH_DROP_OFF),
-      BOT_BALL(Lift.LiftState.BOT_BALL, FourBar.FourBarState.HATCH_PICKUP),
-      MID_BALL(Lift.LiftState.MID_BALL, FourBar.FourBarState.HATCH_PICKUP),
-      TOP_BALL(Lift.LiftState.TOP_HATCH, FourBar.FourBarState.HIGH_DROP_OFF),
-      CARGO_BALL(Lift.LiftState.CARGO_BALL, FourBar.FourBarState.HATCH_PICKUP);
+public class OptimusPrime {
+    public enum RobotState {
+        REST(LiftHeightState.BASE, FourBarState.CARGO_HIGH),
 
-      public LiftState targetLiftState;
-      public FourBarState targetFourBarState;
-      //states for lift intake and ground intakes
+        INTAKE_FLOOR_CARGO(LiftHeightState.INTAKE_FLOOR_CARGO, FourBarState.CARGO_INTAKE),
+        
+        DEPOSIT_LOW_HATCH(LiftHeightState.LOW_HATCH, FourBarState.ROCKET_LOW),
+        DEPOSIT_MID_HATCH(LiftHeightState.MID_HATCH, FourBarState.ROCKET_LOW),
+        DEPOSIT_TOP_HATCH(LiftHeightState.TOP_HATCH, FourBarState.HATCH_HIGH),
+        
+        DEPOSIT_LOW_CARGO(LiftHeightState.LOW_CARGO, FourBarState.ROCKET_LOW),
+        DEPOSIT_MID_CARGO(LiftHeightState.MID_CARGO, FourBarState.ROCKET_LOW),
+        DEPOSIT_TOP_CARGO(LiftHeightState.TOP_CARGO, FourBarState.CARGO_HIGH),
+        
+        LOADING_AND_SHIP_CARGO(LiftHeightState.LOADING_SHIP_CARGO, FourBarState.SHIP_AND_LOADING),
+        LOADING_AND_SHIP_HATCH(LiftHeightState.LOADING_SHIP_HATCH, FourBarState.SHIP_AND_LOADING);
+        
+        public LiftHeightState targetLiftState;
+        public FourBarState targetFourBarState;
+        //states for lift intake and ground intakes
+        
+        private RobotState(LiftHeightState liftState, FourBarState fourBarState) {
+            this.targetLiftState = liftState;
+            this.targetFourBarState = fourBarState;
+        }
 
-      private RobotState(LiftState liftState, FourBarState fourBarState)
-      {
-        this.targetLiftState = liftState;
-        this.targetFourBarState = fourBarState;
-      }
-  }
+        public static RobotState getOptimusState(GameElement gameElement, ScoreTarget scoreLevel) {
+            if (gameElement == GameElement.CARGO) {
+                switch (scoreLevel) {
+                    case CARGO_SHIP:
+                        return LOADING_AND_SHIP_CARGO;
+                    case ROCKET_LOW:
+                        return DEPOSIT_LOW_CARGO;
+                    case ROCKET_MID:
+                        return DEPOSIT_MID_CARGO;
+                    case ROCKET_TOP:
+                        return DEPOSIT_TOP_CARGO;
+                }
+            }
+            else {
+                switch (scoreLevel) {
+                    case CARGO_SHIP:
+                        return LOADING_AND_SHIP_HATCH;
+                    case ROCKET_LOW:
+                        return DEPOSIT_LOW_HATCH;
+                    case ROCKET_MID:
+                        return DEPOSIT_MID_HATCH;
+                    case ROCKET_TOP:
+                        return DEPOSIT_TOP_HATCH;
+                }
+            }
 
-  public class CmdIntakeBall extends Command 
-  {
+            return REST;
+        }
+    }
+    
     Lift lift;
+    LiftIntake liftIntake;
     FourBar fourBar;
-    GroundIntake groundIntake;
 
-
-		public CmdIntakeBall(Lift lift, FourBar fourBar, GroundIntake groundIntake)
-		{
-			super(3);
-      this.lift = lift;
-      this.fourBar = fourBar;
-      this.groundIntake = groundIntake;
+    public RobotState robotState;
+    // GroundIntake groundIntake;
+    
+    private static OptimusPrime instance = null;
+    public static OptimusPrime getInstance() {
+        if (instance != null) {
+			return instance;
 		}
-
-		@Override
-		protected void initialize()
-		{
-      Thread ballIntake = new Thread(()->{
-        lift.setState(LiftState.BALL_INTAKE_LOW);
-        groundIntake.setState(GroundIntakeState.DEPLOYED);
-        fourBar.setState(FourBarState.BALL_INTAKE);
-        groundIntake.setState(GroundIntakeState.DEPLOYED_INTAKE);
-        groundIntake.setState(GroundIntakeState.DEPLOYED);
-        lift.liftIntake.setState(LiftIntakeState.BALL_INTAKE);
-        lift.setState(LiftState.BALL_INTAKE_HIGH);
-        groundIntake.setState(GroundIntakeState.RETRACTED);  
-      });
-      ballIntake.start();
+        
+		Log.fatal("OptimusPrime", "Attempted to get instance before initializtion! Call initialize(...) first.");
+		return null;
+    }
+    
+    public static void initialize() {
+        instance = new OptimusPrime();
+    }
+    
+	private OptimusPrime() {
+        lift = Lift.getInstance();
+        liftIntake = LiftIntake.getInstance();
+        fourBar = FourBar.getInstance();
+        // groundIntake = GroundIntake.getInstance();
     }
 
+    public void setState(RobotState state) {
+        this.robotState = state;
 
-		@Override
-		protected void execute() {
-			//Log.debug("CmdSetLiftPosition", "Error: " + (LiftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)));
-		}
-
-		@Override
-		protected void end() {
-      lift.powerControl(0);
-      fourBar.powerControl(0);
-		}
-
-		@Override
-		protected void interrupted()
-		{
-			end();
-		}
-
-    @Override
-    protected boolean isFinished() {
-      return isTimedOut();
-      //return isTimedOut() || Math.abs(LiftMotor.getSelectedSensorPosition(0) - (int)(heightState.targetHeight * ratio)) < 300;
+        lift.setState(state.targetLiftState);
+        fourBar.setState(state.targetFourBarState);
     }
-	}
+    
+    public class CmdEnterIntakeMode extends CommandGroup {
+        public CmdEnterIntakeMode() {      
+            addSequential(new CmdRunInParallel(
+                lift.new CmdHeightControl(LiftHeightState.INTAKE_FLOOR_CARGO),
+                liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.CARGO_INTAKE))
+            );
+            // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
+            addSequential(fourBar.new CmdAngleControl(FourBarState.CARGO_INTAKE));
+            // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.INTAKING));
+        }
+    }
+    
+    public class CmdExitIntakeMode extends CommandGroup {
+        public CmdExitIntakeMode() {
+            // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
+            addSequential(new CmdRunInParallel(
+                lift.new CmdHeightControl(LiftHeightState.BASE),
+                liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.DEMOGORGON_HOLDING))
+            );
+            // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.RETRACTED));
+        }
+    }
+    
+    public class CmdDepositGameElement extends CommandGroup {
+        public CmdDepositGameElement() {
+            //TODO
+        }
+    }
 }

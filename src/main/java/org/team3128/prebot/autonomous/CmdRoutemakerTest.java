@@ -14,7 +14,7 @@ public class CmdRoutemakerTest extends CommandGroup {
 
         addSequential(drive.new CmdStaticRouteDrive(0.5, 10000, 
             new Waypoint(0 * Length.ft, 0 * Length.ft, 90, 5 * Length.ft),
-            new Waypoint(3 * Length.ft, 4 * Length.ft, 90, 5 * Length.ft)
+            new Waypoint(8 * Length.ft, 15 * Length.ft, 90, 5 * Length.ft)
         ));
     }
 }

@@ -18,6 +18,7 @@ import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.NotifierJNI;
 
 import edu.wpi.first.wpilibj.Watchdog;
+import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -128,7 +129,7 @@ public abstract class NarwhalRobot extends RobotBase {
     /* ----------- Overridable periodic code ----------------- */
 
     protected double m_period;
-    public static final double kDefaultPeriod = 0.02;
+    public static final double kDefaultPeriod = 0.05;
     
     private enum Mode {
         kNone,
@@ -286,6 +287,7 @@ public abstract class NarwhalRobot extends RobotBase {
             HAL.observeUserProgramAutonomous();
             Scheduler.getInstance().run();
             autonomousPeriodic();
+
             m_watchdog.addEpoch("autonomousPeriodic()");
         } else if (isOperatorControl()) {
             // Call TeleopInit() if we are now just entering teleop mode from either a different mode or
@@ -337,14 +339,14 @@ public abstract class NarwhalRobot extends RobotBase {
         LiveWindow.updateValues();
         Shuffleboard.update();
         
-        // Warn on loop time overruns
-        if (m_watchdog.isExpired()) {
-            m_watchdog.printEpochs();
-        }
+        // // Warn on loop time overruns
+        // if (m_watchdog.isExpired()) {
+        //     m_watchdog.printEpochs();
+        // }
     }
     
     private void printLoopOverrunMessage() {
-        DriverStation.reportWarning("Loop time of " + m_period + "s overrun\n", false);
+        // DriverStation.reportWarning("Loop time of " + m_period + "s overrun\n", false);
     }
     
     @Override
@@ -382,7 +384,7 @@ public abstract class NarwhalRobot extends RobotBase {
 	
 	private void runAutoProgram()
 	{
-		CommandGroup autoProgram = null;
+		Command autoProgram = null;
 
 		autoProgram = NarwhalDashboard.getSelectedAuto();
 

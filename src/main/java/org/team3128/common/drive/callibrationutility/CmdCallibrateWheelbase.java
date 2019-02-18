@@ -1,4 +1,4 @@
-package org.team3128.prebot.autonomous;
+package org.team3128.common.drive.callibrationutility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,8 +15,7 @@ import org.team3128.common.util.Wheelbase;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class CmdCallibrateWheelbase extends CommandGroup {
-    public CmdCallibrateWheelbase(AHRS ahrs, double duration, double leftSpeed, double rightSpeed,
-            Wheelbase wheelbase) {
+    public CmdCallibrateWheelbase(AHRS ahrs, double duration, double leftSpeed, double rightSpeed, Wheelbase wheelbase) {
         List<Wheelbase> calculatedWheelbases = new ArrayList<Wheelbase>();
         int numSamples = 1;
 

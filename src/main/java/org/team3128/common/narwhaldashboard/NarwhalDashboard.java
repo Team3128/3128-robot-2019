@@ -11,19 +11,21 @@ import org.java_websocket.server.WebSocketServer;
 
 import org.team3128.common.util.Log;
 
+import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class NarwhalDashboard extends WebSocketServer {
-    private static final int PORT = 5800;
+    private static final int PORT = 5805;
     private final static int UPDATE_WAVELENGTH = 100;
     public static int getUpdateWavelength() {
         return UPDATE_WAVELENGTH;
     }
 
     private static HashMap<String, String> data = new HashMap<String, String>();
-    private static LinkedHashMap<String, CommandGroup> autoPrograms = new LinkedHashMap<String, CommandGroup>();
+    private static LinkedHashMap<String, Command> autoPrograms = new LinkedHashMap<String, Command>();
 
     private static HashMap<String, DashButtonCallback> buttons = new HashMap<String, DashButtonCallback>();
+    private static HashMap<String, NumericalDataCallback> numDataCallbacks = new HashMap<String, NumericalDataCallback>();
 
     private static String selectedAuto = null;
     private static boolean autosPushed = false;
@@ -61,11 +63,15 @@ public class NarwhalDashboard extends WebSocketServer {
         buttons.put(key, callback);
     }
 
+    public static void addNumDataListener(String key, NumericalDataCallback callback) {
+        numDataCallbacks.put(key, callback);
+    }
+
     /**
      * Clears the list of autonomous programs.
      */
     public static void clearAutos() {
-        autoPrograms = new LinkedHashMap<String, CommandGroup>();
+        autoPrograms = new LinkedHashMap<String, Command>();
     }
 
     /**
@@ -74,7 +80,7 @@ public class NarwhalDashboard extends WebSocketServer {
      * @param name - The human-readable name of the autonomous program
      * @param program - The auto program to run if this element is chosen
      */
-    public static void addAuto(String name, CommandGroup program) {
+    public static void addAuto(String name, Command program) {
         autoPrograms.put(name, program);
     }
 
@@ -88,7 +94,7 @@ public class NarwhalDashboard extends WebSocketServer {
     /**
      * Returns the currently selected auto program
      */
-    public static CommandGroup getSelectedAuto() {
+    public static Command getSelectedAuto() {
         if (selectedAuto == null) return null;
 
         if (!autoPrograms.containsKey(selectedAuto)) {
@@ -168,7 +174,7 @@ public class NarwhalDashboard extends WebSocketServer {
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-        Log.info("NarwhalDashboard", conn.getRemoteSocketAddress().getHostName() + " has closed its connection.");
+        //Log.info("NarwhalDashboard", conn.getRemoteSocketAddress().getHostName() + " has closed its connection.");
     }
 
     @Override
@@ -193,7 +199,21 @@ public class NarwhalDashboard extends WebSocketServer {
         }
         else if (parts[0].equals("numData")) {
             String key = parts[1];
-            double numericalData = Double.parseDouble(parts[2]);
+            String list = parts[2];
+
+            String[] stringData = list.split(",");
+            double[] data = new double[stringData.length];
+
+            for (int i = 0; i < stringData.length; i++) {
+                data[i] = Double.parseDouble(stringData[i]);
+            }
+
+            if (numDataCallbacks.containsKey(key)) {
+                numDataCallbacks.get(key).process(data);
+            }
+            else {
+                Log.info("NarwhalDashboard", "Recieved, but will not process, numerical data: " + key + " = " + data);
+            }
         }
         else if (parts[0].equals("button")) {
             String key = parts[1];

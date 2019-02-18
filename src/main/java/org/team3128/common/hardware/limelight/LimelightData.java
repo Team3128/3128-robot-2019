@@ -1,4 +1,4 @@
-package org.team3128.common.util.limelight;
+package org.team3128.common.hardware.limelight;
 
 import java.util.HashMap;
 
@@ -9,6 +9,9 @@ public class LimelightData {
         values = new HashMap<String, Double>();
 
         for (String valueKey : LimelightConstants.valueKeys) {
+            values.put(valueKey, 0.0);
+        }
+        for (String valueKey : LimelightConstants.valueKeysPnP) {
             values.put(valueKey, 0.0);
         }
     }
@@ -44,6 +47,30 @@ public class LimelightData {
 
     public double fittedLong() {
         return values.get("tlong");
+    }
+
+    public double x() {
+        return values.get("x");
+    }
+
+    public double y() {
+        return values.get("y");
+    }
+
+    public double z() {
+        return values.get("z");
+    }
+
+    public double pitch() {
+        return values.get("pitch");
+    }
+
+    public double yaw() {
+        return values.get("yaw");
+    }
+    
+    public double roll() {
+        return values.get("roll");
     }
 
     // Setter
