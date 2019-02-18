@@ -1168,10 +1168,11 @@ public class SRXTankDrive implements ITankDrive {
 		double previousTime;
 		double previousAngle;
 
-		public CmdCalculateWheelbase(double leftWheelPower, double rightWheelPower, double duration) {
+		public CmdCalculateWheelbase(double leftWheelPower, double rightWheelPower, AHRS ahrs, double duration) {
 			super(duration);
 			this.leftWheelPower = leftWheelPower;
 			this.rightWheelPower = rightWheelPower;
+			this.ahrs = ahrs;
 
 		}
 
@@ -1201,7 +1202,7 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected boolean isFinished() {
-			return false;
+			return isTimedOut();
 		}
 
 		@Override
