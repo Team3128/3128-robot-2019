@@ -1195,6 +1195,7 @@ public class SRXTankDrive implements ITankDrive {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
+
 			}
 			vL = getLeftMotors().getSelectedSensorVelocity() * 1000/4096 * wheelCircumfrence;
 			vR = getRightMotors().getSelectedSensorVelocity() * 1000/4096 * wheelCircumfrence;
