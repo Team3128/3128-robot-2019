@@ -1178,12 +1178,12 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void initialize() {
-			tankDrive(leftWheelPower, rightWheelPower);
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			tankDrive(leftWheelPower, rightWheelPower);
 			previousTime = RobotController.getFPGATime()/1000000.0;
 			previousAngle = ahrs.getAngle();
 			//Log.info("RONAK", "adham is the best person I have ever witnessed in my life <3");
@@ -1191,6 +1191,11 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void execute() {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			vL = getLeftMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
 			vR = getRightMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
 			w = (ahrs.getAngle()-previousAngle)/(RobotController.getFPGATime()/1000000.0-previousTime);
