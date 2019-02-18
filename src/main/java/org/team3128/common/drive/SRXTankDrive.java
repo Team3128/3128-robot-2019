@@ -1191,6 +1191,11 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void execute() {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			vL = getLeftMotors().getSelectedSensorVelocity() * 1000/4096 * wheelCircumfrence;
 			vR = getRightMotors().getSelectedSensorVelocity() * 1000/4096 * wheelCircumfrence;
 			w = (ahrs.getAngle()-previousAngle)/(RobotController.getFPGATime()/1000000.0-previousTime);
