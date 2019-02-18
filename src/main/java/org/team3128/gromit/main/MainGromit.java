@@ -126,7 +126,7 @@ public class MainGromit extends NarwhalRobot{
         leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
         rightDriveBack.set(ControlMode.Follower, rightDriveFront.getDeviceID());
 
-        SRXTankDrive.initialize(leftDriveFront, rightDriveFront, wheelCirc, gearRatio, wheelBase, track, robotFreeSpeed);
+        SRXTankDrive.initialize(leftDriveFront, rightDriveFront, wheelCirc, gearRatio, wheelBase, robotFreeSpeed);
         drive = SRXTankDrive.getInstance();
 
         ahrs = new AHRS(SPI.Port.kMXP); 
