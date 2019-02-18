@@ -1190,8 +1190,8 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void execute() {
-			vL = getLeftMotors().getSelectedSensorVelocity() * 1000/4096 * wheelCircumfrence;
-			vR = getRightMotors().getSelectedSensorVelocity() * 1000/4096 * wheelCircumfrence;
+			vL = getLeftMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
+			vR = getRightMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
 			w = (ahrs.getAngle()-previousAngle)/(RobotController.getFPGATime()/1000000.0-previousTime);
 			previousTime = RobotController.getFPGATime()/1000000.0;
 			previousAngle = ahrs.getAngle();
@@ -1209,6 +1209,61 @@ public class SRXTankDrive implements ITankDrive {
 			tankDrive(0,0);
 			b = b/timesRun;
 			Log.info("CmdCalculateWheelBase", b + "");
+		}
+	}
+	public class CmdPlotG extends Command {
+		double leftWheelPower, rightWheelPower;
+
+		double voltage;
+		double w;
+
+		double vL, vR;
+
+		AHRS ahrs;
+
+		int timesRun;
+
+		double time;
+		double angle;
+		public CmdPlotG(Wrapper wrapper, AHRS ahrs, double leftWheelPower, double rightWheelPower) {
+			this.leftWheelPower = leftWheelPower;
+			this.rightWheelPower = rightWheelPower;
+		}
+
+		@Override
+		protected void initialize() {
+			tankDrive(leftWheelPower, rightWheelPower);
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			time = RobotController.getFPGATime()/1000000.0;
+			angle = ahrs.getAngle();
+		}
+
+		@Override
+		protected void execute() {
+			voltage = DriverStation.getInstance().getBatteryVoltage();
+			vL = getLeftMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
+			vR = getRightMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
+			w += (ahrs.getAngle()-angle)/(RobotController.getFPGATime()/1000000.0-time);
+			time = RobotController.getFPGATime()/1000000.0;
+			angle = ahrs.getAngle();
+			gL += leftWheelPower/(vL * voltage/12);
+			gR += leftWheelPower/(vR * voltage/12);
+			timesRun++;
+		}
+
+		@Override
+		protected boolean isFinished() {
+			return isTimedOut;
+		}
+
+		@Override
+		protected void end() {
+			tankDrive(0,0);
+			wrapper.csv += "\n" + String.valueOf(w/timesRun) + "," + String.valueOf(gL/timeRun) + "," + String.valueOf(gR/timesRun);
 		}
 	}
 }
