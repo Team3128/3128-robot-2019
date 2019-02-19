@@ -100,7 +100,9 @@ public class DriveCallibrationUtility {
         NarwhalDashboard.put("leftSpeedScalar", getLeftSpeedScalar());
         NarwhalDashboard.put("rightSpeedScalar", getRightSpeedScalar());
 
-        NarwhalDashboard.put("wheelBase", calculatedWheelbase.wheelbase);
+        NarwhalDashboard.put("prev_wb", calculatedWheelbase.wheelbase);
+        NarwhalDashboard.put("avg_wb", wheelbaseSum / wheelbaseCount);
+
     }
 
     public double getWheelCirc() {

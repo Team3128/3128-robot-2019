@@ -23,6 +23,8 @@ public class CmdObtainG extends CommandGroup {
         addSequential(drive.new CmdGetFeedForwardPower(data,gyro,0.6,1.0,500));
         addSequential(drive.new CmdGetFeedForwardPower(data,gyro,0.4,1.0,500));
         addSequential(drive.new CmdGetFeedForwardPower(data,gyro,0.2,1.0,500));
+
+        
         System.out.println(data.getCSV());
     }
 }
