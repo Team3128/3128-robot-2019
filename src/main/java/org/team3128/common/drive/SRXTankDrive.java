@@ -1228,9 +1228,9 @@ public class SRXTankDrive implements ITankDrive {
 		double leftWheelPower, rightWheelPower;
 
 		double voltage;
-		double w;
+		double w, wadd, wmid;
 
-		double vL, vR, gL, gR;
+		double vL, vR, gL, gR, gLadd, gRadd;
 
 		AHRS ahrs;
 
@@ -1257,6 +1257,20 @@ public class SRXTankDrive implements ITankDrive {
 			}
 			time = RobotController.getFPGATime()/1000000.0;
 			angle = ahrs.getAngle();
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			voltage = DriverStation.getInstance().getBatteryVoltage();
+			vL = getLeftMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
+			vR = getRightMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
+			wmid = (ahrs.getAngle()-angle)/(RobotController.getFPGATime()/1000000.0-time);
+			w += wmid;
+			time = RobotController.getFPGATime()/1000000.0;
+			gL += leftWheelPower/(vL * voltage/12);
+			gR += leftWheelPower/(vR * voltage/12);
+			angle = ahrs.getAngle();
 		}
 
 		@Override
@@ -1264,12 +1278,17 @@ public class SRXTankDrive implements ITankDrive {
 			voltage = DriverStation.getInstance().getBatteryVoltage();
 			vL = getLeftMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
 			vR = getRightMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
-			w += (ahrs.getAngle()-angle)/(RobotController.getFPGATime()/1000000.0-time);
+			wadd = (ahrs.getAngle()-angle)/(RobotController.getFPGATime()/1000000.0-time);
 			time = RobotController.getFPGATime()/1000000.0;
 			angle = ahrs.getAngle();
-			gL += leftWheelPower/(vL * voltage/12);
-			gR += leftWheelPower/(vR * voltage/12);
-			timesRun++;
+			gLadd = leftWheelPower/(vL * voltage/12);
+			gRadd = leftWheelPower/(vR * voltage/12);
+			if (wadd > 0.95*wmid & wadd < 1.05*wmid) {
+				w += wadd;
+				gL += gLadd;
+				gR += gRadd;
+				timesRun++;
+			}
 		}
 
 		@Override

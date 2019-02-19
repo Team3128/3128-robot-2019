@@ -13,7 +13,7 @@ public class CmdObtainG extends CommandGroup {
     public class Wrapper {
         public String csv = "angular velocity, gL, gR";
     }
-    
+
     public CmdObtainG(AHRS ahrs) {    
         Wrapper data = new Wrapper();
         SRXTankDrive drive = SRXTankDrive.getInstance();
