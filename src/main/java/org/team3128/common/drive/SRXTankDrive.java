@@ -1228,9 +1228,9 @@ public class SRXTankDrive implements ITankDrive {
 		double leftWheelPower, rightWheelPower;
 
 		double voltage;
-		double w, wadd, wmid;
+		double w, wSum, wBase;
 
-		double vL, vR, gL, gR, gLadd, gRadd;
+		double vL, vR, gLsum, gRsum, gL, gR;
 
 		AHRS ahrs;
 
@@ -1241,10 +1241,11 @@ public class SRXTankDrive implements ITankDrive {
 
 		Wrapper wrapper;
 		public CmdPlotG(Wrapper wrapper, AHRS ahrs, double leftWheelPower, double rightWheelPower, int duration) {
-			super(duration);
+			super(duration / 1000);
 			this.leftWheelPower = leftWheelPower;
 			this.rightWheelPower = rightWheelPower;
 			this.wrapper = wrapper;
+			this.ahrs = ahrs;
 		}
 
 		@Override
@@ -1265,11 +1266,11 @@ public class SRXTankDrive implements ITankDrive {
 			voltage = DriverStation.getInstance().getBatteryVoltage();
 			vL = getLeftMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
 			vR = getRightMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
-			wmid = (ahrs.getAngle()-angle)/(RobotController.getFPGATime()/1000000.0-time);
-			w += wmid;
+			wBase = (ahrs.getAngle()-angle)/(RobotController.getFPGATime()/1000000.0-time);
+			wSum += wBase;
 			time = RobotController.getFPGATime()/1000000.0;
-			gL += leftWheelPower/(vL * voltage/12);
-			gR += leftWheelPower/(vR * voltage/12);
+			gLsum += leftWheelPower/(vL * voltage/12);
+			gRsum += leftWheelPower/(vR * voltage/12);
 			angle = ahrs.getAngle();
 		}
 
@@ -1278,15 +1279,15 @@ public class SRXTankDrive implements ITankDrive {
 			voltage = DriverStation.getInstance().getBatteryVoltage();
 			vL = getLeftMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
 			vR = getRightMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
-			wadd = (ahrs.getAngle()-angle)/(RobotController.getFPGATime()/1000000.0-time);
+			w = (ahrs.getAngle()-angle)/(RobotController.getFPGATime()/1000000.0-time);
 			time = RobotController.getFPGATime()/1000000.0;
 			angle = ahrs.getAngle();
-			gLadd = leftWheelPower/(vL * voltage/12);
-			gRadd = leftWheelPower/(vR * voltage/12);
-			if (wadd > 0.95*wmid & wadd < 1.05*wmid) {
-				w += wadd;
-				gL += gLadd;
-				gR += gRadd;
+			gL = leftWheelPower/(vL * voltage/12);
+			gR = leftWheelPower/(vR * voltage/12);
+			if ((w > 0.95*wBase) && ( w < 1.05*wBase)) {
+				wSum += w;
+				gLsum += gL;
+				gRsum += gR;
 				timesRun++;
 			}
 		}
@@ -1298,8 +1299,9 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void end() {
+
 			tankDrive(0,0);
-			wrapper.csv += "\n" + String.valueOf(w/timesRun) + "," + String.valueOf(gL/timesRun) + "," + String.valueOf(gR/timesRun);
+			wrapper.csv += "\n" + String.valueOf(w/timesRun) + "," + String.valueOf(gLsum/timesRun) + "," + String.valueOf(gRsum/timesRun);
 		}
 	}
 }

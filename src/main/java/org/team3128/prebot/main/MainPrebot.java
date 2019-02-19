@@ -6,6 +6,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import org.team3128.prebot.autonomous.*;
 
+import org.team3128.prebot.autonomous.CmdObtainG.Wrapper;
 import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.hardware.limelight.Limelight;
@@ -40,7 +41,7 @@ public class MainPrebot extends NarwhalRobot {
     public SRXTankDrive tankDrive;
 
     public Joystick joystick;
-
+    public Wrapper data = new Wrapper();
     public ListenerManager lm;
 
     public ADXRS450_Gyro gyro;
@@ -201,48 +202,55 @@ public class MainPrebot extends NarwhalRobot {
 
         //efieh
 
+        int timeMs = 1000;
 
-
-        NarwhalDashboard.addButton("G_10_08", (boolean down) -> {
+        NarwhalDashboard.addButton("g_10_08", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdPlotG(data,ahrs,1.0,0.8,3);
+                tankDrive.new CmdPlotG(data,ahrs,1.0,0.8,timeMs).start();
             }
         });
-        NarwhalDashboard.addButton("wb_10_06", (boolean down) -> {
+        NarwhalDashboard.addButton("g_10_06", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdCalculateWheelbase(1.0,0.6,gyro,1000).start();
+                tankDrive.new CmdPlotG(data,ahrs,1.0,0.6,timeMs).start();
             }
         });
-        NarwhalDashboard.addButton("wb_10_04", (boolean down) -> {
+        NarwhalDashboard.addButton("g_10_04", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdCalculateWheelbase(1.0,0.4,gyro,1000).start();
+                tankDrive.new CmdPlotG(data,ahrs,1.0,0.4,timeMs).start();
             }
         });
-        NarwhalDashboard.addButton("wb_10_02", (boolean down) -> {
+        NarwhalDashboard.addButton("g_10_02", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdCalculateWheelbase(1.0,0.2,gyro,1000).start();
+                tankDrive.new CmdPlotG(data,ahrs,1.0,0.2,timeMs).start();
             }
         });
-        NarwhalDashboard.addButton("wb_08_10", (boolean down) -> {
+        NarwhalDashboard.addButton("g_08_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdCalculateWheelbase(0.8,1.0,gyro,1000).start();
+                tankDrive.new CmdPlotG(data,ahrs,0.8,1.0,timeMs).start();
             }
         });
-        NarwhalDashboard.addButton("wb_06_10", (boolean down) -> {
+        NarwhalDashboard.addButton("g_06_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdCalculateWheelbase(0.6,1.0,gyro,1000).start();
+                tankDrive.new CmdPlotG(data,ahrs,0.6,1.0,timeMs).start();
             }
         });
-        NarwhalDashboard.addButton("wb_04_10", (boolean down) -> {
+        NarwhalDashboard.addButton("g_04_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdCalculateWheelbase(0.4,1.0,gyro,1000).start();
+                tankDrive.new CmdPlotG(data,ahrs,0.4,1.0,timeMs).start();
             }
         });
-        NarwhalDashboard.addButton("wb_02_10", (boolean down) -> {
+        NarwhalDashboard.addButton("g_02_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdCalculateWheelbase(0.2,1.0,gyro,1000).start();
+                tankDrive.new CmdPlotG(data,ahrs,0.2,1.0,timeMs).start();
             }
         });
+        NarwhalDashboard.addButton("flushCSV", (boolean down) -> {
+            if (down) {
+                Log.info("outputCSV", data.csv);
+                data.csv = "angular velocity, gL, gR";
+            }
+        });
+        
     }
     
     @Override

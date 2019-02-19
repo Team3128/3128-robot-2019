@@ -10,7 +10,7 @@ import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class CmdObtainG extends CommandGroup {
-    public class Wrapper {
+    public static class Wrapper {
         public String csv = "angular velocity, gL, gR";
     }
 
