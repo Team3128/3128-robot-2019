@@ -1,11 +1,10 @@
 package org.team3128.common.drive.callibrationutility;
 
-import com.kauailabs.navx.frc.AHRS;
-
 import org.team3128.common.drive.SRXTankDrive;
+import org.team3128.common.drive.SRXTankDrive.Wheelbase;
+import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Log;
-import org.team3128.common.util.Wheelbase;
 
 public class DriveCallibrationUtility {
     private static DriveCallibrationUtility instance = null;
@@ -18,8 +17,8 @@ public class DriveCallibrationUtility {
 		return null;
     }
     
-    public static void initialize(AHRS ahrs) {
-        instance = new DriveCallibrationUtility(ahrs);
+    public static void initialize(Gyro gyro) {
+        instance = new DriveCallibrationUtility(gyro);
     }
 
     public double maxLeftSpeed = 0;
@@ -28,16 +27,20 @@ public class DriveCallibrationUtility {
     public Wheelbase calculatedWheelbase;
     
     public SRXTankDrive drive;
-    public AHRS ahrs;
+    public Gyro gyro;
 
-    private DriveCallibrationUtility(AHRS ahrs) {
+    private double wheelbaseSum;
+    private int wheelbaseCount;
+
+    private DriveCallibrationUtility(Gyro gyro) {
         maxLeftSpeed = 0;
         maxRightSpeed = 0;
 
         calculatedWheelbase = new Wheelbase();
-        this.ahrs = ahrs;
+        this.gyro = gyro;
 
         drive = SRXTankDrive.getInstance();
+        calculatedWheelbase = new Wheelbase();
     }
 
     public void initNarwhalDashboard() {
@@ -55,10 +58,26 @@ public class DriveCallibrationUtility {
             }
         });
 
-        calculatedWheelbase = new Wheelbase();
-        NarwhalDashboard.addButton("wheelbase", (boolean down) -> {
+        NarwhalDashboard.addNumDataListener("calc_wb", (double[] data) -> {
+            double pL = data[0];
+            double pR = data[1];
+
+            int duration = (int) data[2];
+
+            drive.new CmdCalculateWheelbase(calculatedWheelbase, pL, pR, gyro, duration).start();
+        });
+
+        NarwhalDashboard.addButton("add_wb_to_avg", (boolean down) -> {
             if (down) {
-                (new CmdCallibrateWheelbase(ahrs, 5000, 2500, 1000, calculatedWheelbase)).start();;
+                wheelbaseSum += calculatedWheelbase.wheelbase;
+                wheelbaseCount += 1;
+            }
+        });
+
+        NarwhalDashboard.addButton("reset_wb_avg", (boolean down) -> {
+            if (down) {
+                wheelbaseSum = 0;
+                wheelbaseCount = 0;
             }
         });
         
@@ -82,8 +101,6 @@ public class DriveCallibrationUtility {
         NarwhalDashboard.put("rightSpeedScalar", getRightSpeedScalar());
 
         NarwhalDashboard.put("wheelBase", calculatedWheelbase.wheelbase);
-        NarwhalDashboard.put("leftVelocityError", calculatedWheelbase.leftVelocityError);
-        NarwhalDashboard.put("rightVelocityError", calculatedWheelbase.rightVelocityError);
     }
 
     public double getWheelCirc() {

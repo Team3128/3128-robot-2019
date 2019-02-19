@@ -442,4 +442,16 @@ public class RobotMath {
 	public static double distance(double x0, double y0, double x1, double y1) {
 		return Math.sqrt(Math.pow(x0 - x1, 2) + Math.pow(y0 - y1, 2));
 	}
+
+	/**
+	 * Determines when a certain value is within some number of percent of a certain
+	 * target value.
+	 * 
+	 * @param testValue - The value being checked
+	 * @param targetValue - THe value that is used as reference
+	 * @param percent - The acceptable threshold above and below targetValue
+	 */
+	public static boolean isWithin(double testValue, double targetValue, double percent) {
+		return testValue > (1.0 - percent/100.0) * targetValue || testValue < (1.0 + percent/100.0) * targetValue;
+	}
 }

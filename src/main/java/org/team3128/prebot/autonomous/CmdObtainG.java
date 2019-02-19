@@ -3,28 +3,26 @@ package org.team3128.prebot.autonomous;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Length;
 import org.team3128.common.drive.SRXTankDrive;
-import org.team3128.common.drive.SRXTankDrive.CmdPlotG;
+import org.team3128.common.drive.SRXTankDrive.CmdGetFeedForwardPower;
+import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerSet;
+import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.util.Log;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class CmdObtainG extends CommandGroup {
-    public static class Wrapper {
-        public String csv = "angular velocity, gL, gR";
-    }
-
-    public CmdObtainG(AHRS ahrs) {    
-        Wrapper data = new Wrapper();
+    public CmdObtainG(Gyro gyro) {    
+        FeedForwardPowerSet data = new FeedForwardPowerSet();
         SRXTankDrive drive = SRXTankDrive.getInstance();
-        addSequential(drive.new CmdPlotG(data,ahrs,1.0,0.8,3));
-        addSequential(drive.new CmdPlotG(data,ahrs,1.0,0.6,3));
-        addSequential(drive.new CmdPlotG(data,ahrs,1.0,0.4,3));
-        addSequential(drive.new CmdPlotG(data,ahrs,1.0,0.2,3));  
-        addSequential(drive.new CmdPlotG(data,ahrs,0.8,1.0,3));
-        addSequential(drive.new CmdPlotG(data,ahrs,0.6,1.0,3));
-        addSequential(drive.new CmdPlotG(data,ahrs,0.4,1.0,3));
-        addSequential(drive.new CmdPlotG(data,ahrs,0.2,1.0,3));
-        Log.info("CmdObtainG", data.csv);
+        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,1.0,0.8,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,1.0,0.6,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,1.0,0.4,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,1.0,0.2,500));  
+        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,0.8,1.0,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,0.6,1.0,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,0.4,1.0,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,0.2,1.0,500));
+        System.out.println(data.getCSV());
     }
 }

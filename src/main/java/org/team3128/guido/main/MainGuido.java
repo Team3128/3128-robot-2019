@@ -9,6 +9,8 @@ import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
+import org.team3128.common.hardware.navigation.AnalogDevicesGyro;
+import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.POVValue;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
@@ -26,7 +28,6 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -45,7 +46,7 @@ public class MainGuido extends NarwhalRobot
 	public TalonSRX leftDriveLeader, leftDriveFollower;
 	public TalonSRX rightDriveLeader, rightDriveFollower;
 	
-	public ADXRS450_Gyro gyro;
+	public Gyro gyro;
 
 	public TwoSpeedGearshift gearshift;
 	public Piston gearshiftPiston, climberPiston, climberLockPiston;
@@ -134,13 +135,10 @@ public class MainGuido extends NarwhalRobot
 		leftDriveFollower.set(ControlMode.Follower, leftDriveLeader.getDeviceID());
 		rightDriveFollower.set(ControlMode.Follower, rightDriveLeader.getDeviceID());
 
-		gyro = new ADXRS450_Gyro();
+		gyro = new AnalogDevicesGyro();
 		
 		// create SRXTankDrive
 		SRXTankDrive.initialize(leftDriveLeader, rightDriveLeader, wheelCirc, 25.25 * Length.in, lowGearMaxSpeed,
-		() -> {
-			invertSetup();
-		},
 		() -> {
 			invertSetup();
 		});

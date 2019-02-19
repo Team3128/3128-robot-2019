@@ -1,19 +1,16 @@
 package org.team3128.common.drive;
 
-import org.team3128.prebot.autonomous.CmdObtainG.*;
-
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.DriverStation;
 import org.team3128.common.drive.routemaker.Routemaker;
 import org.team3128.common.drive.routemaker.ProfilePoint;
 import org.team3128.common.drive.routemaker.Waypoint;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
+import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Assert;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
-import org.team3128.common.util.Wheelbase;
 import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
@@ -30,9 +27,6 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.SlotConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
-import com.kauailabs.navx.frc.AHRS;
-import edu.wpi.first.wpilibj.SPI;
-//import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
@@ -82,13 +76,6 @@ public class SRXTankDrive implements ITankDrive {
 	private double shiftDownSpeed;
 
 	/**
-	 * How the drive should stop. Brake if the drive motors should apply power to
-	 * stop the robot (typically set for teleop). Coast if the drive motors should
-	 * not react when power is set to 0 (typically set for auto).
-	 */
-	private NeutralMode neutralMode;
-
-	/**
 	 * circumference of wheels in cm
 	 */
 	public final double wheelCircumfrence;
@@ -120,7 +107,21 @@ public class SRXTankDrive implements ITankDrive {
 	 * motors are driving forward.
 	 */
 	private SRXInvertCallback teleopInvertCallback, autoInvertCallback;
-	private boolean invertedForTeleop;
+	private enum DriveMode {
+		TELEOP(NeutralMode.Coast),
+		AUTONOMOUS(NeutralMode.Brake);
+
+		private NeutralMode neutralMode;
+
+		private DriveMode(NeutralMode neutralMode) {
+			this.neutralMode = neutralMode;
+		}
+
+		public NeutralMode getNeutralMode() {
+			return neutralMode;
+		}
+	}
+	private DriveMode driveMode;
 
 
 	/**
@@ -176,11 +177,11 @@ public class SRXTankDrive implements ITankDrive {
 	 *            in native units per 100ms, of the robot driving on the ground at
 	 *            100% throttle
 	 */
-	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert) {
-		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, wheelBase, robotMaxSpeed, teleopInvert, autoInvert);
+	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase, int robotMaxSpeed, SRXInvertCallback driveInverts) {
+		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, wheelBase, robotMaxSpeed, driveInverts);
 	}
 
-	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase, int robotMaxSpeed, SRXInvertCallback teleopInvert, SRXInvertCallback autoInvert)
+	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase, int robotMaxSpeed, SRXInvertCallback driveInverts)
 	{
 		this.leftMotors = leftMotors;
 		this.rightMotors = rightMotors;
@@ -193,11 +194,9 @@ public class SRXTankDrive implements ITankDrive {
 		leftSpeedScalar = 1;
 		rightSpeedScalar = 1;
 
-		setTeleopInvert(teleopInvert);
-		setAutoInvert(autoInvert);
+		driveInverts.invertMotors();
 
-		invertedForTeleop = true;
-		teleopInvertCallback.invertMotors();
+		configureDriveMode(DriveMode.TELEOP);
 
 		loadSRXPIDConstants();
 		setupDashboardPIDListener();
@@ -210,20 +209,13 @@ public class SRXTankDrive implements ITankDrive {
 		// }
 	}
 
-	private void setBrakeNeutralMode() {
-		if (neutralMode != NeutralMode.Brake) {
-			leftMotors.setNeutralMode(NeutralMode.Brake);
-			rightMotors.setNeutralMode(NeutralMode.Brake);
+	private void configureDriveMode(DriveMode mode) {
+		if (driveMode != mode) {			
+			leftMotors.setNeutralMode(mode.getNeutralMode());
+			rightMotors.setNeutralMode(mode.getNeutralMode());
 
-			neutralMode = NeutralMode.Brake;
+			driveMode = mode;
 		}
-	}
-
-	private void setCoastNeutralMode() {
-		leftMotors.setNeutralMode(NeutralMode.Coast);
-		rightMotors.setNeutralMode(NeutralMode.Coast);
-
-		neutralMode = NeutralMode.Coast;
 	}
 
 	// threshold below which joystick movements are ignored.
@@ -240,11 +232,7 @@ public class SRXTankDrive implements ITankDrive {
 	@Override
 	public void arcadeDrive(double joyX, double joyY, double throttle, boolean fullSpeed)
 	{
-		if (!invertedForTeleop) {
-			teleopInvertCallback.invertMotors();
-			invertedForTeleop = true;
-		}
-		setBrakeNeutralMode();
+		configureDriveMode(DriveMode.TELEOP);
 
 		double spdL, spdR;
 
@@ -289,14 +277,6 @@ public class SRXTankDrive implements ITankDrive {
 		rightSpeedScalar = scalar;
 	}
 
-	public void setTeleopInvert(SRXInvertCallback callback) {
-		teleopInvertCallback = callback;
-	}
-
-	public void setAutoInvert(SRXInvertCallback callback) {
-		autoInvertCallback = callback;
-	}
-
 	/**
 	 * Drive by providing motor powers for each side.
 	 *
@@ -304,11 +284,7 @@ public class SRXTankDrive implements ITankDrive {
 	 * @param powR the right side power.
 	 */
 	public void tankDrive(double powL, double powR) {
-		if (!invertedForTeleop) {
-			teleopInvertCallback.invertMotors();
-			invertedForTeleop = true;
-		}
-		setBrakeNeutralMode();
+		configureDriveMode(DriveMode.TELEOP);
 
 		leftMotors.set(ControlMode.PercentOutput, powL);
 		rightMotors.set(ControlMode.PercentOutput, powR);
@@ -321,7 +297,8 @@ public class SRXTankDrive implements ITankDrive {
 
 	@Override
 	public void stopMovement() {
-		setBrakeNeutralMode();
+		configureDriveMode(DriveMode.AUTONOMOUS);
+
 		tankDrive(0, 0);
 	}
 
@@ -593,8 +570,7 @@ public class SRXTankDrive implements ITankDrive {
 		 * @param useScalars - whether or not to scale output left and right powers
 		 * @param timeoutMs  - The maximum time (in milliseconds) to run the command for
 		 */
-		public CmdMotionMagicMove(MoveEndMode endMode, double leftAngle, double rightAngle, double power,
-				boolean useScalars, double timeoutMs) {
+		public CmdMotionMagicMove(MoveEndMode endMode, double leftAngle, double rightAngle, double power, boolean useScalars, double timeoutMs) {
 			super(timeoutMs / 1000.0);
 
 			this.power = power;
@@ -609,13 +585,10 @@ public class SRXTankDrive implements ITankDrive {
 			Log.info("CmdMotionMagicMove", "Initializing...");
 
 			clearEncoders();
-			setCoastNeutralMode();
+			configureDriveMode(DriveMode.AUTONOMOUS);
 
 			leftMotors.selectProfileSlot(0, 0);
 			rightMotors.selectProfileSlot(0, 0);
-
-			autoInvertCallback.invertMotors();
-			invertedForTeleop = false;
 
 			// Coast speed measured in nu/100ms
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
@@ -836,8 +809,7 @@ public class SRXTankDrive implements ITankDrive {
 		public CmdMotionProfileMove(double timeoutMs) {
 			super(timeoutMs / 1000.0);
 
-			autoInvertCallback.invertMotors();
-			invertedForTeleop = false;
+			configureDriveMode(DriveMode.AUTONOMOUS);
 		}
 
 		protected void initialize() {
@@ -1044,156 +1016,67 @@ public class SRXTankDrive implements ITankDrive {
 		}
 	}
 
-	// /**
-	//  * Callibration command to determine effective wheelbase of the robot. This is
-	//  * to account for the field material scrubbing against the wheels, resisting a
-	//  * turning motion.
-	//  *
-	//  * The effective wheelbase should always be larger than the measured wheelbase,
-	//  * but it will differ by a different factor for each robot. For instance, a
-	//  * 6-wheel tank drive with corner omnis will have a relatively small factor of
-	//  * difference, while a tank drive with pneumatic wheels will have a very large
-	//  * difference.
-	//  */
-	// public class CmdDetermineWheelbase extends Command {
-	// 	double leftSpeed, rightSpeed;
+	/**
+	 * Wrapper object to hold a single value--the calculated average wheelbase.
+	 */
+	public static class Wheelbase {
+		public double wheelbase;
+	}
 
-	// 	AHRS ahrs;
-
-	// 	double leftDistance, rightDistance;
-
-	// 	double theta0, theta1;
-	// 	double dTheta;
-
-	// 	double leftWheelbase, rightWheelbase;
-
-	// 	Wheelbase calculatedWheelbase;
-
-	// 	double leftSquareErrorSum, rightSquareErrorSum;
-	// 	int errorSampleCount;
-
-	// 	/**
-	// 	 * @param durationMs          - The amount of time for which the robot should
-	// 	 *                            coast.
-	// 	 * @param leftSpeed           - The coast velocity of the left drive wheels.
-	// 	 * @param rightSpeed          - The coast velocity of the right drive wheels.
-	// 	 * @param calculatedWheelbase - The Double wrapper object that the finished
-	// 	 *                            command should stick the calculated wheelbase in.
-	// 	 */
-	// 	public CmdDetermineWheelbase(AHRS ahrs, double durationMs, double leftSpeed, double rightSpeed, Wheelbase calculatedWheelbase) {
-	// 		super(durationMs / 1000.0);
-
-	// 		this.ahrs = ahrs;
-
-	// 		this.leftSpeed = leftSpeed;
-	// 		this.rightSpeed = rightSpeed;
-
-	// 		this.calculatedWheelbase = calculatedWheelbase;
-	// 	}
-
-	// 	@Override
-	// 	protected void initialize() {
-	// 		leftMotors.selectProfileSlot(1, 0);
-	// 		rightMotors.selectProfileSlot(1, 0);
-
-	// 		autoInvertCallback.invertMotors();
-	// 		invertedForTeleop = false;
-
-	// 		leftSquareErrorSum = 0;
-	// 		rightSquareErrorSum = 0;
-
-	// 		errorSampleCount = 0;
-
-	// 		for(int i = 0; i <= 10000 ; i++) {
-	// 			getLeftMotors().set(ControlMode.Velocity, leftSpeed * i/10000);
-	// 			getRightMotors().set(ControlMode.Velocity, rightSpeed * i/10000);
-	// 		}
-
-	// 		getLeftMotors().setSelectedSensorPosition(0);
-	// 		getRightMotors().setSelectedSensorPosition(0);
-
-	// 		theta0 = ahrs.getAngle() * (Math.PI / 180);
-	// 	}
-
-	// 	@Override
-	// 	protected void execute() {
-	// 		leftSquareErrorSum += RobotMath.square(leftSpeed - leftMotors.getSelectedSensorVelocity());
-	// 		rightSquareErrorSum += RobotMath.square(rightSpeed - rightMotors.getSelectedSensorVelocity());
-
-	// 		errorSampleCount += 1;
-	// 	}
-
-	// 	@Override
-	// 	protected boolean isFinished() {
-	// 		leftSquareErrorSum += RobotMath.square(leftSpeed - leftMotors.getSelectedSensorVelocity());
-	// 		rightSquareErrorSum += RobotMath.square(rightSpeed - rightMotors.getSelectedSensorVelocity());
-
-	// 		SmartDashboard.putNumber("Left Velocity", leftMotors.getSelectedSensorVelocity());
-
-	// 		errorSampleCount += 1;
-
-	// 		return this.isTimedOut();
-	// 	}
-
-	// 	@Override
-	// 	protected void end() {
-	// 		theta1 = ahrs.getAngle() * (Math.PI / 180);
-	// 		dTheta = theta1 - theta0;
-
-	// 		leftDistance = (wheelCircumfrence * getLeftMotors().getSelectedSensorPosition() / 4096);
-	// 		rightDistance = (wheelCircumfrence * getRightMotors().getSelectedSensorPosition() / 4096);
-
-	// 		stopMovement();
-
-	// 		leftWheelbase = 2 * (leftDistance / dTheta) - 2 * (leftDistance + rightDistance) / (2 * dTheta);
-	// 		rightWheelbase = -2 * (rightDistance / dTheta) + 2 * (leftDistance + rightDistance) / (2 * dTheta);
-
-	// 		calculatedWheelbase.wheelbase = (leftWheelbase + rightWheelbase) / 2;
-
-	// 		calculatedWheelbase.leftVelocityError = Math.sqrt(leftSquareErrorSum / errorSampleCount);
-	// 		calculatedWheelbase.rightVelocityError = Math.sqrt(rightSquareErrorSum / errorSampleCount);
-	// 	}
-	// }
-
+	/**
+	  * Callibration command to determine effective wheelbase of the robot. This is
+	  * to account for the field material scrubbing against the wheels, resisting a
+	  * turning motion.
+	  *
+	  * The effective wheelbase should always be larger than the measured wheelbase,
+	  * but it will differ by a different factor for each robot. For instance, a
+	  * 6-wheel tank drive with corner omnis will have a relatively small factor of
+	  * difference, while a tank drive with pneumatic wheels will have a very large
+	  * difference.
+	  */
 	public class CmdCalculateWheelbase extends Command {
-		double leftWheelPower, rightWheelPower;
+		double leftPower, rightPower;
 
-		double b;
-		double w;
+		double wheelbaseSum;
+		double angularVelocity;
+
+		Wheelbase wheelbase;
 
 		double vL, vR;
 
-		ADXRS450_Gyro gyro;
+		Gyro gyro;
 
 		int timesRun;
 
 		double previousTime;
 		double previousAngle; 
 
-		public CmdCalculateWheelbase(double leftWheelPower, double rightWheelPower, ADXRS450_Gyro gyro, double duration) {
-			super(duration / 1000.0);
-			this.leftWheelPower = leftWheelPower;
-			this.rightWheelPower = rightWheelPower;
+		public CmdCalculateWheelbase(Wheelbase wheelbase, double leftPower, double rightPower, Gyro gyro, double durationMs) {
+			super(durationMs / 1000.0);
+
+			this.wheelbase = wheelbase;
+
+			this.leftPower = leftPower;
+			this.rightPower = rightPower;
+
 			this.gyro = gyro;
 		}
 
 		@Override
 		protected void initialize() {
-			tankDrive(leftWheelPower, rightWheelPower);
+			tankDrive(leftPower, rightPower);
+
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			previousTime = RobotController.getFPGATime()/1000000.0;
-			previousAngle = gyro.getAngle();
-			//Log.info("RONAK", "adham is the best person I have ever witnessed in my life <3");
 		}
 
 		@Override
 		protected void execute() {
 			try {
-				Thread.sleep(50);
+				Thread.sleep(20);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -1201,13 +1084,10 @@ public class SRXTankDrive implements ITankDrive {
 			vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
 			vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
 
-			w = -1 * Math.toRadians((gyro.getAngle()-previousAngle)/(RobotController.getFPGATime()/1000000.0-previousTime));
+			angularVelocity = gyro.getRate();
 
-
-			previousTime = RobotController.getFPGATime()/1000000.0;
-			previousAngle = gyro.getAngle();
-			b += (vR - vL)/w;
-			timesRun++;
+			wheelbaseSum += (vR - vL)/Math.toRadians(angularVelocity);
+			timesRun += 1;
 		}
 
 		@Override
@@ -1217,77 +1097,110 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void end() {
-			tankDrive(0,0);
-			b = b/timesRun;
-			Log.info("CmdCalculateWheelBase", "Wheelbase: " + (b / Length.in) + " in");
+			stopMovement();
+
+			wheelbase.wheelbase = wheelbaseSum / timesRun;
+			Log.info("CmdCalculateWheelBase", "Wheelbase: " + (wheelbase.wheelbase / Length.in) + " in");
 		}
 	}
 
+	public static class FeedForwardPower {
+		public double angularVelocity, ffpL, ffpR;
 
-	public class CmdPlotG extends Command {
-		double leftWheelPower, rightWheelPower;
+		public FeedForwardPower(double angularVelocity, double ffpL, double ffpR) {
+			this.angularVelocity = angularVelocity;
+
+			this.ffpL = ffpL;
+			this.ffpR = ffpR;
+		}
+	}
+
+	public static class FeedForwardPowerSet {
+		private List<FeedForwardPower> ffps = new ArrayList<FeedForwardPower>();
+
+		public void addFeedForwardPower(double angularVelocity, double ffpL, double ffpR) {
+			ffps.add(new FeedForwardPower(angularVelocity, ffpL, ffpR));
+		}
+		
+		public String getCSV() {
+			String csv = "angular velocity, ffpL, ffpR\n";
+
+			for (FeedForwardPower ffp : ffps) {
+				csv += ffp.angularVelocity + ",";
+				csv += ffp.ffpL + ",";
+				csv += ffp.ffpR + "\n";
+			}
+
+			return csv;
+		}
+    }
+
+	public class CmdGetFeedForwardPower extends Command {
+		double leftPower, rightPower;
 
 		double voltage;
-		double w, wSum, wBase;
 
-		double vL, vR, gLsum, gRsum, gL, gR;
+		double angularVelocity, angularVelocitySum;
+		double targetAngularVelocity;
 
-		AHRS ahrs;
+		double vL, vR;
+		double ffpLSum, ffpRSum;
+		
+		double ffpL, ffpR;
+
+		Gyro gyro;
 
 		int timesRun;
 
-		double time;
-		double angle;
+		FeedForwardPowerSet feedForwardPowerSet;
 
-		Wrapper wrapper;
-		public CmdPlotG(Wrapper wrapper, AHRS ahrs, double leftWheelPower, double rightWheelPower, int duration) {
-			super(duration / 1000);
-			this.leftWheelPower = leftWheelPower;
-			this.rightWheelPower = rightWheelPower;
-			this.wrapper = wrapper;
-			this.ahrs = ahrs;
+		public CmdGetFeedForwardPower(FeedForwardPowerSet feedForwardPowerSet, Gyro gyro, double leftPower, double rightPower, int durationMs) {
+			super(durationMs / 1000.0);
+
+			this.feedForwardPowerSet = feedForwardPowerSet;
+
+			this.leftPower = leftPower;
+			this.rightPower = rightPower;
+
+			this.gyro = gyro;
 		}
 
 		@Override
 		protected void initialize() {
-			tankDrive(leftWheelPower, rightWheelPower);
+			tankDrive(leftPower, rightPower);
+
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			time = RobotController.getFPGATime()/1000000.0;
-			angle = ahrs.getAngle();
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			voltage = DriverStation.getInstance().getBatteryVoltage();
-			vL = getLeftMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
-			vR = getRightMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
-			wBase = (ahrs.getAngle()-angle)/(RobotController.getFPGATime()/1000000.0-time);
-			wSum += wBase;
-			time = RobotController.getFPGATime()/1000000.0;
-			gLsum += leftWheelPower/(vL * voltage/12);
-			gRsum += leftWheelPower/(vR * voltage/12);
-			angle = ahrs.getAngle();
+
+			targetAngularVelocity = gyro.getRate();
 		}
 
 		@Override
 		protected void execute() {
+			try {
+				Thread.sleep(20);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
 			voltage = DriverStation.getInstance().getBatteryVoltage();
-			vL = getLeftMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
-			vR = getRightMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
-			w = (ahrs.getAngle()-angle)/(RobotController.getFPGATime()/1000000.0-time);
-			time = RobotController.getFPGATime()/1000000.0;
-			angle = ahrs.getAngle();
-			gL = leftWheelPower/(vL * voltage/12);
-			gR = leftWheelPower/(vR * voltage/12);
-			if ((w > 0.95*wBase) && ( w < 1.05*wBase)) {
-				wSum += w;
-				gLsum += gL;
-				gRsum += gR;
+
+			vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
+			vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
+
+			angularVelocity = gyro.getRate();
+
+			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 3.0)) {
+				ffpL = leftPower/(vL * voltage/12);
+				ffpR = leftPower/(vR * voltage/12);
+
+				angularVelocitySum += angularVelocity;
+				ffpLSum += ffpL;
+				ffpRSum += ffpR;
+
 				timesRun++;
 			}
 		}
@@ -1299,9 +1212,9 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void end() {
+			stopMovement();
 
-			tankDrive(0,0);
-			wrapper.csv += "\n" + String.valueOf(w/timesRun) + "," + String.valueOf(gLsum/timesRun) + "," + String.valueOf(gRsum/timesRun);
+			feedForwardPowerSet.addFeedForwardPower(angularVelocitySum/timesRun, ffpLSum/timesRun, ffpRSum/timesRun);
 		}
 	}
 }

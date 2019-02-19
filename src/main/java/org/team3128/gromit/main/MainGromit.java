@@ -7,6 +7,9 @@ import org.team3128.common.drive.callibrationutility.DriveCallibrationUtility;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
+import org.team3128.common.hardware.navigation.AnalogDevicesGyro;
+import org.team3128.common.hardware.navigation.Gyro;
+import org.team3128.common.hardware.navigation.NavX;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.POVValue;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
@@ -36,23 +39,19 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
 
-import com.kauailabs.navx.frc.AHRS;
-import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 
 public class MainGromit extends NarwhalRobot{
 
-    public AHRS ahrs;
-	public ADXRS450_Gyro gyro;
+    public Gyro gyro;
 
 	// Drivetrain
 	public SRXTankDrive drive;
@@ -66,7 +65,7 @@ public class MainGromit extends NarwhalRobot{
     public double wheelbase;
 	public int driveMaxSpeed;
 
-	public SRXInvertCallback teleopInvertCallback, autoInvertCallback;
+	public SRXInvertCallback driveInvertCallback;
 	public double leftSpeedScalar, rightSpeedScalar;
 
 	public DriveCallibrationUtility dcu;
@@ -128,14 +127,10 @@ public class MainGromit extends NarwhalRobot{
 	public PowerDistributionPanel powerDistPanel;
 	public DriverStation ds;
 
-	private boolean groundIntaking = false;
-	private boolean isOutaking = false;
-
 	private CommandGroup climbCommand;
 
 	// CV!!!!!!
 	public Limelight limelight;
-
 
 	// 4200
 	public double maxLiftSpeed = 0;
@@ -196,7 +191,7 @@ public class MainGromit extends NarwhalRobot{
         rightDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
 		rightDriveFollower.follow(rightDriveLeader);
 
-		SRXTankDrive.initialize(rightDriveLeader, leftDriveLeader, wheelCirc, wheelbase, driveMaxSpeed, teleopInvertCallback, autoInvertCallback);
+		SRXTankDrive.initialize(rightDriveLeader, leftDriveLeader, wheelCirc, wheelbase, driveMaxSpeed, driveInvertCallback);
         drive = SRXTankDrive.getInstance();
 
 		drive.setLeftSpeedScalar(leftSpeedScalar);
@@ -206,14 +201,16 @@ public class MainGromit extends NarwhalRobot{
 		drive.addShifter(gearshift, shiftUpSpeed, shiftDownSpeed);
 
 		// Instantiate gryoscopes
-		ahrs = new AHRS(SPI.Port.kMXP);
-		ahrs.reset();
 
-		gyro = new ADXRS450_Gyro();
-		gyro.calibrate();
+		// Instatiator if we're using the NavX
+		gyro = new NavX();
+
+		// Instatiator if we're using the KoP Gyro
+		// gyro = new AnalogDevicesGyro();
+		// ((AnalogDevicesGyro) gyro).recalibrate();
 
 		// DCU
-		DriveCallibrationUtility.initialize(ahrs);
+		DriveCallibrationUtility.initialize(gyro);
 		dcu = DriveCallibrationUtility.getInstance();
 
 		compressor = new Compressor();
@@ -331,11 +328,6 @@ public class MainGromit extends NarwhalRobot{
 				currentGameElement = GameElement.HATCH_PANEL;
 			}
 		});
-		// NarwhalDashboard.addButton("setElement_none", (boolean down) -> {
-		// 	if (down) {
-		// 		currentGameElement = GameElement.NONE;
-		// 	}
-		// });
 
 		// Debug
 		NarwhalDashboard.addButton("rezero_backleg", (boolean down) -> {
@@ -424,11 +416,11 @@ public class MainGromit extends NarwhalRobot{
 		listenerRight.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");
 		listenerRight.addMultiListener(() ->
 		{
-			double x = listenerRight.getAxis("MoveForwards");
-			double y = listenerRight.getAxis("MoveTurn");
-			double t = listenerRight.getAxis("Throttle") * -1;
+			double vert =     -1.0 * listenerRight.getAxis("MoveForwards");
+			double horiz =    -0.8 * listenerRight.getAxis("MoveTurn");
+			double throttle = -1.0 * listenerRight.getAxis("Throttle");
 
-			drive.arcadeDrive(x, 0.8 * y, t, true);
+			drive.arcadeDrive(vert, horiz, throttle, true);
 		}, "MoveForwards", "MoveTurn", "Throttle");
 
 		listenerRight.nameControl(new Button(2), "Gearshift");
