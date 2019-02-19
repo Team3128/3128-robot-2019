@@ -1,6 +1,8 @@
 package org.team3128.common.drive;
 
 import org.team3128.prebot.autonomous.CmdObtainG.*;
+
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.DriverStation;
 import org.team3128.common.drive.routemaker.Routemaker;
 import org.team3128.common.drive.routemaker.ProfilePoint;
@@ -16,6 +18,7 @@ import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.AngularSpeed;
+import org.team3128.common.util.units.Length;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -264,10 +267,7 @@ public class SRXTankDrive implements ITankDrive {
 		joyX *= throttle;
 
 		spdR = rightSpeedScalar * RobotMath.clampPosNeg1(joyY + joyX);
-		spdL = leftSpeedScalar *  RobotMath.clampPosNeg1(joyY - joyX);
-
-		// Log.debug("SRXTankDrive", "x1: " + joyX + " throttle: " + throttle +
-		// " spdR: " + spdR + " spdL: " + spdL);
+		spdL = leftSpeedScalar  * RobotMath.clampPosNeg1(joyY - joyX);
 
 		leftMotors.set(ControlMode.PercentOutput, spdL);
 		rightMotors.set(ControlMode.PercentOutput, spdR);
@@ -1163,46 +1163,49 @@ public class SRXTankDrive implements ITankDrive {
 
 		double vL, vR;
 
-		AHRS ahrs;
+		ADXRS450_Gyro gyro;
 
 		int timesRun;
 
 		double previousTime;
-		double previousAngle;
+		double previousAngle; 
 
-		public CmdCalculateWheelbase(double leftWheelPower, double rightWheelPower, AHRS ahrs, double duration) {
-			super(duration);
+		public CmdCalculateWheelbase(double leftWheelPower, double rightWheelPower, ADXRS450_Gyro gyro, double duration) {
+			super(duration / 1000.0);
 			this.leftWheelPower = leftWheelPower;
 			this.rightWheelPower = rightWheelPower;
-			this.ahrs = ahrs;
-
+			this.gyro = gyro;
 		}
 
 		@Override
 		protected void initialize() {
+			tankDrive(leftWheelPower, rightWheelPower);
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			tankDrive(leftWheelPower, rightWheelPower);
 			previousTime = RobotController.getFPGATime()/1000000.0;
-			previousAngle = ahrs.getAngle();
+			previousAngle = gyro.getAngle();
 			//Log.info("RONAK", "adham is the best person I have ever witnessed in my life <3");
 		}
 
 		@Override
 		protected void execute() {
 			try {
-				Thread.sleep(100);
+				Thread.sleep(50);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			vL = getLeftMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
-			vR = getRightMotors().getSelectedSensorVelocity() * 100000/4096 * wheelCircumfrence;
-			w = (ahrs.getAngle()-previousAngle)/(RobotController.getFPGATime()/1000000.0-previousTime);
+
+			vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
+			vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
+
+			w = -1 * Math.toRadians((gyro.getAngle()-previousAngle)/(RobotController.getFPGATime()/1000000.0-previousTime));
+
+
 			previousTime = RobotController.getFPGATime()/1000000.0;
-			previousAngle = ahrs.getAngle();
+			previousAngle = gyro.getAngle();
 			b += (vR - vL)/w;
 			timesRun++;
 		}
@@ -1216,9 +1219,11 @@ public class SRXTankDrive implements ITankDrive {
 		protected void end() {
 			tankDrive(0,0);
 			b = b/timesRun;
-			Log.info("CmdCalculateWheelBase", b + "");
+			Log.info("CmdCalculateWheelBase", "Wheelbase: " + (b / Length.in) + " in");
 		}
 	}
+
+
 	public class CmdPlotG extends Command {
 		double leftWheelPower, rightWheelPower;
 

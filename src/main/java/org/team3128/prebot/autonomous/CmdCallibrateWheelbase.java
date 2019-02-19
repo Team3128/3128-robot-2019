@@ -23,7 +23,7 @@ public class CmdCallibrateWheelbase extends CommandGroup {
         for (int i = 0; i < numSamples; i++) {
             Wheelbase wb = new Wheelbase();
 
-            addSequential(SRXTankDrive.getInstance().new CmdCalculateWheelbase(leftPower, rightPower, ahrs, duration));
+            // addSequential(SRXTankDrive.getInstance().new CmdCalculateWheelbase(leftPower, rightPower, ahrs, duration));
             addSequential(new CmdDelay(1.0));
             addSequential(new CmdLog("" + wb.wheelbase));
 
