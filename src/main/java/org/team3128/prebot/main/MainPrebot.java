@@ -92,16 +92,16 @@ public class MainPrebot extends NarwhalRobot {
             () -> {
                 Log.info("SRXTankDrive", "Inverting for teleop.");
 
-                leftDriveFront.setInverted(false);
-                leftDriveMiddle.setInverted(false);
-                leftDriveBack.setInverted(false);
-
-                rightDriveFront.setInverted(true);
-                rightDriveMiddle.setInverted(true);
-                rightDriveBack.setInverted(true);    
+                leftDriveFront.setInverted(true);
+                leftDriveMiddle.setInverted(true);
+                leftDriveBack.setInverted(true);
                 
-                leftDriveFront.setSensorPhase(false);
-                rightDriveFront.setSensorPhase(false);
+                rightDriveFront.setInverted(false);
+                rightDriveMiddle.setInverted(false);
+                rightDriveBack.setInverted(false);
+
+                leftDriveFront.setSensorPhase(true);
+                rightDriveFront.setSensorPhase(true);
             },
             () -> {
                 Log.info("SRXTankDrive", "Inverting for auto.");
@@ -157,6 +157,92 @@ public class MainPrebot extends NarwhalRobot {
                 new CmdDriveForward().start();
             }
         });
+
+        NarwhalDashboard.addButton("wb_10_08", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(1.0,0.8,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_10_06", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(1.0,0.6,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_10_04", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(1.0,0.4,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_10_02", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(1.0,0.2,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_08_10", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(0.8,1.0,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_06_10", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(0.6,1.0,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_04_10", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(0.4,1.0,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_02_10", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(0.2,1.0,gyro,1000).start();
+            }
+        });
+
+        //efieh
+
+
+
+        NarwhalDashboard.addButton("G_10_08", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdPlotG(data,ahrs,1.0,0.8,3);
+            }
+        });
+        NarwhalDashboard.addButton("wb_10_06", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(1.0,0.6,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_10_04", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(1.0,0.4,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_10_02", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(1.0,0.2,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_08_10", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(0.8,1.0,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_06_10", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(0.6,1.0,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_04_10", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(0.4,1.0,gyro,1000).start();
+            }
+        });
+        NarwhalDashboard.addButton("wb_02_10", (boolean down) -> {
+            if (down) {
+                tankDrive.new CmdCalculateWheelbase(0.2,1.0,gyro,1000).start();
+            }
+        });
     }
     
     @Override
@@ -165,10 +251,10 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.addAuto("Arc Turn", new CmdArcTurnTest());
         NarwhalDashboard.addAuto("Forward", new CmdDriveForward());
         //NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
-        NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(ahrs, 10, 1000, 1500, calculatedWheelbase));
-        NarwhalDashboard.addAuto("Forward CV", new CmdDriveForwardCVTest());
-        NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
-        NarwhalDashboard.addAuto("Heading Then Arc Turn", new CmdHeadingThenArc(limelight));
+        // NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(ahrs, 10, 1000, 1500, calculatedWheelbase));
+        // NarwhalDashboard.addAuto("Forward CV", new CmdDriveForwardCVTest());
+        // NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
+        // NarwhalDashboard.addAuto("Heading Then Arc Turn", new CmdHeadingThenArc(limelight));
         NarwhalDashboard.addAuto("Fancy Wheel Base Calibration", new CmdFancyCalibrateWheelBase(ahrs));
         // previous speeds that were used were 2000, 4000 (arbitrarily picked)
     }
@@ -180,10 +266,12 @@ public class MainPrebot extends NarwhalRobot {
 		lm.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");		
 
         lm.addMultiListener(() -> {
-			tankDrive.arcadeDrive(0.7 * RobotMath.thresh(lm.getAxis("MoveTurn"), 0.2),
-					RobotMath.thresh(lm.getAxis("MoveForwards"), 0.2),
-					-1 * lm.getAxis("Throttle"),
-					true);		
+			tankDrive.arcadeDrive(
+                -0.7 * RobotMath.thresh(lm.getAxis("MoveTurn"), 0.1),
+                -1.0 * RobotMath.thresh(lm.getAxis("MoveForwards"), 0.1),
+                -1.0 * lm.getAxis("Throttle"),
+                 true
+            );		
         }, "MoveTurn", "MoveForwards", "Throttle");
 
         lm.nameControl(new Button(12), "FullSpeed");
