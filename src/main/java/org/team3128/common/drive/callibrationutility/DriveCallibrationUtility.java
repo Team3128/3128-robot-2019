@@ -94,8 +94,8 @@ public class DriveCallibrationUtility {
 
         NarwhalDashboard.put("wheelCirc", getWheelCirc());
 
-        NarwhalDashboard.put("leftKf", getLeftKf());
-        NarwhalDashboard.put("rightKf", getRightKf());
+        NarwhalDashboard.put("left_max_speed", maxLeftSpeed);
+        NarwhalDashboard.put("right_max_speed", maxRightSpeed);
 
         NarwhalDashboard.put("leftSpeedScalar", getLeftSpeedScalar());
         NarwhalDashboard.put("rightSpeedScalar", getRightSpeedScalar());
