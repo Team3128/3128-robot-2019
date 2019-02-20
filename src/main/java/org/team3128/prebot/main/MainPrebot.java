@@ -67,11 +67,11 @@ public class MainPrebot extends NarwhalRobot {
     public DriveCallibrationUtility dcu;
     public Wheelbase calculatedWheelbase;
 
-
     public Limelight limelight = new Limelight(0 * Length.in, 26 * Length.in, 6.15 * Length.in, 28.5 * Length.in, 14.5 * Length.in);
 	@Override
 	protected void constructHardware()
 	{
+        ffpSet = new FeedForwardPowerSet();
 		limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 
         rightDriveFront = new TalonSRX(0);
@@ -131,10 +131,11 @@ public class MainPrebot extends NarwhalRobot {
 
         dcu.initNarwhalDashboard();
 
-        int timeMs = 1000;
+        int timeMs = 4000;
 
         NarwhalDashboard.addButton("g_10_08", (boolean down) -> {
             if (down) {
+                Log.info("cmdfeedfrwrd", "triggered");
                 tankDrive.new CmdGetFeedForwardPower(ffpSet,gyro,1.0,0.8,timeMs).start();
             }
         });
@@ -237,6 +238,8 @@ public class MainPrebot extends NarwhalRobot {
     @Override
     protected void updateDashboard() {
         SmartDashboard.putNumber("Gyro Angle", gyro.getAngle());
+        SmartDashboard.putNumber("getRate", gyro.getRate());
+
 
         maxLeftSpeed = Math.max(leftDriveFront.getSelectedSensorVelocity(), maxLeftSpeed);
         maxRightSpeed = Math.max(rightDriveFront.getSelectedSensorVelocity(), maxRightSpeed);
