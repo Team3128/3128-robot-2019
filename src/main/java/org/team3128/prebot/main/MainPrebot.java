@@ -179,7 +179,7 @@ public class MainPrebot extends NarwhalRobot {
 
         NarwhalDashboard.addButton("flushCSV", (boolean down) -> {
             if (down) {
-                System.out.println(ffpSetAvg.getCSV());
+                System.out.println(ffpSet.getCSV());
             }
         });
         
