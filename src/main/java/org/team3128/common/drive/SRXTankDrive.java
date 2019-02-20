@@ -1153,11 +1153,13 @@ public class SRXTankDrive implements ITankDrive {
 		int timesRun;
 		int loopNum;
 
+		FeedForwardPowerSet feedForwardPowerSetAvg;
 		FeedForwardPowerSet feedForwardPowerSet;
 
-		public CmdGetFeedForwardPower(FeedForwardPowerSet feedForwardPowerSet, Gyro gyro, double leftPower, double rightPower, int durationMs) {
+		public CmdGetFeedForwardPower(FeedForwardPowerSet feedForwardPowerSet, FeedForwardPowerSet feedForwardPowerSetAvg, Gyro gyro, double leftPower, double rightPower, int durationMs) {
 			super(durationMs / 1000.0);
 	
+			this.feedForwardPowerSetAvg = feedForwardPowerSetAvg;
 			this.feedForwardPowerSet = feedForwardPowerSet;
 
 			this.leftPower = leftPower;
@@ -1195,8 +1197,10 @@ public class SRXTankDrive implements ITankDrive {
 			angularVelocity = gyro.getRate();
 			Log.info("currentAngularW", String.valueOf(angularVelocity));
 			loopNum++;
-			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 50.0)) {					ffpL = leftPower/(vL * voltage/12.0);
-				ffpR = rightPower/(vR * voltage/12.0);
+			ffpL = leftPower/(vL * voltage/12.0);
+			ffpR = rightPower/(vR * voltage/12.0);
+			feedForwardPowerSet.addFeedForwardPower(angularVelocity, ffpL, ffpR);
+			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 50.0)) {
 				angularVelocitySum += angularVelocity;
 				Log.info("angularVelocitySum", String.valueOf(angularVelocitySum));
 				ffpLSum += ffpL;
@@ -1213,7 +1217,8 @@ public class SRXTankDrive implements ITankDrive {
 		@Override
 		protected void end() {
 			stopMovement();
-			feedForwardPowerSet.addFeedForwardPower(angularVelocitySum/timesRun, ffpLSum/timesRun, ffpRSum/timesRun);
+			feedForwardPowerSetAvg.addFeedForwardPower(angularVelocitySum/timesRun, ffpLSum/timesRun, ffpRSum/timesRun);
+			Log.info("ffps_avg", String.valueOf(feedForwardPowerSetAvg.getCSV()));
 			Log.info("ffps", String.valueOf(feedForwardPowerSet.getCSV()));
 			Log.info("ffpLSum", String.valueOf(ffpLSum));//timesRun));
 			Log.info("ffpRSum", String.valueOf(ffpRSum));//timesRun));

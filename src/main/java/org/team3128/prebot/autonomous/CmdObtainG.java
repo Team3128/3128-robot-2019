@@ -14,17 +14,18 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 public class CmdObtainG extends CommandGroup {
     public CmdObtainG(Gyro gyro) {    
         FeedForwardPowerSet data = new FeedForwardPowerSet();
+        FeedForwardPowerSet dataAvg = new FeedForwardPowerSet();
         SRXTankDrive drive = SRXTankDrive.getInstance();
-        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,1.0,0.8,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,1.0,0.6,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,1.0,0.4,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,1.0,0.2,500));  
-        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,0.8,1.0,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,0.6,1.0,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,0.4,1.0,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,gyro,0.2,1.0,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,1.0,0.8,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,1.0,0.6,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,1.0,0.4,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,1.0,0.2,500));  
+        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,0.8,1.0,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,0.6,1.0,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,0.4,1.0,500));
+        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,0.2,1.0,500));
 
         
-        System.out.println(data.getCSV());
+        //System.out.println(data.getCSV());
     }
 }
