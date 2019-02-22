@@ -1224,6 +1224,7 @@ public class SRXTankDrive implements ITankDrive {
 			Log.info("ffpRSum", String.valueOf(ffpRSum));//timesRun));
 			Log.info("# of loops", String.valueOf(loopNum));
 			Log.info("# of valid loops", String.valueOf(timesRun))
+
 ;		}
-	}
+ 	}
 }
