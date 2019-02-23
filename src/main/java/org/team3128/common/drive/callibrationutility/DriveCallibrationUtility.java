@@ -5,6 +5,7 @@ import org.team3128.common.drive.SRXTankDrive.Wheelbase;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Log;
+import org.team3128.common.util.units.Length;
 
 public class DriveCallibrationUtility {
     private static DriveCallibrationUtility instance = null;
@@ -100,8 +101,8 @@ public class DriveCallibrationUtility {
         NarwhalDashboard.put("leftSpeedScalar", getLeftSpeedScalar());
         NarwhalDashboard.put("rightSpeedScalar", getRightSpeedScalar());
 
-        NarwhalDashboard.put("prev_wb", calculatedWheelbase.wheelbase);
-        NarwhalDashboard.put("avg_wb", wheelbaseSum / wheelbaseCount);
+        NarwhalDashboard.put("prev_wb", calculatedWheelbase.wheelbase / Length.in);
+        NarwhalDashboard.put("avg_wb", wheelbaseSum / (wheelbaseCount * Length.in));
 
     }
 

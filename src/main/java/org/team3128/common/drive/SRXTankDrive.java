@@ -1151,12 +1151,15 @@ public class SRXTankDrive implements ITankDrive {
 		Gyro gyro;
 
 		int timesRun;
+		int loopNum;
 
+		FeedForwardPowerSet feedForwardPowerSetAvg;
 		FeedForwardPowerSet feedForwardPowerSet;
 
-		public CmdGetFeedForwardPower(FeedForwardPowerSet feedForwardPowerSet, Gyro gyro, double leftPower, double rightPower, int durationMs) {
+		public CmdGetFeedForwardPower(FeedForwardPowerSet feedForwardPowerSet, FeedForwardPowerSet feedForwardPowerSetAvg, Gyro gyro, double leftPower, double rightPower, int durationMs) {
 			super(durationMs / 1000.0);
-
+	
+			this.feedForwardPowerSetAvg = feedForwardPowerSetAvg;
 			this.feedForwardPowerSet = feedForwardPowerSet;
 
 			this.leftPower = leftPower;
@@ -1167,15 +1170,17 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void initialize() {
+			voltage = RobotController.getBatteryVoltage();
 			tankDrive(leftPower, rightPower);
 
 			try {
-				Thread.sleep(100);
+				Thread.sleep(2000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 
 			targetAngularVelocity = gyro.getRate();
+			Log.info("targetW", String.valueOf(targetAngularVelocity));
 		}
 
 		@Override
@@ -1186,21 +1191,20 @@ public class SRXTankDrive implements ITankDrive {
 				e.printStackTrace();
 			}
 
-			voltage = DriverStation.getInstance().getBatteryVoltage();
-
 			vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
 			vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
 
 			angularVelocity = gyro.getRate();
-
-			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 3.0)) {
-				ffpL = leftPower/(vL * voltage/12);
-				ffpR = leftPower/(vR * voltage/12);
-
+			Log.info("currentAngularW", String.valueOf(angularVelocity));
+			loopNum++;
+			ffpL = leftPower/(vL * voltage/12.0);
+			ffpR = rightPower/(vR * voltage/12.0);
+			feedForwardPowerSet.addFeedForwardPower(angularVelocity, ffpL, ffpR);
+			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 50.0)) {
 				angularVelocitySum += angularVelocity;
+				Log.info("angularVelocitySum", String.valueOf(angularVelocitySum));
 				ffpLSum += ffpL;
 				ffpRSum += ffpR;
-
 				timesRun++;
 			}
 		}
@@ -1213,8 +1217,14 @@ public class SRXTankDrive implements ITankDrive {
 		@Override
 		protected void end() {
 			stopMovement();
+			feedForwardPowerSetAvg.addFeedForwardPower(angularVelocitySum/timesRun, ffpLSum/timesRun, ffpRSum/timesRun);
+			Log.info("ffps_avg", String.valueOf(feedForwardPowerSetAvg.getCSV()));
+			Log.info("ffps", String.valueOf(feedForwardPowerSet.getCSV()));
+			Log.info("ffpLSum", String.valueOf(ffpLSum));//timesRun));
+			Log.info("ffpRSum", String.valueOf(ffpRSum));//timesRun));
+			Log.info("# of loops", String.valueOf(loopNum));
+			Log.info("# of valid loops", String.valueOf(timesRun))
 
-			feedForwardPowerSet.addFeedForwardPower(angularVelocitySum/timesRun, ffpLSum/timesRun, ffpRSum/timesRun);
-		}
-	}
+;		}
+ 	}
 }

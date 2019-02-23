@@ -452,6 +452,6 @@ public class RobotMath {
 	 * @param percent - The acceptable threshold above and below targetValue
 	 */
 	public static boolean isWithin(double testValue, double targetValue, double percent) {
-		return testValue > (1.0 - percent/100.0) * targetValue || testValue < (1.0 + percent/100.0) * targetValue;
+		return Math.abs(testValue) > (1.0 - percent/100.0) * Math.abs(targetValue) && Math.abs(testValue) < (1.0 + percent/100.0) * Math.abs(targetValue);
 	}
 }

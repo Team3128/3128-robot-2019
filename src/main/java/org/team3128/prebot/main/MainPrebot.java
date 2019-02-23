@@ -45,6 +45,7 @@ public class MainPrebot extends NarwhalRobot {
     public SRXTankDrive tankDrive;
 
     public Joystick joystick;
+    public FeedForwardPowerSet ffpSetAvg;
     public FeedForwardPowerSet ffpSet;
     public ListenerManager lm;
 
@@ -67,11 +68,12 @@ public class MainPrebot extends NarwhalRobot {
     public DriveCallibrationUtility dcu;
     public Wheelbase calculatedWheelbase;
 
-
     public Limelight limelight = new Limelight(0 * Length.in, 26 * Length.in, 6.15 * Length.in, 28.5 * Length.in, 14.5 * Length.in);
 	@Override
 	protected void constructHardware()
 	{
+        ffpSetAvg = new FeedForwardPowerSet();
+        ffpSet = new FeedForwardPowerSet();
 		limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 
         rightDriveFront = new TalonSRX(0);
@@ -131,46 +133,47 @@ public class MainPrebot extends NarwhalRobot {
 
         dcu.initNarwhalDashboard();
 
-        int timeMs = 1000;
+        int timeMs = 4000;
 
         NarwhalDashboard.addButton("g_10_08", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,gyro,1.0,0.8,timeMs).start();
+                Log.info("cmdfeedfrwrd", "triggered");
+                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,1.0,0.8,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_10_06", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,gyro,1.0,0.6,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,1.0,0.6,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_10_04", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,gyro,1.0,0.4,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,1.0,0.4,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_10_02", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,gyro,1.0,0.2,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,1.0,0.2,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_08_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,gyro,0.8,1.0,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,0.8,1.0,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_06_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,gyro,0.6,1.0,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,0.6,1.0,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_04_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,gyro,0.4,1.0,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,0.4,1.0,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_02_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,gyro,0.2,1.0,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,0.2,1.0,timeMs).start();
             }
         });
 
@@ -237,6 +240,8 @@ public class MainPrebot extends NarwhalRobot {
     @Override
     protected void updateDashboard() {
         SmartDashboard.putNumber("Gyro Angle", gyro.getAngle());
+        SmartDashboard.putNumber("getRate", gyro.getRate());
+
 
         maxLeftSpeed = Math.max(leftDriveFront.getSelectedSensorVelocity(), maxLeftSpeed);
         maxRightSpeed = Math.max(rightDriveFront.getSelectedSensorVelocity(), maxRightSpeed);

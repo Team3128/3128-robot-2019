@@ -21,12 +21,12 @@ public class NavX implements Gyro {
 
     @Override
     public double getAngle() {
-        return ahrs.getAngle();
+        return -ahrs.getAngle();
     }
 
     @Override
     public double getRate() {
-        return ahrs.getRate();
+        return -Math.toDegrees(ahrs.getRate());
     }
 
     @Override
