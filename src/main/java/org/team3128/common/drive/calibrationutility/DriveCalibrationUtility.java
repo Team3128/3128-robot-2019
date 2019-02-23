@@ -1,4 +1,4 @@
-package org.team3128.common.drive.callibrationutility;
+package org.team3128.common.drive.calibrationutility;
 
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.drive.SRXTankDrive.Wheelbase;
@@ -8,19 +8,19 @@ import org.team3128.common.util.Log;
 import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplierSet;
 import org.team3128.common.util.units.Length;
 
-public class DriveCallibrationUtility {
-    private static DriveCallibrationUtility instance = null;
-	public static DriveCallibrationUtility getInstance() {
+public class DriveCalibrationUtility {
+    private static DriveCalibrationUtility instance = null;
+	public static DriveCalibrationUtility getInstance() {
 		if (instance != null) {
 			return instance;
 		}
 
-		Log.fatal("DriveCallibrationUtility", "Attempted to get instance before initializtion! Call initialize(...) first.");
+		Log.fatal("DriveCalibrationUtility", "Attempted to get instance before initializtion! Call initialize(...) first.");
 		return null;
     }
     
     public static void initialize(Gyro gyro, FeedForwardPowerMultiplierSet wrapper) {
-        instance = new DriveCallibrationUtility(gyro, wrapper);
+        instance = new DriveCalibrationUtility(gyro, wrapper);
     }
 
     public double maxLeftSpeed = 0;
@@ -35,7 +35,7 @@ public class DriveCallibrationUtility {
     private int wheelbaseCount;
     private FeedForwardPowerMultiplierSet wrapper;
 
-    private DriveCallibrationUtility(Gyro gyro, FeedForwardPowerMultiplierSet wrapper) {
+    private DriveCalibrationUtility(Gyro gyro, FeedForwardPowerMultiplierSet wrapper) {
         maxLeftSpeed = 0;
         maxRightSpeed = 0;
 

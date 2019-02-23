@@ -11,7 +11,7 @@ import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplier;
 import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplierSet;
 import org.team3128.common.drive.SRXTankDrive.Wheelbase;
-import org.team3128.common.drive.callibrationutility.DriveCallibrationUtility;
+import org.team3128.common.drive.calibrationutility.DriveCalibrationUtility;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.hardware.navigation.NavX;
@@ -64,7 +64,7 @@ public class MainPrebot extends NarwhalRobot {
 
     public NetworkTable limelightTable;
 
-    public DriveCallibrationUtility dcu;
+    public DriveCalibrationUtility dcu;
     public Wheelbase calculatedWheelbase;
 
     public Limelight limelight = new Limelight(0 * Length.in, 26 * Length.in, 6.15 * Length.in, 28.5 * Length.in, 14.5 * Length.in);
@@ -126,8 +126,8 @@ public class MainPrebot extends NarwhalRobot {
         addListenerManager(lm);
 
         // DCU
-		DriveCallibrationUtility.initialize(gyro, wrapper);
-		dcu = DriveCallibrationUtility.getInstance();
+		DriveCalibrationUtility.initialize(gyro, wrapper);
+		dcu = DriveCalibrationUtility.getInstance();
 
         dcu.initNarwhalDashboard();
 
@@ -190,7 +190,7 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.addAuto("Arc Turn", new CmdArcTurnTest());
         NarwhalDashboard.addAuto("Forward", new CmdDriveForward());
         //NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
-        // NarwhalDashboard.addAuto("Wheel Base Test", new CmdCallibrateWheelbase(ahrs, 10, 1000, 1500, calculatedWheelbase));
+        // NarwhalDashboard.addAuto("Wheel Base Test", new CmdCalibrateWheelbase(ahrs, 10, 1000, 1500, calculatedWheelbase));
         // NarwhalDashboard.addAuto("Forward CV", new CmdDriveForwardCVTest());
         // NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
         // NarwhalDashboard.addAuto("Heading Then Arc Turn", new CmdHeadingThenArc(limelight));
@@ -234,6 +234,11 @@ public class MainPrebot extends NarwhalRobot {
 		lm.nameControl(ControllerExtreme3D.TRIGGER, "LogLimelight");
 		lm.addButtonDownListener("LogLimelight", () -> { 
         });
+    }
+
+    @Override
+    protected void autonomousPeriodic() {
+        System.out.println(gyro.getAngle());
     }
     
     @Override

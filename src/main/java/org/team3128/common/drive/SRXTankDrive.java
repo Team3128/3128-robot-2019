@@ -1024,7 +1024,7 @@ public class SRXTankDrive implements ITankDrive {
 	}
 
 	/**
-	  * Callibration command to determine effective wheelbase of the robot. This is
+	  * Calibration command to determine effective wheelbase of the robot. This is
 	  * to account for the field material scrubbing against the wheels, resisting a
 	  * turning motion.
 	  *

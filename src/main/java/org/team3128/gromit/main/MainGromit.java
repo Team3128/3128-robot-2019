@@ -3,7 +3,7 @@ package org.team3128.gromit.main;
 import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.SRXInvertCallback;
 import org.team3128.common.drive.SRXTankDrive;
-import org.team3128.common.drive.callibrationutility.DriveCallibrationUtility;
+import org.team3128.common.drive.calibrationutility.DriveCalibrationUtility;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
@@ -68,7 +68,7 @@ public class MainGromit extends NarwhalRobot{
 	public SRXInvertCallback driveInvertCallback;
 	public double leftSpeedScalar, rightSpeedScalar;
 
-	public DriveCallibrationUtility dcu;
+	public DriveCalibrationUtility dcu;
 
     // Drive Motors
 	public TalonSRX leftDriveLeader;
@@ -210,8 +210,8 @@ public class MainGromit extends NarwhalRobot{
 		// ((AnalogDevicesGyro) gyro).recalibrate();
 
 		// DCU
-		//DriveCallibrationUtility.initialize(gyro);
-		dcu = DriveCallibrationUtility.getInstance();
+		//DriveCalibrationUtility.initialize(gyro);
+		dcu = DriveCalibrationUtility.getInstance();
 
 		compressor = new Compressor();
 
