@@ -27,6 +27,13 @@ public interface Gyro {
     public double getRate();
 
     /**
+     * Gets the pitch of the robot in degrees
+     * @return robot pitch, in degrees
+     */
+    public double getPitch();
+
+    public double getRoll();
+    /**
      * Gives the gyro reading an offset such that the current position
      * is read as 0 degrees.
      */

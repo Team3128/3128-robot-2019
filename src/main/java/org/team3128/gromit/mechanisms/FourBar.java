@@ -4,10 +4,11 @@ import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.units.Angle;
+import org.team3128.common.hardware.navigation.Gyro;
+import org.team3128.common.hardware.navigation.NavX;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
@@ -20,6 +21,7 @@ public class FourBar
     public final double ratio = 4550 / (180 * Angle.DEGREES);
 	public double error;
 
+	public Gyro gyro = new NavX();
 	private final double allowableError = 2 * Angle.DEGREES;
 
     public enum FourBarState {
@@ -32,8 +34,8 @@ public class FourBar
 		CARGO_INTAKE(-22 * Angle.DEGREES),
 
 		HATCH_HIGH(64 * Angle.DEGREES),
-		CARGO_HIGH(68 * Angle.DEGREES);
-
+		CARGO_HIGH(76 * Angle.DEGREES);
+		//68
 		public double targetAngle;
 
         private FourBarState(double angle){
@@ -140,6 +142,7 @@ public class FourBar
 
 			double kP;
 			double kD;
+			double kPitch;
 
 			while (true)
 			{
@@ -193,8 +196,7 @@ public class FourBar
 						}
 
 						kD = 0*0.05;
-
-						target = this.getFeedForwardPower() + kP * this.error + kD * (this.error - lastError) * 1000000 / (RobotController.getFPGATime() - this.lastTime);
+						target = /*gyro.getPitch() +*/ this.getFeedForwardPower() + kP * this.error + kD * (this.error - lastError) * 1000000 / (RobotController.getFPGATime() - this.lastTime);
 						this.lastTime = RobotController.getFPGATime();
 					}
 

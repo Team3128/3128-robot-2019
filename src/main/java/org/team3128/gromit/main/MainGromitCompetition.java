@@ -30,8 +30,8 @@ public class MainGromitCompetition extends MainGromit {
             leftDriveFollower.setInverted(true);
             leftDriveLeader.setSensorPhase(true);
 
-            rightDriveLeader.setInverted(false);
-            rightDriveFollower.setInverted(false);
+            rightDriveLeader.setInverted(true);
+            rightDriveFollower.setInverted(true);
             rightDriveLeader.setSensorPhase(true);
         };
 

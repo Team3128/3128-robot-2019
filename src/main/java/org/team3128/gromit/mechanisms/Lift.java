@@ -36,7 +36,7 @@ public class Lift
 		TOP_HATCH(59 * Length.in),
 		
         LOADING_SHIP_CARGO(57.5 * Length.in),
-        LOADING_SHIP_HATCH(18.5 * Length.in);
+        LOADING_SHIP_HATCH(16.5 * Length.in);
 
 		public double targetHeight;
 
