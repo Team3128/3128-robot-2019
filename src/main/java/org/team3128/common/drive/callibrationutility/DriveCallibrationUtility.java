@@ -63,6 +63,7 @@ public class DriveCallibrationUtility {
         });
 
         NarwhalDashboard.addNumDataListener("calc_wb", (double[] data) -> {
+            Log.info("test", "triggered");
             double pL = data[0];
             double pR = data[1];
 
@@ -128,6 +129,7 @@ public class DriveCallibrationUtility {
 
         NarwhalDashboard.put("prev_wb", calculatedWheelbase.wheelbase / Length.in);
         NarwhalDashboard.put("avg_wb", wheelbaseSum / (wheelbaseCount * Length.in));
+
 
     }
 

@@ -1148,10 +1148,10 @@ public class SRXTankDrive implements ITankDrive {
 		public String getAvgCSV() {
 			String csv = "angular velocity, ffpL, ffpR\n";
 
-			for (FeedForwardPowerMultiplier ffpmsAvg : ffpms) {
-				csv += ffpmsAvg.angularVelocity + ",";
-				csv += ffpmsAvg.ffpL + ",";
-				csv += ffpmsAvg.ffpR + "\n";
+			for (FeedForwardPowerMultiplier ffpmAvg : ffpms) {
+				csv += ffpmAvg.angularVelocity + ",";
+				csv += ffpmAvg.ffpL + ",";
+				csv += ffpmAvg.ffpR + "\n";
 			}
 
 			return csv;
@@ -1176,13 +1176,12 @@ public class SRXTankDrive implements ITankDrive {
 		int timesRun;
 		int loopNum;
 
-		FeedForwardPowerMultiplierSet feedForwardPowerSetAvg;
-		FeedForwardPowerMultiplierSet feedForwardPowerSet;
+		FeedForwardPowerMultiplierSet feedForwardPowerMultiplierSet;
 
 		public CmdGetFeedForwardPowerMultiplier(FeedForwardPowerMultiplierSet feedForwardPowerMultiplierSet, Gyro gyro, double leftPower, double rightPower, int durationMs) {
 			super(durationMs / 1000.0);
 
-			this.feedForwardPowerSet = feedForwardPowerMultiplierSet;
+			this.feedForwardPowerMultiplierSet = feedForwardPowerMultiplierSet;
 
 			this.leftPower = leftPower;
 			this.rightPower = rightPower;
@@ -1221,10 +1220,9 @@ public class SRXTankDrive implements ITankDrive {
 			loopNum++;
 			ffpL = leftPower/(vL * voltage/12.0);
 			ffpR = rightPower/(vR * voltage/12.0);
-			feedForwardPowerSet.addFeedForwardPowerMultiplier(angularVelocity, ffpL, ffpR);
-			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 50.0)) {
+			feedForwardPowerMultiplierSet.addFeedForwardPowerMultiplier(angularVelocity, ffpL, ffpR);
+			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 10.0)) {
 				angularVelocitySum += angularVelocity;
-				Log.info("angularVelocitySum", String.valueOf(angularVelocitySum));
 				ffpLSum += ffpL;
 				ffpRSum += ffpR;
 				timesRun++;
@@ -1239,10 +1237,11 @@ public class SRXTankDrive implements ITankDrive {
 		@Override
 		protected void end() {
 			stopMovement();
-			feedForwardPowerSetAvg.addFeedForwardPowerMultiplier(angularVelocitySum/timesRun, ffpLSum/timesRun, ffpRSum/timesRun);
-			feedForwardPowerSet.numLoops = timesRun;
-			Log.info("ffpLSum", String.valueOf(ffpLSum));//timesRun));
-			Log.info("ffpRSum", String.valueOf(ffpRSum));//timesRun));
+			Log.info("angVelSum", String.valueOf(angularVelocitySum));
+			Log.info("ffpLSum", String.valueOf(ffpLSum));
+			Log.info("ffpRSum", String.valueOf(ffpRSum));
+			feedForwardPowerMultiplierSet.addFeedForwardPowerMultiplierAvg(angularVelocitySum/timesRun, ffpLSum/timesRun, ffpRSum/timesRun);
+			feedForwardPowerMultiplierSet.numLoops = timesRun;
 			Log.info("# of loops", String.valueOf(loopNum));
 			Log.info("# of valid loops", String.valueOf(timesRun))
 
