@@ -650,6 +650,8 @@ public class MainGromit extends NarwhalRobot{
 	@Override
 	protected void updateDashboard()
 	{
+		//Log.info("roll, pitch", String.valueOf(gyro.getRoll()) + ", " + String.valueOf(gyro.getPitch()));
+		SmartDashboard.putNumber("pitch", gyro.getPitch());
 		SmartDashboard.putBoolean("Lift: Can Raise", lift.canRaise);
 		SmartDashboard.putBoolean("Lift: Can Lower", lift.canLower);
 

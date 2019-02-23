@@ -25,6 +25,14 @@ public class AnalogDevicesGyro implements Gyro {
     public double getAngle() {
         return offset - gyro.getAngle();
     }
+    @Override
+    public double getPitch(){
+        return -10000;
+    }
+    @Override
+    public double getRoll(){
+        return -10000;
+    }
 
     @Override
     public double getRate() {

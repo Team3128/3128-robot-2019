@@ -30,6 +30,16 @@ public class NavX implements Gyro {
     }
 
     @Override
+    public double getPitch(){
+        return ahrs.getPitch();
+    }
+
+    @Override
+    public double getRoll(){
+        return ahrs.getRoll();
+    }
+
+    @Override
     public void reset() {
         ahrs.reset();
     }
