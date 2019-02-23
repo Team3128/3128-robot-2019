@@ -1104,10 +1104,10 @@ public class SRXTankDrive implements ITankDrive {
 		}
 	}
 
-	public static class FeedForwardPower {
+	public static class FeedForwardPowerMultiplier {
 		public double angularVelocity, ffpL, ffpR;
 
-		public FeedForwardPower(double angularVelocity, double ffpL, double ffpR) {
+		public FeedForwardPowerMultiplier(double angularVelocity, double ffpL, double ffpR) {
 			this.angularVelocity = angularVelocity;
 
 			this.ffpL = ffpL;
@@ -1115,27 +1115,50 @@ public class SRXTankDrive implements ITankDrive {
 		}
 	}
 
-	public static class FeedForwardPowerSet {
-		private List<FeedForwardPower> ffps = new ArrayList<FeedForwardPower>();
+	public static class FeedForwardPowerMultiplierSet {
+		public int numLoops;
+		private List<FeedForwardPowerMultiplier> ffpms = new ArrayList<FeedForwardPowerMultiplier>();
+		private List<FeedForwardPowerMultiplier> ffpmsAvg = new ArrayList<FeedForwardPowerMultiplier>();
 
-		public void addFeedForwardPower(double angularVelocity, double ffpL, double ffpR) {
-			ffps.add(new FeedForwardPower(angularVelocity, ffpL, ffpR));
+		public void addFeedForwardPowerMultiplier(double angularVelocity, double ffpL, double ffpR) {
+			ffpms.add(new FeedForwardPowerMultiplier(angularVelocity, ffpL, ffpR));
 		}
-		
-		public String getCSV() {
+		public void addFeedForwardPowerMultiplierAvg(double angularVelocity, double ffpL, double ffpR) {
+			ffpmsAvg.add(new FeedForwardPowerMultiplier(angularVelocity, ffpL, ffpR));
+		}
+		public void removeLastAverage(){
+			ffpmsAvg.remove(ffpmsAvg.size() - 1);
+		}
+		public void removeLastAll(){
+			for(int i = 0; i < numLoops; i++){
+				ffpms.remove(ffpmsAvg.size() - 1);
+			}
+		}
+		public String getAllCSV() {
 			String csv = "angular velocity, ffpL, ffpR\n";
 
-			for (FeedForwardPower ffp : ffps) {
-				csv += ffp.angularVelocity + ",";
-				csv += ffp.ffpL + ",";
-				csv += ffp.ffpR + "\n";
+			for (FeedForwardPowerMultiplier ffpm : ffpms) {
+				csv += ffpm.angularVelocity + ",";
+				csv += ffpm.ffpL + ",";
+				csv += ffpm.ffpR + "\n";
+			}
+
+			return csv;
+		}
+		public String getAvgCSV() {
+			String csv = "angular velocity, ffpL, ffpR\n";
+
+			for (FeedForwardPowerMultiplier ffpmsAvg : ffpms) {
+				csv += ffpmsAvg.angularVelocity + ",";
+				csv += ffpmsAvg.ffpL + ",";
+				csv += ffpmsAvg.ffpR + "\n";
 			}
 
 			return csv;
 		}
     }
 
-	public class CmdGetFeedForwardPower extends Command {
+	public class CmdGetFeedForwardPowerMultiplier extends Command {
 		double leftPower, rightPower;
 
 		double voltage;
@@ -1153,14 +1176,13 @@ public class SRXTankDrive implements ITankDrive {
 		int timesRun;
 		int loopNum;
 
-		FeedForwardPowerSet feedForwardPowerSetAvg;
-		FeedForwardPowerSet feedForwardPowerSet;
+		FeedForwardPowerMultiplierSet feedForwardPowerSetAvg;
+		FeedForwardPowerMultiplierSet feedForwardPowerSet;
 
-		public CmdGetFeedForwardPower(FeedForwardPowerSet feedForwardPowerSet, FeedForwardPowerSet feedForwardPowerSetAvg, Gyro gyro, double leftPower, double rightPower, int durationMs) {
+		public CmdGetFeedForwardPowerMultiplier(FeedForwardPowerMultiplierSet feedForwardPowerMultiplierSet, Gyro gyro, double leftPower, double rightPower, int durationMs) {
 			super(durationMs / 1000.0);
-	
-			this.feedForwardPowerSetAvg = feedForwardPowerSetAvg;
-			this.feedForwardPowerSet = feedForwardPowerSet;
+
+			this.feedForwardPowerSet = feedForwardPowerMultiplierSet;
 
 			this.leftPower = leftPower;
 			this.rightPower = rightPower;
@@ -1174,7 +1196,7 @@ public class SRXTankDrive implements ITankDrive {
 			tankDrive(leftPower, rightPower);
 
 			try {
-				Thread.sleep(2000);
+				Thread.sleep(1500);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -1199,7 +1221,7 @@ public class SRXTankDrive implements ITankDrive {
 			loopNum++;
 			ffpL = leftPower/(vL * voltage/12.0);
 			ffpR = rightPower/(vR * voltage/12.0);
-			feedForwardPowerSet.addFeedForwardPower(angularVelocity, ffpL, ffpR);
+			feedForwardPowerSet.addFeedForwardPowerMultiplier(angularVelocity, ffpL, ffpR);
 			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 50.0)) {
 				angularVelocitySum += angularVelocity;
 				Log.info("angularVelocitySum", String.valueOf(angularVelocitySum));
@@ -1217,9 +1239,8 @@ public class SRXTankDrive implements ITankDrive {
 		@Override
 		protected void end() {
 			stopMovement();
-			feedForwardPowerSetAvg.addFeedForwardPower(angularVelocitySum/timesRun, ffpLSum/timesRun, ffpRSum/timesRun);
-			Log.info("ffps_avg", String.valueOf(feedForwardPowerSetAvg.getCSV()));
-			Log.info("ffps", String.valueOf(feedForwardPowerSet.getCSV()));
+			feedForwardPowerSetAvg.addFeedForwardPowerMultiplier(angularVelocitySum/timesRun, ffpLSum/timesRun, ffpRSum/timesRun);
+			feedForwardPowerSet.numLoops = timesRun;
 			Log.info("ffpLSum", String.valueOf(ffpLSum));//timesRun));
 			Log.info("ffpRSum", String.valueOf(ffpRSum));//timesRun));
 			Log.info("# of loops", String.valueOf(loopNum));

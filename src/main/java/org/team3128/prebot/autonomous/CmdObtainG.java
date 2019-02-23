@@ -3,8 +3,8 @@ package org.team3128.prebot.autonomous;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Length;
 import org.team3128.common.drive.SRXTankDrive;
-import org.team3128.common.drive.SRXTankDrive.CmdGetFeedForwardPower;
-import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerSet;
+import org.team3128.common.drive.SRXTankDrive.CmdGetFeedForwardPowerMultiplier;
+import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplierSet;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.util.Log;
 import com.kauailabs.navx.frc.AHRS;
@@ -13,19 +13,20 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class CmdObtainG extends CommandGroup {
     public CmdObtainG(Gyro gyro) {    
-        FeedForwardPowerSet data = new FeedForwardPowerSet();
-        FeedForwardPowerSet dataAvg = new FeedForwardPowerSet();
+        FeedForwardPowerMultiplierSet data = new FeedForwardPowerMultiplierSet();
+        FeedForwardPowerMultiplierSet dataAvg = new FeedForwardPowerMultiplierSet();
         SRXTankDrive drive = SRXTankDrive.getInstance();
-        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,1.0,0.8,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,1.0,0.6,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,1.0,0.4,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,1.0,0.2,500));  
-        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,0.8,1.0,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,0.6,1.0,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,0.4,1.0,500));
-        addSequential(drive.new CmdGetFeedForwardPower(data,dataAvg,gyro,0.2,1.0,500));
+        /*
+        addSequential(drive.new CmdGetFeedForwardPowerMultiplier(data,dataAvg,gyro,1.0,0.8,500));
+        addSequential(drive.new CmdGetFeedForwardPowerMultiplier(data,dataAvg,gyro,1.0,0.6,500));
+        addSequential(drive.new CmdGetFeedForwardPowerMultiplier(data,dataAvg,gyro,1.0,0.4,500));
+        addSequential(drive.new CmdGetFeedForwardPowerMultiplier(data,dataAvg,gyro,1.0,0.2,500));  
+        addSequential(drive.new CmdGetFeedForwardPowerMultiplier(data,dataAvg,gyro,0.8,1.0,500));
+        addSequential(drive.new CmdGetFeedForwardPowerMultiplier(data,dataAvg,gyro,0.6,1.0,500));
+        addSequential(drive.new CmdGetFeedForwardPowerMultiplier(data,dataAvg,gyro,0.4,1.0,500));
+        addSequential(drive.new CmdGetFeedForwardPowerMultiplier(data,dataAvg,gyro,0.2,1.0,500));
 
-        
+        */
         //System.out.println(data.getCSV());
     }
 }

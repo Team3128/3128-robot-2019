@@ -210,7 +210,7 @@ public class MainGromit extends NarwhalRobot{
 		// ((AnalogDevicesGyro) gyro).recalibrate();
 
 		// DCU
-		DriveCallibrationUtility.initialize(gyro);
+		//DriveCallibrationUtility.initialize(gyro);
 		dcu = DriveCallibrationUtility.getInstance();
 
 		compressor = new Compressor();

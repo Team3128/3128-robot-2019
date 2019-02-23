@@ -5,6 +5,7 @@ import org.team3128.common.drive.SRXTankDrive.Wheelbase;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Log;
+import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplierSet;
 import org.team3128.common.util.units.Length;
 
 public class DriveCallibrationUtility {
@@ -18,8 +19,8 @@ public class DriveCallibrationUtility {
 		return null;
     }
     
-    public static void initialize(Gyro gyro) {
-        instance = new DriveCallibrationUtility(gyro);
+    public static void initialize(Gyro gyro, FeedForwardPowerMultiplierSet wrapper) {
+        instance = new DriveCallibrationUtility(gyro, wrapper);
     }
 
     public double maxLeftSpeed = 0;
@@ -32,13 +33,15 @@ public class DriveCallibrationUtility {
 
     private double wheelbaseSum;
     private int wheelbaseCount;
+    private FeedForwardPowerMultiplierSet wrapper;
 
-    private DriveCallibrationUtility(Gyro gyro) {
+    private DriveCallibrationUtility(Gyro gyro, FeedForwardPowerMultiplierSet wrapper) {
         maxLeftSpeed = 0;
         maxRightSpeed = 0;
 
         calculatedWheelbase = new Wheelbase();
         this.gyro = gyro;
+        this.wrapper = wrapper;
 
         drive = SRXTankDrive.getInstance();
         calculatedWheelbase = new Wheelbase();
@@ -79,6 +82,28 @@ public class DriveCallibrationUtility {
             if (down) {
                 wheelbaseSum = 0;
                 wheelbaseCount = 0;
+            }
+        });
+        NarwhalDashboard.addNumDataListener("calc_ffp", (double[] data) -> {
+            double pL = data[0];
+            double pR = data[1];
+
+            int duration = (int) data[2];
+
+            drive.new CmdGetFeedForwardPowerMultiplier(wrapper, gyro,pL,pR,duration).start();
+        });
+
+        NarwhalDashboard.addButton("printCSV", (boolean down) -> {
+            if (down) {
+                Log.info("ffps_avg", String.valueOf(wrapper.getAvgCSV()));
+			    Log.info("ffps", String.valueOf(wrapper.getAllCSV()));
+            }
+        });
+
+        NarwhalDashboard.addButton("remLast", (boolean down) -> {
+            if (down) {
+                wrapper.removeLastAverage();
+                wrapper.removeLastAll();
             }
         });
         

@@ -8,8 +8,8 @@ import org.team3128.prebot.autonomous.*;
 
 import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.SRXTankDrive;
-import org.team3128.common.drive.SRXTankDrive.FeedForwardPower;
-import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerSet;
+import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplier;
+import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplierSet;
 import org.team3128.common.drive.SRXTankDrive.Wheelbase;
 import org.team3128.common.drive.callibrationutility.DriveCallibrationUtility;
 import org.team3128.common.hardware.limelight.Limelight;
@@ -45,8 +45,7 @@ public class MainPrebot extends NarwhalRobot {
     public SRXTankDrive tankDrive;
 
     public Joystick joystick;
-    public FeedForwardPowerSet ffpSetAvg;
-    public FeedForwardPowerSet ffpSet;
+    public FeedForwardPowerMultiplierSet wrapper;
     public ListenerManager lm;
 
     public Gyro gyro;
@@ -72,8 +71,7 @@ public class MainPrebot extends NarwhalRobot {
 	@Override
 	protected void constructHardware()
 	{
-        ffpSetAvg = new FeedForwardPowerSet();
-        ffpSet = new FeedForwardPowerSet();
+        wrapper = new FeedForwardPowerMultiplierSet();
 		limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 
         rightDriveFront = new TalonSRX(0);
@@ -128,60 +126,61 @@ public class MainPrebot extends NarwhalRobot {
         addListenerManager(lm);
 
         // DCU
-		DriveCallibrationUtility.initialize(gyro);
+		DriveCallibrationUtility.initialize(gyro, wrapper);
 		dcu = DriveCallibrationUtility.getInstance();
 
         dcu.initNarwhalDashboard();
 
         int timeMs = 4000;
-
+            /*
         NarwhalDashboard.addButton("g_10_08", (boolean down) -> {
             if (down) {
                 Log.info("cmdfeedfrwrd", "triggered");
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,1.0,0.8,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,ffpSetAvg,gyro,1.0,0.8,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_10_06", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,1.0,0.6,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper, gyro,1.0,0.6,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_10_04", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,1.0,0.4,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,1.0,0.4,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_10_02", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,1.0,0.2,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,1.0,0.2,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_08_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,0.8,1.0,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,0.8,1.0,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_06_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,0.6,1.0,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,0.6,1.0,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_04_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,0.4,1.0,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,0.4,1.0,timeMs).start();
             }
         });
         NarwhalDashboard.addButton("g_02_10", (boolean down) -> {
             if (down) {
-                tankDrive.new CmdGetFeedForwardPower(ffpSet,ffpSetAvg,gyro,0.2,1.0,timeMs).start();
+                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,0.2,1.0,timeMs).start();
             }
         });
 
         NarwhalDashboard.addButton("flushCSV", (boolean down) -> {
             if (down) {
-                System.out.println(ffpSet.getCSV());
+                System.out.println(wrapper.getCSV());
             }
         });
+        */
         
     }
     
