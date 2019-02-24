@@ -19,8 +19,8 @@ public class DriveCalibrationUtility {
 		return null;
     }
     
-    public static void initialize(Gyro gyro, FeedForwardPowerMultiplierSet wrapper) {
-        instance = new DriveCalibrationUtility(gyro, wrapper);
+    public static void initialize(Gyro gyro) {
+        instance = new DriveCalibrationUtility(gyro);
     }
 
     public double maxLeftSpeed = 0;
@@ -33,15 +33,14 @@ public class DriveCalibrationUtility {
 
     private double wheelbaseSum;
     private int wheelbaseCount;
-    private FeedForwardPowerMultiplierSet wrapper;
+    private FeedForwardPowerMultiplierSet ffpmSet;
 
-    private DriveCalibrationUtility(Gyro gyro, FeedForwardPowerMultiplierSet wrapper) {
+    private DriveCalibrationUtility(Gyro gyro) {
         maxLeftSpeed = 0;
         maxRightSpeed = 0;
 
         calculatedWheelbase = new Wheelbase();
         this.gyro = gyro;
-        this.wrapper = wrapper;
 
         drive = SRXTankDrive.getInstance();
         calculatedWheelbase = new Wheelbase();
@@ -91,20 +90,14 @@ public class DriveCalibrationUtility {
 
             int duration = (int) data[2];
 
-            drive.new CmdGetFeedForwardPowerMultiplier(wrapper, gyro,pL,pR,duration).start();
+            ffpmSet = new FeedForwardPowerMultiplierSet();
+            drive.new CmdGetFeedForwardPowerMultiplier(ffpmSet,gyro,pL,pR,duration).start();
         });
 
         NarwhalDashboard.addButton("printCSV", (boolean down) -> {
             if (down) {
-                Log.info("ffps_avg", String.valueOf(wrapper.getAvgCSV()));
-			    Log.info("ffps", String.valueOf(wrapper.getAllCSV()));
-            }
-        });
-
-        NarwhalDashboard.addButton("remLast", (boolean down) -> {
-            if (down) {
-                wrapper.removeLastAverage();
-                wrapper.removeLastAll();
+                Log.info("DriveCalibrationUtility", "average:\n" + ffpmSet.getAvgCSV());
+			    Log.info("DriveCalibrationUtility", "data:\n" + ffpmSet.getAllCSV());
             }
         });
         
@@ -130,7 +123,9 @@ public class DriveCalibrationUtility {
         NarwhalDashboard.put("prev_wb", calculatedWheelbase.wheelbase / Length.in);
         NarwhalDashboard.put("avg_wb", wheelbaseSum / (wheelbaseCount * Length.in));
 
-
+        NarwhalDashboard.put("avg_w", ffpmSet.ffpmAvg.angularVelocity);
+        NarwhalDashboard.put("avg_ffpmL", ffpmSet.ffpmAvg.ffpL);
+        NarwhalDashboard.put("avg_ffpmR", ffpmSet.ffpmAvg.ffpR);
     }
 
     public double getWheelCirc() {

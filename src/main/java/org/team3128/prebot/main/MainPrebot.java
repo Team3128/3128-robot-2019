@@ -45,7 +45,6 @@ public class MainPrebot extends NarwhalRobot {
     public SRXTankDrive tankDrive;
 
     public Joystick joystick;
-    public FeedForwardPowerMultiplierSet wrapper;
     public ListenerManager lm;
 
     public Gyro gyro;
@@ -71,7 +70,6 @@ public class MainPrebot extends NarwhalRobot {
 	@Override
 	protected void constructHardware()
 	{
-        wrapper = new FeedForwardPowerMultiplierSet();
 		limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 
         rightDriveFront = new TalonSRX(0);
@@ -126,7 +124,7 @@ public class MainPrebot extends NarwhalRobot {
         addListenerManager(lm);
 
         // DCU
-		DriveCalibrationUtility.initialize(gyro, wrapper);
+		DriveCalibrationUtility.initialize(gyro);
 		dcu = DriveCalibrationUtility.getInstance();
 
         dcu.initNarwhalDashboard();
@@ -237,10 +235,9 @@ public class MainPrebot extends NarwhalRobot {
     }
 
     @Override
-    protected void autonomousPeriodic() {
-        System.out.println(gyro.getAngle());
+    protected void teleopPeriodic() {
     }
-    
+
     @Override
     protected void updateDashboard() {
         SmartDashboard.putNumber("Gyro Angle", gyro.getAngle());
