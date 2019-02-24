@@ -129,8 +129,10 @@ public class SRXTankDrive implements ITankDrive {
 	 * Motion Magic/Motion Profile control mode as well as velocity
 	 * control mode.
 	 */
-	private PIDConstants leftMotionProfilePID, leftVelocityPID;
-	private PIDConstants rightMotionProfilePID, rightVelocityPID;
+	public PIDConstants leftMotionProfilePID;
+	// private PIDConstants leftVelocityPID, rightVelocityPID;
+
+	public PIDConstants rightMotionProfilePID;
 
 	// public double getGearRatio()
 	// {
@@ -199,9 +201,6 @@ public class SRXTankDrive implements ITankDrive {
 		configureDriveMode(DriveMode.TELEOP);
 
 		loadSRXPIDConstants();
-		setupDashboardPIDListener();
-
-		sendPIDConstants();
 
 		// if (gearRatio <= 0)
 		// {
@@ -394,109 +393,41 @@ public class SRXTankDrive implements ITankDrive {
 		leftMotionProfilePID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
 		Log.info("SRXTankDrive", "Left MP: " + leftMotionProfilePID);
 
-		leftMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
-		leftVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
-		Log.info("SRXTankDrive", "Left V: " + leftVelocityPID);
+		// leftMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
+		// leftVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		// Log.info("SRXTankDrive", "Left V: " + leftVelocityPID);
 
 		rightMotors.getSlotConfigs(configs, 0, Constants.CAN_TIMEOUT);
 		rightMotionProfilePID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
 		Log.info("SRXTankDrive", "Right MP: " + rightMotionProfilePID);
 
-		rightMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
-		rightVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
-		Log.info("SRXTankDrive", "Right V: " + rightVelocityPID);
+		// rightMotors.getSlotConfigs(configs, 1, Constants.CAN_TIMEOUT);
+		// rightVelocityPID = new PIDConstants(configs.kF, configs.kP, configs.kI, configs.kD);
+		// Log.info("SRXTankDrive", "Right V: " + rightVelocityPID);
 	}
 
-	public void setLeftPID() {
-		Log.info("SRXTankDrive", "Setting left PID constants.");
+	public void setPID() {
+		Log.info("SRXTankDrive", "Setting PID constants.");
 
-		leftMotors.config_kF(0, leftMotionProfilePID.kF);
+		//leftMotors.config_kF(0, leftMotionProfilePID.kF);
 		leftMotors.config_kP(0, leftMotionProfilePID.kP);
 		leftMotors.config_kI(0, leftMotionProfilePID.kI);
 		leftMotors.config_kD(0, leftMotionProfilePID.kD);
 
-		leftMotors.config_kF(1, leftVelocityPID.kF);
-		leftMotors.config_kP(1, leftVelocityPID.kP);
-		leftMotors.config_kI(1, leftVelocityPID.kI);
-		leftMotors.config_kD(1, leftVelocityPID.kD);
-
-		sendPIDConstants();
-	}
-
-	public void setRightPID() {
-		Log.info("SRXTankDrive", "Setting right PID constants.");
-
-		rightMotors.config_kF(0, rightMotionProfilePID.kF);
+		//rightMotors.config_kF(0, rightMotionProfilePID.kF);
 		rightMotors.config_kP(0, rightMotionProfilePID.kP);
 		rightMotors.config_kI(0, rightMotionProfilePID.kI);
 		rightMotors.config_kD(0, rightMotionProfilePID.kD);
 
-		rightMotors.config_kF(1, rightVelocityPID.kF);
-		rightMotors.config_kP(1, rightVelocityPID.kP);
-		rightMotors.config_kI(1, rightVelocityPID.kI);
-		rightMotors.config_kD(1, rightVelocityPID.kD);
+		// leftMotors.config_kF(1, leftVelocityPID.kF);
+		// leftMotors.config_kP(1, leftVelocityPID.kP);
+		// leftMotors.config_kI(1, leftVelocityPID.kI);
+		// leftMotors.config_kD(1, leftVelocityPID.kD);
 
-		sendPIDConstants();
-	}
-
-	/**
-	 * Sets up listeners to update drive PID constants when sent from
-	 * NarwhalDashboard
-	 */
-	public void setupDashboardPIDListener() {
-		NarwhalDashboard.addNumDataListener("leftPID", (double constants[]) -> {
-			this.leftMotionProfilePID.kF = constants[0];
-			this.leftMotionProfilePID.kP = constants[1];
-			this.leftMotionProfilePID.kI = constants[2];
-			this.leftMotionProfilePID.kD = constants[3];
-
-			this.leftVelocityPID.kF = constants[0];
-			this.leftVelocityPID.kP = constants[4];
-			this.leftVelocityPID.kI = constants[5];
-			this.leftVelocityPID.kD = constants[6];
-
-			this.setLeftPID();
-		});
-
-		NarwhalDashboard.addNumDataListener("rightPID", (double constants[]) -> {
-			this.rightMotionProfilePID.kF = constants[0];
-			this.rightMotionProfilePID.kP = constants[1];
-			this.rightMotionProfilePID.kI = constants[2];
-			this.rightMotionProfilePID.kD = constants[3];
-
-			this.rightVelocityPID.kF = constants[0];
-			this.rightVelocityPID.kP = constants[4];
-			this.rightVelocityPID.kI = constants[5];
-			this.rightVelocityPID.kD = constants[6];
-
-			this.setRightPID();
-		});
-	}
-
-	/**
-	 * Sends PID constants to NarwhalDashboard
-	 */
-	public void sendPIDConstants() {
-		NarwhalDashboard.put("l_f", leftMotionProfilePID.kF);
-
-		NarwhalDashboard.put("l_mp_p", leftMotionProfilePID.kP);
-		NarwhalDashboard.put("l_mp_i", leftMotionProfilePID.kI);
-		NarwhalDashboard.put("l_mp_d", leftMotionProfilePID.kD);
-
-		NarwhalDashboard.put("l_v_p", leftVelocityPID.kP);
-		NarwhalDashboard.put("l_v_i", leftVelocityPID.kI);
-		NarwhalDashboard.put("l_v_d", leftVelocityPID.kD);
-
-
-		NarwhalDashboard.put("r_f", rightMotionProfilePID.kF);
-
-		NarwhalDashboard.put("r_mp_p", rightMotionProfilePID.kP);
-		NarwhalDashboard.put("r_mp_i", rightMotionProfilePID.kI);
-		NarwhalDashboard.put("r_mp_d", rightMotionProfilePID.kD);
-
-		NarwhalDashboard.put("r_v_p", leftVelocityPID.kP);
-		NarwhalDashboard.put("r_v_i", leftVelocityPID.kI);
-		NarwhalDashboard.put("r_v_d", leftVelocityPID.kD);
+		// rightMotors.config_kF(1, rightVelocityPID.kF);
+		// rightMotors.config_kP(1, rightVelocityPID.kP);
+		// rightMotors.config_kI(1, rightVelocityPID.kI);
+		// rightMotors.config_kD(1, rightVelocityPID.kD);
 	}
 
 	/**
@@ -528,9 +459,15 @@ public class SRXTankDrive implements ITankDrive {
 	 *
 	 */
 	public enum MoveEndMode {
-		BOTH, // ends when both sides have reached their targets.
-		EITHER, // Stops both sides when either side has reached its target.
-				// Force stops the move command of the slower side.
+		/**
+		 * Ends the move command when both sides have reached their targets.
+		 */
+		BOTH,
+		/**
+		 * Stops both sides when either side has reached its target, force stopping
+		 * the move command of the slower side.
+		 */ 
+		EITHER,
 	}
 
 	/**

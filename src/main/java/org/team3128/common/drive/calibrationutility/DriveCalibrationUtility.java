@@ -106,6 +106,32 @@ public class DriveCalibrationUtility {
                 new Cmd100InchDrive().start();
             }
         });
+
+        NarwhalDashboard.addNumDataListener("drivePID", (double constants[]) -> {
+			//this.leftMotionProfilePID.kF = constants[0];
+			drive.leftMotionProfilePID.kP = constants[0];
+			drive.leftMotionProfilePID.kI = constants[1];
+			drive.leftMotionProfilePID.kD = constants[2];
+
+			//this.rightMotionProfilePID.kF = constants[0];
+			drive.rightMotionProfilePID.kP = constants[3];
+			drive.rightMotionProfilePID.kI = constants[4];
+			drive.rightMotionProfilePID.kD = constants[5];
+
+			// this.leftVelocityPID.kF = constants[0];
+			// this.leftVelocityPID.kP = constants[4];
+			// this.leftVelocityPID.kI = constants[5];
+			// this.leftVelocityPID.kD = constants[6];
+
+			// this.rightVelocityPID.kF = constants[0];
+			// this.rightVelocityPID.kP = constants[4];
+			// this.rightVelocityPID.kI = constants[5];
+			// this.rightVelocityPID.kD = constants[6];
+
+            drive.setPID();
+            sendPIDConstants();
+        });
+        sendPIDConstants();
     }
 
     public void tickNarwhalDashboard() {
@@ -173,4 +199,30 @@ public class DriveCalibrationUtility {
             return 1.0;
         }
     }
+
+	/**
+	 * Sends PID constants to NarwhalDashboard
+	 */
+	public void sendPIDConstants() {
+		// NarwhalDashboard.put("l_f", leftMotionProfilePID.kF);
+
+		NarwhalDashboard.put("l_mp_p", drive.leftMotionProfilePID.kP);
+		NarwhalDashboard.put("l_mp_i", drive.leftMotionProfilePID.kI);
+		NarwhalDashboard.put("l_mp_d", drive.leftMotionProfilePID.kD);
+
+		// NarwhalDashboard.put("l_v_p", leftVelocityPID.kP);
+		// NarwhalDashboard.put("l_v_i", leftVelocityPID.kI);
+		// NarwhalDashboard.put("l_v_d", leftVelocityPID.kD);
+
+
+		// NarwhalDashboard.put("r_f", rightMotionProfilePID.kF);
+
+		NarwhalDashboard.put("r_mp_p", drive.rightMotionProfilePID.kP);
+		NarwhalDashboard.put("r_mp_i", drive.rightMotionProfilePID.kI);
+		NarwhalDashboard.put("r_mp_d", drive.rightMotionProfilePID.kD);
+
+		// NarwhalDashboard.put("r_v_p", leftVelocityPID.kP);
+		// NarwhalDashboard.put("r_v_i", leftVelocityPID.kI);
+		// NarwhalDashboard.put("r_v_d", leftVelocityPID.kD);
+	}
 }
