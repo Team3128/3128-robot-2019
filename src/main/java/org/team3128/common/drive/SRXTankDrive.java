@@ -470,6 +470,27 @@ public class SRXTankDrive implements ITankDrive {
 		EITHER,
 	}
 
+	double ccwLeftCutoff = 138;
+	double cwRightCutoff = 138;
+
+	double ccwRightCutoff = 170;
+	double cwLeftCutoff = 170;
+
+	double leftA = 6;
+    double leftB = 148;
+	double leftC = 0.291;
+
+	double leftFFCW = 0.3;
+	double leftFFCCW = 0.291;
+
+	
+    double rightA = 6;
+    double rightB = 148;
+	double rightC = 0.28;
+
+	double rightFFCCW = 0.35;
+	double rightFFCW = 0.28;
+
 	/**
 	 * Command to move each side of the drivetrain a specified distance, using the
 	 * MotionMagic control mode.
@@ -530,6 +551,32 @@ public class SRXTankDrive implements ITankDrive {
 			// Coast speed measured in nu/100ms
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
 			double rightSpeed = (robotMaxSpeed * power * ((useScalars) ? rightSpeedScalar : 1.0));
+
+			double angularVelocity = Math.toDegrees((rightSpeed - leftSpeed) / wheelBase);
+
+
+			double ffLeft = 12.0 / RobotController.getBatteryVoltage() * leftA / (angularVelocity + leftB) + leftC;
+			if (angularVelocity > ccwLeftCutoff) {
+				ffLeft = leftFFCCW;
+			}
+			else if (angularVelocity < -cwLeftCutoff) {
+				ffLeft = leftFFCW;
+			}
+
+			double ffRight = 12.0 / RobotController.getBatteryVoltage() * rightA / (angularVelocity + rightB) + rightC;
+			if (angularVelocity < -cwRightCutoff) {
+				ffRight = rightFFCW;
+			}
+			else if (angularVelocity > ccwRightCutoff) {
+				ffRight = rightFFCCW;
+			}
+
+			leftMotors.config_kF(0, ffLeft);
+			leftMotors.config_kP(0, 0.05);
+
+			rightMotors.config_kF(0, ffRight);
+			rightMotors.config_kP(0, 0.05);
+
 
 			if (leftAngle == 0) {
 				leftSpeed = 0;
@@ -1004,7 +1051,7 @@ public class SRXTankDrive implements ITankDrive {
 			tankDrive(leftPower, rightPower);
 
 			try {
-				Thread.sleep(100);
+				Thread.sleep(500);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -1185,7 +1232,7 @@ public class SRXTankDrive implements ITankDrive {
 			ffpmL = leftPower/(vL * voltage/12.0);
 			ffpmR = rightPower/(vR * voltage/12.0);
 
-			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 25.0)) {
+			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 35.0)) {
 				feedForwardPowerMultiplierSet.addFeedForwardPowerMultiplier(angularVelocity, ffpmL, ffpmR);
 			}
 

@@ -16,10 +16,12 @@ import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.hardware.navigation.NavX;
 import org.team3128.common.util.Constants;
+import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
+import org.team3128.common.util.enums.Direction;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
@@ -89,7 +91,9 @@ public class MainPrebot extends NarwhalRobot {
         leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
 
         double wheelCirc = 13.21 * Length.in;
-        double wheelBase = 30 * Length.in;//68.61 * Length.in;
+        //double wheelBase = 31.5 * Length.in; 5 feet
+        //double wheelBase = 32.25 * Length.in; 4 feet
+        double wheelBase = 32.3 * Length.in;
         int robotFreeSpeed = 3700;
 
         SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, wheelBase, robotFreeSpeed,
@@ -185,7 +189,17 @@ public class MainPrebot extends NarwhalRobot {
     @Override
     protected void constructAutoPrograms() {
         NarwhalDashboard.addAuto("Turn", new CmdInPlaceTurnTest());
-        NarwhalDashboard.addAuto("Arc Turn", new CmdArcTurnTest());
+
+        NarwhalDashboard.addAuto("Arc, 5ft, Left",  tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.LEFT, .75, 10000));
+        NarwhalDashboard.addAuto("Arc, 4ft, Left",  tankDrive.new CmdArcTurn(4 * Length.ft, 90, Direction.LEFT, .75, 10000));
+        NarwhalDashboard.addAuto("Arc, 3ft, Left",  tankDrive.new CmdArcTurn(3 * Length.ft, 90, Direction.LEFT, .75, 10000));
+
+        NarwhalDashboard.addAuto("Arc, 5ft, Right", tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.RIGHT, .75, 10000));
+        NarwhalDashboard.addAuto("Arc, 4ft, Right", tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.RIGHT, .75, 10000));
+        NarwhalDashboard.addAuto("Arc, 3ft, Right", tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.RIGHT, .75, 10000));
+
+        NarwhalDashboard.addAuto("In-Place, 180, Left", tankDrive.new CmdInPlaceTurn(180 * Angle.DEGREES, Direction.LEFT, 0.75, 5000));
+
         NarwhalDashboard.addAuto("Forward", new CmdDriveForward());
         //NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
         // NarwhalDashboard.addAuto("Wheel Base Test", new CmdCalibrateWheelbase(ahrs, 10, 1000, 1500, calculatedWheelbase));
