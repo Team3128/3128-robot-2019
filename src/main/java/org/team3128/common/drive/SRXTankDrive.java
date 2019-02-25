@@ -1001,11 +1001,60 @@ public class SRXTankDrive implements ITankDrive {
 	}
 
 	/**
-	 * Wrapper object to hold a single value--the calculated average wheelbase.
+	 * Wrapper object to hold all needed values to fit wheelbase to radius.
 	 */
 	public static class Wheelbase {
-		public double wheelbase;
+		public double wheelbase, radius, angularVelocity, linearVelocity, vL, vR, ;
+
+		public Wheelbase(double wheelbase, double radius, double angularVelocity, double linearVelocity, double vL, double vR) {
+			this.wheelbase = wheelbase;
+			this.radius = radius;
+			this.angularVelocity = angularVelocity;
+			this.linearVelocity = linearVelocity;
+			this.vL = vL;
+			this.vR = vR;
+		}
 	}
+	public static class WheelbaseSet {
+		private List<Wheelbase> wbSet = new ArrayList<Wheelbase>();
+		public Wheelbase wbAvg;
+
+		public void addWheelbase(double wheelbase, double radius, double angularVelocity, double linearVelocity, double vL, double vR) {
+			wbSet.add(new Wheelbase(wheelbase, radius, angularVelocity,linearVelocity, vL, vR));
+		}
+
+		public void setAverage(double wheelbase, double radius, double angularVelocity, double linearVelocity, double vL, double vR) {
+			wbAvg = new Wheelbase(wheelbase, radius, angularVelocity,linearVelocity, vL, vR);
+		}
+
+		public String getAllCSV() {
+			String csv = "";
+
+			for (Wheelbase wb : wbSet) {
+				csv += wb.wheelbase + ",";
+				csv += wb.radius + ",";
+				csv += wb.angularVelocity + ",";
+				csv += wb.linearVelocity + ",";
+				csv += wb.vL + ",";
+				csv += wb.vR + "\n";
+			}
+
+			return csv;
+		}
+		public String getAvgCSV() {
+			String csv = "";
+
+			csv += wbAvg.wheelbase + ",";
+			csv += wbAvg.radius + ",";
+			csv += wbAvg.angularVelocity + ",";
+			csv += wbAvg.linearVelocity + ",";
+			csv += wbAvg.vL + ",";
+			csv += wbAvg.vR + "\n";
+
+			return csv;
+		}
+  }
+
 
 	/**
 	  * Calibration command to determine effective wheelbase of the robot. This is
@@ -1019,14 +1068,15 @@ public class SRXTankDrive implements ITankDrive {
 	  * difference.
 	  */
 	public class CmdCalculateWheelbase extends Command {
+		private final double VELOCITY_PLATEAU_RANGE = 2;
 		double leftPower, rightPower;
+
+		double vL, vR, linearVelocity;
 
 		double wheelbaseSum;
 		double angularVelocity;
 
-		Wheelbase wheelbase;
-
-		double vL, vR;
+		WheelbaseSet wheelbaseSet;
 
 		Gyro gyro;
 
@@ -1035,7 +1085,7 @@ public class SRXTankDrive implements ITankDrive {
 		double previousTime;
 		double previousAngle; 
 
-		public CmdCalculateWheelbase(Wheelbase wheelbase, double leftPower, double rightPower, Gyro gyro, double durationMs) {
+		public CmdCalculateWheelbase(WheelbaseSet wheelbaseSet, double leftPower, double rightPower, Gyro gyro, double durationMs) {
 			super(durationMs / 1000.0);
 
 			this.wheelbase = wheelbase;
@@ -1048,13 +1098,57 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void initialize() {
+			//might need to account for voltage:
+			//voltage = RobotController.getBatteryVoltage(); 
 			tankDrive(leftPower, rightPower);
 
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			double currentRadius = 0;
+			double previousRadius = 0;
+			int plateauCount = 0;
+
+			while (true) {
+				vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
+				vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
+				linearVelocity = (vL + vR)/2;
+				currentRadius = linearVelocity/gyro.getRate();
+
+				Log.info("CmdCalculateWheelbase", "Plateau Radius: " + currentRadius);
+
+				if (Math.abs(currentRadius - previousRadius) < VELOCITY_PLATEAU_RANGE) {
+					plateauCount += 1;
+				}
+				else {
+					plateauCount = 0;
+				}
+
+				if (plateauCount > 10) break;
+				previousRadius = currentRadius;
+
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
+			double radiusSum = 0;
+			int radiusCount = 0;
+
+			for (int i = 0; i < 25; i++) {
+				vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
+				vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
+
+				linearVelocity = (vL + vR)/2;
+				angularVelocity = gyro.getRate();
+
+				currentRadius = linearVelocity/Math.toRadians(angularVelocity);
+
+				radiusSum += currentRadius;
+				radiusCount += 1;
+			}
+			
+			targetRadius = radiusSum / radiusCount;
+
+
 		}
 
 		@Override
@@ -1064,14 +1158,33 @@ public class SRXTankDrive implements ITankDrive {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			executeCount++; 
 
 			vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
 			vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
 
+			linearVelocity = (vL + vR)/2;
 			angularVelocity = gyro.getRate();
 
+			currentRadius = linearVelocity/Math.toRadians(angularVelocity);
 			wheelbaseSum += (vR - vL)/Math.toRadians(angularVelocity);
-			timesRun += 1;
+
+			Log.info("CmdCalculateWheelbase", "Loop radius = " + currentRadius);
+
+			if(RobotMath.isWithin(currentRadius, targetRadius, 25.0)) {
+				wheelbaseSet.addWheelbase(wheelbase, currentRadius, angularVelocity, linearVelocity, vL, vR);
+			}
+
+			if(RobotMath.isWithin(currentRadius, targetRadius, 10.0)) {
+				wheelbaseSum += currentWheelbase;
+				radiusSum += currentRadius;
+				angularVelocitySum += angularVelocity;
+				linearVelocitySum += linearVelocity;
+				vLSum += vL;
+				vRSum += vR;
+
+				inRangeCount++;
+			}	
 		}
 
 		@Override
@@ -1082,9 +1195,29 @@ public class SRXTankDrive implements ITankDrive {
 		@Override
 		protected void end() {
 			stopMovement();
+			double avgWheelbase = wheelbaseSum / inRangeCount;
+			double avgRadius = radiusSum / inRangeCount;
+			double avgAngularVelocity = angularVelocitySum / inRangeCount;
+			double avgLinearVelocity = linearVelocity / inRangeCount;
+			double avgVL = vLSum / inRangeCount;
+			double avgVR = vRSum / inRangeCount;
+			
 
-			wheelbase.wheelbase = wheelbaseSum / timesRun;
-			Log.info("CmdCalculateWheelBase", "Wheelbase: " + (wheelbase.wheelbase / Length.in) + " in");
+			Log.info("CmdCalculateWheelbase",
+				"Completed...\n" +
+				"\tTarget Radius: " + targetRadius + "\n" +
+				"\tRuntime Information:\n" +
+				"\t\tTotal Loops: " + executeCount + "\n" +
+				"\t\tIn-Range Loops: " + inRangeCount + "\n" +
+				"\tFinal Average Values\n" +
+				"\t\tRadius: " + avgRadius + "\n" +
+				"\t\tWheelbase: " + avgWheelbase + "\n" +
+				"\t\tAngular Velocity: " + avgAngularVelocity + "\n" +
+				"\t\tLinear Velocity: " + avgLinearVelocity + "\n" +
+				"\t\tLeft Velocity: " + avgVL + "\n" +
+				"\t\tRight Velocity: " + avgVR
+			);
+			wheelbaseSet.setAverage(avgWheelbase, avgRadius, avgAngularVelocity, avgLinearVelocity, avgVL, avgVR);
 		}
 	}
 
@@ -1131,7 +1264,7 @@ public class SRXTankDrive implements ITankDrive {
 
 			return csv;
 		}
-    }
+  }
 
 	public class CmdGetFeedForwardPowerMultiplier extends Command {
 		private final double VELOCITY_PLATEAU_RANGE = 2;
@@ -1223,8 +1356,8 @@ public class SRXTankDrive implements ITankDrive {
 
 			executeCount += 1;
 
-			vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
-			vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
+			vL = getLeftMotors().getSelectedSensorVelocity();
+			vR = getRightMotors().getSelectedSensorVelocity();
 
 			angularVelocity = gyro.getRate();
 			Log.info("CmdGetFeedForwardPowerMultiplier", "Loop omega = " + angularVelocity);
