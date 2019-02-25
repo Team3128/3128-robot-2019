@@ -1004,7 +1004,7 @@ public class SRXTankDrive implements ITankDrive {
 	 * Wrapper object to hold all needed values to fit wheelbase to radius.
 	 */
 	public static class Wheelbase {
-		public double wheelbase, radius, angularVelocity, linearVelocity, vL, vR, ;
+		public double wheelbase, radius, angularVelocity, linearVelocity, vL, vR;
 
 		public Wheelbase(double wheelbase, double radius, double angularVelocity, double linearVelocity, double vL, double vR) {
 			this.wheelbase = wheelbase;
@@ -1015,18 +1015,44 @@ public class SRXTankDrive implements ITankDrive {
 			this.vR = vR;
 		}
 	}
+
+	/**
+	 * Wrapper for holding wheelbase set values and the average for each time the command is run.
+	 * Mainly used for ease of printing data is csv format.
+	 */
 	public static class WheelbaseSet {
 		private List<Wheelbase> wbSet = new ArrayList<Wheelbase>();
 		public Wheelbase wbAvg;
 
+		/**
+		 * Add wheelbase to ongoing set of wheelbase/radius/angularVel/linearVel/vL/vR values.
+		 * @param wheelbase
+		 * @param radius
+		 * @param angularVelocity
+		 * @param linearVelocity
+		 * @param vL
+		 * @param vR
+		 */
 		public void addWheelbase(double wheelbase, double radius, double angularVelocity, double linearVelocity, double vL, double vR) {
 			wbSet.add(new Wheelbase(wheelbase, radius, angularVelocity,linearVelocity, vL, vR));
 		}
 
+		/**
+		 * Populate a wheelbase object with the set of averaged values.
+		 * @param wheelbase
+		 * @param radius
+		 * @param angularVelocity
+		 * @param linearVelocity
+		 * @param vL
+		 * @param vR
+		 */
 		public void setAverage(double wheelbase, double radius, double angularVelocity, double linearVelocity, double vL, double vR) {
 			wbAvg = new Wheelbase(wheelbase, radius, angularVelocity,linearVelocity, vL, vR);
 		}
 
+		/**
+		 * @return String in csv format populated with the entire dataset of wheelbase/radius/angularVel/linearVel/vL/vR values.
+		 */
 		public String getAllCSV() {
 			String csv = "";
 
@@ -1041,6 +1067,10 @@ public class SRXTankDrive implements ITankDrive {
 
 			return csv;
 		}
+
+		/**
+		 * @return String in csv format populated with the wheelbase object of averaged(& within range) wheelbase/radius/angularVel/linearVel/vL/vR values.
+		 */
 		public String getAvgCSV() {
 			String csv = "";
 
@@ -1071,24 +1101,27 @@ public class SRXTankDrive implements ITankDrive {
 		private final double VELOCITY_PLATEAU_RANGE = 2;
 		double leftPower, rightPower;
 
-		double vL, vR, linearVelocity;
-
-		double wheelbaseSum;
-		double angularVelocity;
+		double wheelbase, radius, linearVelocity, angularVelocity, vL, vR;
+		double wheelbaseSum, radiusSum, linearVelocitySum, angularVelocitySum, vLSum, vRSum;
 
 		WheelbaseSet wheelbaseSet;
-
 		Gyro gyro;
 
-		int timesRun;
+		int executeCount;
+		int inRangeCount;
 
-		double previousTime;
-		double previousAngle; 
-
+		double targetRadius;
+		/**
+		 * @param wheelbaseSet
+		 * @param leftPower
+		 * @param rightPower
+		 * @param gyro
+		 * @param durationMs
+		 */
 		public CmdCalculateWheelbase(WheelbaseSet wheelbaseSet, double leftPower, double rightPower, Gyro gyro, double durationMs) {
 			super(durationMs / 1000.0);
 
-			this.wheelbase = wheelbase;
+			this.wheelbaseSet = wheelbaseSet;
 
 			this.leftPower = leftPower;
 			this.rightPower = rightPower;
@@ -1166,18 +1199,19 @@ public class SRXTankDrive implements ITankDrive {
 			linearVelocity = (vL + vR)/2;
 			angularVelocity = gyro.getRate();
 
-			currentRadius = linearVelocity/Math.toRadians(angularVelocity);
-			wheelbaseSum += (vR - vL)/Math.toRadians(angularVelocity);
+			radius = linearVelocity/Math.toRadians(angularVelocity);
+			wheelbase = (vR - vL)/Math.toRadians(angularVelocity);
+			wheelbaseSum += wheelbase;
 
-			Log.info("CmdCalculateWheelbase", "Loop radius = " + currentRadius);
+			Log.info("CmdCalculateWheelbase", "Loop radius = " + radius);
 
-			if(RobotMath.isWithin(currentRadius, targetRadius, 25.0)) {
-				wheelbaseSet.addWheelbase(wheelbase, currentRadius, angularVelocity, linearVelocity, vL, vR);
+			if(RobotMath.isWithin(radius, targetRadius, 25.0)) {
+				wheelbaseSet.addWheelbase(wheelbase, radius, angularVelocity, linearVelocity, vL, vR);
 			}
 
-			if(RobotMath.isWithin(currentRadius, targetRadius, 10.0)) {
-				wheelbaseSum += currentWheelbase;
-				radiusSum += currentRadius;
+			if(RobotMath.isWithin(radius, targetRadius, 10.0)) {
+				wheelbaseSum += wheelbase;
+				radiusSum += radius;
 				angularVelocitySum += angularVelocity;
 				linearVelocitySum += linearVelocity;
 				vLSum += vL;
