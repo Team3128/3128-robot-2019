@@ -1,7 +1,7 @@
 package org.team3128.common.drive.calibrationutility;
 
 import org.team3128.common.drive.SRXTankDrive;
-import org.team3128.common.drive.SRXTankDrive.Wheelbase;
+import org.team3128.common.drive.SRXTankDrive.WheelbaseSet;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Log;
@@ -25,25 +25,21 @@ public class DriveCalibrationUtility {
 
     public double maxLeftSpeed = 0;
     public double maxRightSpeed = 0;
-	
-    public Wheelbase calculatedWheelbase;
-    
+	    
     public SRXTankDrive drive;
     public Gyro gyro;
 
     private double wheelbaseSum;
     private int wheelbaseCount;
     private FeedForwardPowerMultiplierSet ffpmSet;
+    public WheelbaseSet wbSet;
 
     private DriveCalibrationUtility(Gyro gyro) {
         maxLeftSpeed = 0;
         maxRightSpeed = 0;
-
-        calculatedWheelbase = new Wheelbase();
         this.gyro = gyro;
 
         drive = SRXTankDrive.getInstance();
-        calculatedWheelbase = new Wheelbase();
     }
 
     public void initNarwhalDashboard() {
@@ -67,14 +63,14 @@ public class DriveCalibrationUtility {
             double pR = data[1];
 
             int duration = (int) data[2];
-
-            drive.new CmdCalculateWheelbase(calculatedWheelbase, pL, pR, gyro, duration).start();
+            wbSet = new WheelbaseSet();
+            drive.new CmdCalculateWheelbase(wbSet, pL, pR, gyro, duration).start();
         });
 
-        NarwhalDashboard.addButton("add_wb_to_avg", (boolean down) -> {
+        NarwhalDashboard.addButton("printCSV_wb", (boolean down) -> {
             if (down) {
-                wheelbaseSum += calculatedWheelbase.wheelbase;
-                wheelbaseCount += 1;
+                Log.info("DriveCalibrationUtility", "average:\n" + wbSet.getAvgCSV());
+			    Log.info("DriveCalibrationUtility", "data:\n" + wbSet.getAllCSV());
             }
         });
 
@@ -146,7 +142,7 @@ public class DriveCalibrationUtility {
         NarwhalDashboard.put("leftSpeedScalar", getLeftSpeedScalar());
         NarwhalDashboard.put("rightSpeedScalar", getRightSpeedScalar());
 
-        NarwhalDashboard.put("prev_wb", calculatedWheelbase.wheelbase / Length.in);
+        //NarwhalDashboard.put("prev_wb", calculatedWheelbase.wheelbase / Length.in);
         NarwhalDashboard.put("avg_wb", wheelbaseSum / (wheelbaseCount * Length.in));
 
         NarwhalDashboard.put("avg_w", ffpmSet.ffpmAvg.angularVelocity);

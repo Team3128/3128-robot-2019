@@ -1098,7 +1098,7 @@ public class SRXTankDrive implements ITankDrive {
 	  * difference.
 	  */
 	public class CmdCalculateWheelbase extends Command {
-		private final double VELOCITY_PLATEAU_RANGE = 2;
+		private final double VELOCITY_PLATEAU_RANGE = 2;//2;
 		double leftPower, rightPower;
 
 		double wheelbase, radius, linearVelocity, angularVelocity, vL, vR;
@@ -1143,7 +1143,8 @@ public class SRXTankDrive implements ITankDrive {
 				vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
 				vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
 				linearVelocity = (vL + vR)/2;
-				currentRadius = linearVelocity/gyro.getRate();
+				angularVelocity = Math.abs(Math.toRadians(gyro.getRate()));
+				currentRadius = linearVelocity/angularVelocity;
 
 				Log.info("CmdCalculateWheelbase", "Plateau Radius: " + currentRadius);
 
@@ -1163,7 +1164,7 @@ public class SRXTankDrive implements ITankDrive {
 					e.printStackTrace();
 				}
 			}
-			double radiusSum = 0;
+			radiusSum = 0;
 			int radiusCount = 0;
 
 			for (int i = 0; i < 25; i++) {
@@ -1171,21 +1172,22 @@ public class SRXTankDrive implements ITankDrive {
 				vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
 
 				linearVelocity = (vL + vR)/2;
-				angularVelocity = gyro.getRate();
+				angularVelocity = Math.abs(Math.toRadians(gyro.getRate()));
 
-				currentRadius = linearVelocity/Math.toRadians(angularVelocity);
+				currentRadius = linearVelocity/angularVelocity;
 
 				radiusSum += currentRadius;
 				radiusCount += 1;
 			}
 			
 			targetRadius = radiusSum / radiusCount;
-
+			radiusSum = 0;
 
 		}
 
 		@Override
 		protected void execute() {
+			//radiusSum = 0;
 			try {
 				Thread.sleep(20);
 			} catch (InterruptedException e) {
@@ -1197,11 +1199,10 @@ public class SRXTankDrive implements ITankDrive {
 			vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
 
 			linearVelocity = (vL + vR)/2;
-			angularVelocity = gyro.getRate();
+			angularVelocity = Math.abs(Math.toRadians(gyro.getRate()));
 
-			radius = linearVelocity/Math.toRadians(angularVelocity);
-			wheelbase = (vR - vL)/Math.toRadians(angularVelocity);
-			wheelbaseSum += wheelbase;
+			radius = linearVelocity/angularVelocity;
+			wheelbase = Math.abs(vR - vL)/angularVelocity;
 
 			Log.info("CmdCalculateWheelbase", "Loop radius = " + radius);
 
