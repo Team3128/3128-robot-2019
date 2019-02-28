@@ -98,19 +98,30 @@ public class MainPrebot extends NarwhalRobot {
 
         SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, wheelBase, robotFreeSpeed,
             () -> {
-                Log.info("SRXTankDrive", "Inverting drive motors.");
+                // Log.info("SRXTankDrive", "Inverting drive motors.");
 
-                leftDriveFront.setInverted(true);
-                leftDriveMiddle.setInverted(true);
-                leftDriveBack.setInverted(true);
+                // leftDriveFront.setInverted(true);
+                // leftDriveMiddle.setInverted(true);
+                // leftDriveBack.setInverted(true);
                 
-                rightDriveFront.setInverted(false);
-                rightDriveMiddle.setInverted(false);
-                rightDriveBack.setInverted(false);
+                // rightDriveFront.setInverted(false);
+                // rightDriveMiddle.setInverted(false);
+                // rightDriveBack.setInverted(false);
 
-                leftDriveFront.setSensorPhase(true);
-                rightDriveFront.setSensorPhase(true);
+                // leftDriveFront.setSensorPhase(true);
+                // rightDriveFront.setSensorPhase(true);
             });
+
+        leftDriveFront.setInverted(true);
+        leftDriveMiddle.setInverted(true);
+        leftDriveBack.setInverted(true);
+        
+        rightDriveFront.setInverted(false);
+        rightDriveMiddle.setInverted(false);
+        rightDriveBack.setInverted(false);
+
+        leftDriveFront.setSensorPhase(true);
+        rightDriveFront.setSensorPhase(true);
 
         tankDrive = SRXTankDrive.getInstance();
         tankDrive.setLeftSpeedScalar(1.0);
@@ -190,21 +201,23 @@ public class MainPrebot extends NarwhalRobot {
     protected void constructAutoPrograms() {
         NarwhalDashboard.addAuto("Turn", new CmdInPlaceTurnTest());
 
-        NarwhalDashboard.addAuto("Arc, 5ft, Left",  tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.LEFT, .75, 10000));
-        NarwhalDashboard.addAuto("Arc, 4ft, Left",  tankDrive.new CmdArcTurn(4 * Length.ft, 90, Direction.LEFT, .75, 10000));
-        NarwhalDashboard.addAuto("Arc, 3ft, Left",  tankDrive.new CmdArcTurn(3 * Length.ft, 90, Direction.LEFT, .75, 10000));
+        // NarwhalDashboard.addAuto("Arc, 5ft, Left",  tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.LEFT, .75, 10000));
+        // NarwhalDashboard.addAuto("Arc, 4ft, Left",  tankDrive.new CmdArcTurn(4 * Length.ft, 90, Direction.LEFT, .75, 10000));
+        // NarwhalDashboard.addAuto("Arc, 3ft, Left",  tankDrive.new CmdArcTurn(3 * Length.ft, 90, Direction.LEFT, .75, 10000));
 
-        NarwhalDashboard.addAuto("Arc, 5ft, Right", tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.RIGHT, .75, 10000));
-        NarwhalDashboard.addAuto("Arc, 4ft, Right", tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.RIGHT, .75, 10000));
-        NarwhalDashboard.addAuto("Arc, 3ft, Right", tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.RIGHT, .75, 10000));
+        // NarwhalDashboard.addAuto("Arc, 5ft, Right", tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.RIGHT, .75, 10000));
+        // NarwhalDashboard.addAuto("Arc, 4ft, Right", tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.RIGHT, .75, 10000));
+        // NarwhalDashboard.addAuto("Arc, 3ft, Right", tankDrive.new CmdArcTurn(5 * Length.ft, 90, Direction.RIGHT, .75, 10000));
 
-        NarwhalDashboard.addAuto("In-Place, 180, Left", tankDrive.new CmdInPlaceTurn(180 * Angle.DEGREES, Direction.LEFT, 0.75, 5000));
+        // NarwhalDashboard.addAuto("In-Place, 180, Left", tankDrive.new CmdInPlaceTurn(180 * Angle.DEGREES, Direction.LEFT, 0.75, 5000));
+
+        NarwhalDashboard.addAuto("Please Work", new CmdPleaseWorkTurnTest(gyro));
 
         NarwhalDashboard.addAuto("Forward", new CmdDriveForward());
         //NarwhalDashboard.addAuto("Test", new Test(tankDrive, ahrs));
         // NarwhalDashboard.addAuto("Wheel Base Test", new CmdCalibrateWheelbase(ahrs, 10, 1000, 1500, calculatedWheelbase));
         // NarwhalDashboard.addAuto("Forward CV", new CmdDriveForwardCVTest());
-        // NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
+        NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
         // NarwhalDashboard.addAuto("Heading Then Arc Turn", new CmdHeadingThenArc(limelight));
         NarwhalDashboard.addAuto("Fancy Wheel Base Calibration", new CmdFancyCalibrateWheelBase(gyro));
         // previous speeds that were used were 2000, 4000 (arbitrarily picked)
