@@ -24,7 +24,9 @@ public class LimelightData {
     public double ty() {
         return values.get("ty");
     }
-
+    public double tv() {
+        return values.get("tv");
+    }
     public double shear() {
         return values.get("ts");
     }

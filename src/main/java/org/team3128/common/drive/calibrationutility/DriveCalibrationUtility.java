@@ -5,6 +5,7 @@ import org.team3128.common.drive.SRXTankDrive.WheelbaseSet;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Log;
+import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplierSet;
 import org.team3128.common.util.units.Length;
 
@@ -28,6 +29,8 @@ public class DriveCalibrationUtility {
 	    
     public SRXTankDrive drive;
     public Gyro gyro;
+
+    private PIDConstants visionPID;
 
     private double wheelbaseSum;
     private int wheelbaseCount;
@@ -101,6 +104,11 @@ public class DriveCalibrationUtility {
             if (down) {
                 new Cmd100InchDrive().start();
             }
+        });
+        NarwhalDashboard.addNumDataListener("visionPID", (double constants[]) ->{
+            visionPID.kP = constants[0];
+            visionPID.kI = constants[1];
+            visionPID.kD = constants[2];
         });
 
         NarwhalDashboard.addNumDataListener("drivePID", (double constants[]) -> {
@@ -220,5 +228,11 @@ public class DriveCalibrationUtility {
 		// NarwhalDashboard.put("r_v_p", leftVelocityPID.kP);
 		// NarwhalDashboard.put("r_v_i", leftVelocityPID.kI);
 		// NarwhalDashboard.put("r_v_d", leftVelocityPID.kD);
-	}
+    }
+    /**
+     * @return the PIDConstants visionPID
+     */
+    public PIDConstants getVisionPID() {
+        return visionPID;
+    }
 }

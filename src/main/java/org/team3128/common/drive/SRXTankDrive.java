@@ -1076,8 +1076,6 @@ private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCirc
 	}
 
 	public class CmdDynamicAdjust extends Command {
-		double HOR_CUT_OFF = 1;
-		double Z_CUT_OFF = 3;
 		Gyro gyro;
 		
 		PIDConstants offsetPID;
@@ -1086,12 +1084,13 @@ private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCirc
 
 		private double lastTime;
 		private double lastError;
+		private double currentError;
 
 		double currentPL;
 		double currentPR;
 		double horizOffset;
 		/**
-		 * 
+		 * Constructor for the CmdDynamicAdjust command.
 		 * @param gyro
 		 * @param limelight
 		 * @param initPower
@@ -1121,21 +1120,41 @@ private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCirc
 		@Override
 		protected boolean isFinished() {
 			data = limelight.getValues(5);
-			currentPR += (0.5*offsetPID.kP * data.tx()) + (offsetPID.kD * ((data.tx() - this.lastError) * 1000000 / (RobotController.getFPGATime() - this.lastTime)));
-			currentPL -= (0.5*offsetPID.kP * data.tx()) + (offsetPID.kD * ((data.tx() - this.lastError) * 1000000 / (RobotController.getFPGATime() - this.lastTime)));
+
+			/** 
+			 * Only update the current error if there is a valid target, so if the target is lost, 
+			 * it just uses the last available value of the the error, which should theoretically force 
+			 * the robot to turn in the opposite direction until the target is back in the field of vision.
+			 */
+			if(data.tv() == 1){
+				this.currentError = data.tx();
+			}
+			
+			/**
+			 * PID feedback loop for the left and right powers based on the horizontal offset errors.
+			 */
+			currentPR += (0.5*offsetPID.kP * this.currentError) + (offsetPID.kD * ((this.currentError - this.lastError) * 1000000 / (RobotController.getFPGATime() - this.lastTime)));
+			currentPL -= (0.5*offsetPID.kP * this.currentError) + (offsetPID.kD * ((this.currentError - this.lastError) * 1000000 / (RobotController.getFPGATime() - this.lastTime)));
+			
+			//debug
 			Log.info("CmdDynamicAdjust: PR", String.valueOf(currentPR));
 			Log.info("CmdDynamicAdjust: PL", String.valueOf(currentPL));
+			
 			rightMotors.set(ControlMode.PercentOutput, currentPR);
 			leftMotors.set(ControlMode.PercentOutput, currentPL);
 
 			this.lastTime = RobotController.getFPGATime();
 			this.lastError = data.tx();
+			
+			//debug
 			if(isTimedOut()){
 				Log.info("CmdDynamicAdjust", "TIMED OUT");
 			}
 			if(data.tx() == 0){
 				Log.info("CmdDynamicAdjust", "HIT 0");
 			}
+			
+
 			return isTimedOut();
 		}
 		

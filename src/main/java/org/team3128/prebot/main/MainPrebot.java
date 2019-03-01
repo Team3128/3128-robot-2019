@@ -63,6 +63,8 @@ public class MainPrebot extends NarwhalRobot {
     public NetworkTable table;
     public NetworkTable table2;
 
+    PIDConstants offsetPID;
+
     public NetworkTable limelightTable;
 
     public DriveCalibrationUtility dcu;
@@ -257,8 +259,11 @@ public class MainPrebot extends NarwhalRobot {
   
         });
 
-		lm.nameControl(ControllerExtreme3D.TRIGGER, "LogLimelight");
-		lm.addButtonDownListener("LogLimelight", () -> { 
+		lm.nameControl(ControllerExtreme3D.TRIGGER, "AlignToTarget");
+		lm.addButtonDownListener("AlignToTarget", () -> { 
+            offsetPID = dcu.getVisionPID();
+            //offsetPID = new PIDConstants(0, 0.0005, 0, 0.00009);
+            tankDrive.new CmdDynamicAdjust(gyro, limelight, 0.3, offsetPID, 10000).start();
         });
     }
 
