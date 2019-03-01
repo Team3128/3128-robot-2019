@@ -112,10 +112,11 @@ public class MainGromit extends NarwhalRobot{
 	public OptimusPrime optimusPrime;
 
 	// Climb
+	public Climber climber;
 	public Piston climbPiston;
 	public TalonSRX climbMotor;
 
-	public Climber climber;
+	
 
 	// Controls
 	public Joystick leftJoystick;
@@ -215,6 +216,10 @@ public class MainGromit extends NarwhalRobot{
 
 		compressor = new Compressor();
 
+		// Create the Climber
+		climbMotor = new TalonSRX(40);
+		Climber.initialize(climbPiston, climbMotor);
+		climber = Climber.getInstance();
 
 		// Create Four-Bar
 		fourBarMotor = new TalonSRX(30);
@@ -250,12 +255,6 @@ public class MainGromit extends NarwhalRobot{
 		// Create Optimus Prime
 		OptimusPrime.initialize();
 		optimusPrime = OptimusPrime.getInstance();
-
-		// Create the Climber
-		climbMotor = new TalonSRX(40);
-
-		Climber.initialize(climbPiston, climbMotor);
-		climber = Climber.getInstance();
 
 		// Instantiate PDP
 		powerDistPanel = new PowerDistributionPanel();
@@ -403,7 +402,7 @@ public class MainGromit extends NarwhalRobot{
 			}
 		});
 
-		dcu.initNarwhalDashboard();
+		//dcu.initNarwhalDashboard();
     }
 
     @Override
