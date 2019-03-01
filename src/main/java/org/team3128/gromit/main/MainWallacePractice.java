@@ -8,9 +8,8 @@ import org.team3128.common.util.units.Length;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotBase;
 
-public class MainGromitCompetition extends MainGromit {
+public class MainWallacePractice extends MainGromit {
     Piston placeholder;    
-    
 
     @Override
     protected void constructHardware() {
@@ -36,7 +35,7 @@ public class MainGromitCompetition extends MainGromit {
             rightDriveLeader.setSensorPhase(true);
         };
 
-        gearshiftPiston = new Piston(3, 4);
+        gearshiftPiston = new Piston(2, 5);
         gearshiftPiston.setPistonOn();
 
         climbPiston = new Piston(1, 6);
@@ -44,8 +43,8 @@ public class MainGromitCompetition extends MainGromit {
 
         demogorgonPiston = new Piston(7, 0);
 
-        placeholder = new Piston(2, 5);
-        placeholder.setPistonOn();
+        //placeholder = new Piston(2, 5);
+        //placeholder.setPistonOn();
 
         liftLimitSwitch = new DigitalInput(2);
         liftSwitchPosition = 0;
@@ -56,7 +55,7 @@ public class MainGromitCompetition extends MainGromit {
         fourBarMaxVelocity = 100;
         
         cargoBumperSwitch = new DigitalInput(3);
-        
+
         super.constructHardware();
 
         // Lift Inverts
@@ -72,11 +71,8 @@ public class MainGromitCompetition extends MainGromit {
         fourBarMotor.setInverted(true);
         fourBarMotor.setSensorPhase(false);
 
-        // Climber Invert
-        climbMotor.setSensorPhase(true);
     }
-
     public static void main(String... args) {
-        RobotBase.startRobot(MainGromitCompetition::new);
+        RobotBase.startRobot(MainWallacePractice::new);
     }
 }
