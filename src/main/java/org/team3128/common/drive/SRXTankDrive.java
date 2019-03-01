@@ -4,6 +4,8 @@ import edu.wpi.first.wpilibj.DriverStation;
 import org.team3128.common.drive.routemaker.Routemaker;
 import org.team3128.common.drive.routemaker.ProfilePoint;
 import org.team3128.common.drive.routemaker.Waypoint;
+import org.team3128.common.hardware.limelight.Limelight;
+import org.team3128.common.hardware.limelight.LimelightData;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
@@ -1072,7 +1074,77 @@ private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCirc
 		}
 		
 	}
-	
+
+	public class CmdDynamicAdjust extends Command {
+		double HOR_CUT_OFF = 1;
+		double Z_CUT_OFF = 3;
+		Gyro gyro;
+		
+		PIDConstants offsetPID;
+		Limelight limelight;
+		LimelightData data;
+
+		private double lastTime;
+		private double lastError;
+
+		double currentPL;
+		double currentPR;
+		double horizOffset;
+		/**
+		 * 
+		 * @param gyro
+		 * @param limelight
+		 * @param initPower
+		 * @param offsetPID
+		 * @param timeoutMs
+		 */
+		public CmdDynamicAdjust(Gyro gyro, Limelight limelight, double initPower, PIDConstants offsetPID, int timeoutMs) {
+			super(timeoutMs / 1000.0);
+			this.gyro = gyro;
+			this.limelight = limelight;
+			this.currentPL = initPower;
+			this.currentPR = initPower;
+			this.offsetPID = offsetPID;
+		}
+		
+		@Override
+		protected void initialize() {
+			rightMotors.set(ControlMode.PercentOutput, currentPR);
+			leftMotors.set(ControlMode.PercentOutput, currentPL);
+			data = limelight.getValues(5);
+			Log.info("CmdDynamicAdjust", String.valueOf(data.tx()));
+			this.lastTime = RobotController.getFPGATime();
+			this.lastError = data.tx();
+			gyro.setAngle(0);
+		}
+		
+		@Override
+		protected boolean isFinished() {
+			data = limelight.getValues(5);
+			currentPR += (0.5*offsetPID.kP * data.tx()) + (offsetPID.kD * ((data.tx() - this.lastError) * 1000000 / (RobotController.getFPGATime() - this.lastTime)));
+			currentPL -= (0.5*offsetPID.kP * data.tx()) + (offsetPID.kD * ((data.tx() - this.lastError) * 1000000 / (RobotController.getFPGATime() - this.lastTime)));
+			Log.info("CmdDynamicAdjust: PR", String.valueOf(currentPR));
+			Log.info("CmdDynamicAdjust: PL", String.valueOf(currentPL));
+			rightMotors.set(ControlMode.PercentOutput, currentPR);
+			leftMotors.set(ControlMode.PercentOutput, currentPL);
+
+			this.lastTime = RobotController.getFPGATime();
+			this.lastError = data.tx();
+			if(isTimedOut()){
+				Log.info("CmdDynamicAdjust", "TIMED OUT");
+			}
+			if(data.tx() == 0){
+				Log.info("CmdDynamicAdjust", "HIT 0");
+			}
+			return isTimedOut();
+		}
+		
+		@Override
+		protected void end() {
+			stopMovement();
+		}
+		
+	}
 	/**
 	* Wrapper object to hold all needed values to fit wheelbase to radius.
 	*/

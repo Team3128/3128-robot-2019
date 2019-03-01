@@ -220,6 +220,7 @@ public class MainPrebot extends NarwhalRobot {
         NarwhalDashboard.addAuto("Routemaker Test", new CmdRoutemakerTest());
         // NarwhalDashboard.addAuto("Heading Then Arc Turn", new CmdHeadingThenArc(limelight));
         NarwhalDashboard.addAuto("Fancy Wheel Base Calibration", new CmdFancyCalibrateWheelBase(gyro));
+        NarwhalDashboard.addAuto("CmdDynamicAdjsut", new CmdDynamicAdjustTest(gyro, limelight));
         // previous speeds that were used were 2000, 4000 (arbitrarily picked)
     }
 
