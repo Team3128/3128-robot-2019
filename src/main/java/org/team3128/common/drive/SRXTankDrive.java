@@ -1079,8 +1079,7 @@ public class SRXTankDrive implements ITankDrive {
 		 * @param offsetPID
 		 * @param timeoutMs
 		 */
-		public CmdTargetAlignSimple(Gyro gyro, Limelight limelight, double feedForwardPower, PIDConstants offsetPID,
-				int timeoutMs) {
+		public CmdTargetAlignSimple(Gyro gyro, Limelight limelight, double feedForwardPower, PIDConstants offsetPID, int timeoutMs) {
 			super(timeoutMs / 1000.0);
 
 			this.feedForwardPower = feedForwardPower;

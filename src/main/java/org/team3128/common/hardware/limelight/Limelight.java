@@ -43,6 +43,23 @@ public class Limelight
         ndeltay = calcValsTable.getEntry("deltay");
     }
 
+    public double getValue(String key, int numSamples){
+        double runningTotal = 0;
+        int count = 0;
+
+        while (count <= numSamples) {
+            if (hasValidTarget()) {
+                runningTotal += limelightTable.getEntry(key).getDouble(0.0);
+                count += 1;
+            }
+        }
+
+        return runningTotal/numSamples;
+    }
+    public boolean hasValidTarget(){
+        return limelightTable.getEntry("tv").getDouble(0.0) > 0.99;
+    }
+
     public LimelightData getValues(int numSamples) {
         LimelightData data = new LimelightData();
         double runningTotal;
