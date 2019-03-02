@@ -26,12 +26,12 @@ public class MainWallacePractice extends MainGromit {
         shiftDownSpeed = -1;
 
         driveInvertCallback = () -> {
-            leftDriveLeader.setInverted(true);
-            leftDriveFollower.setInverted(true);
+            leftDriveLeader.setInverted(false);
+            leftDriveFollower.setInverted(false);
             leftDriveLeader.setSensorPhase(true);
 
-            rightDriveLeader.setInverted(true);
-            rightDriveFollower.setInverted(true);
+            rightDriveLeader.setInverted(false);
+            rightDriveFollower.setInverted(false);
             rightDriveLeader.setSensorPhase(true);
         };
 
