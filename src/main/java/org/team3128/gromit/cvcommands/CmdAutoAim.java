@@ -30,7 +30,8 @@ public class CmdAutoAim extends Command {
             case FEEDBACK:
                 // TODO: Copy the SRXTankDrive FF&PID stuff here
 
-                // TODO: Move to
+                // TODO: Move to BLIND when tv reads 1 <TODO: determine what this number this actually is> times AND
+                // the last calculated distance is less than <TODO: determine what
                 break;
 
             case BLIND:
