@@ -455,7 +455,7 @@ public class MainGromit extends NarwhalRobot{
 					
 					break;
 				case 0:
-					liftIntake.setState(LiftIntakeState.DEMOGORGON_HOLDING);
+					liftIntake.setState(LiftIntakeState.CARGO_HOLDING);
 
 					break;
 				default:
@@ -564,7 +564,7 @@ public class MainGromit extends NarwhalRobot{
 					liftIntake.setState(LiftIntakeState.CARGO_INTAKE);
 					break;
                 default:
-					liftIntake.setState(LiftIntakeState.DEMOGORGON_RELEASED);
+					liftIntake.setState(LiftIntakeState.CARGO_HOLDING);
 					break;
             }
 		});
@@ -637,7 +637,7 @@ public class MainGromit extends NarwhalRobot{
 	}
 
 	public GameElement getCurrentGameElement() {
-		if (liftIntake.currentState == LiftIntakeState.CARGO_INTAKE || liftIntake.getCargoBumper() || liftIntake.bumped) {
+		if (liftIntake.currentState == LiftIntakeState.CARGO_INTAKE || liftIntake.currentState == LiftIntakeState.CARGO_HOLDING) {
 			return GameElement.CARGO;
 		}
 		else {

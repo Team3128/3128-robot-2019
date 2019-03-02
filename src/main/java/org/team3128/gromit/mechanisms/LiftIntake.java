@@ -21,24 +21,20 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class LiftIntake {
     public enum LiftIntakeState
 	{
-		CARGO_INTAKE(-1.0, true, "Cargo Intake"),
-		CARGO_OUTTAKE(1.0, true, "Cargo Outtake"),
-		
-		DEMOGORGON_RELEASED(0.0, false, "Demogorgon Released"),
-        DEMOGORGON_HOLDING(0.0, true, "Demogorgon Holding");
+		CARGO_INTAKE(true, "Cargo Intake"),
+		CARGO_OUTTAKE(true, "Cargo Outtake"),
 
-		private double rollerPower;
+		CARGO_HOLDING(true, "Cargo Holding"),
+		
+		DEMOGORGON_RELEASED(false, "Demogorgon Released"),
+        DEMOGORGON_HOLDING(true, "Demogorgon Holding");
+
 		private boolean demogorgonPistonState;
 		private String name;
 		
-		private LiftIntakeState(double rollerPower, boolean demogorgonPistonState, String name) {
-			this.rollerPower = rollerPower;
+		private LiftIntakeState(boolean demogorgonPistonState, String name) {
 			this.demogorgonPistonState = demogorgonPistonState;
 			this.name = name;
-		}
-
-		public double getRollerPower() {
-			return rollerPower;
 		}
 
 		public boolean getDemogorgonPistonState() {
@@ -94,10 +90,10 @@ public class LiftIntake {
 							this.setIntakePower(-0.2);
 						}
 						else {
-							this.setIntakePower(-0.6);
+							this.setIntakePower(-1.0);
 						}
 					}
-					else if (this.currentState == LiftIntakeState.DEMOGORGON_HOLDING && bumped) {
+					else if (this.currentState == LiftIntakeState.CARGO_HOLDING && bumped) {
 						if (this.getCargoBumper()) {
 							this.setIntakePower(-0.2);
 						}
@@ -108,23 +104,17 @@ public class LiftIntake {
 				}
 				else {
 					if (this.newState == LiftIntakeState.CARGO_INTAKE) {
-						this.setIntakePower(this.newState.getRollerPower());
+						this.setIntakePower(-1.0);
+
 						bumped = false;
 					}
 					else if (this.newState == LiftIntakeState.CARGO_OUTTAKE) {
-						this.setIntakePower(this.newState.rollerPower);
+						this.setIntakePower(1.0);
+
 						bumped = false;
 					}
-					else if (this.newState == LiftIntakeState.DEMOGORGON_HOLDING && bumped) {
-						if (this.getCargoBumper()) {
-							this.setIntakePower(-0.2);
-						}
-						else {
-							this.setIntakePower(-0.6);
-						}
-					}
 					else {
-						this.setIntakePower(this.newState.rollerPower);
+						this.setIntakePower(0.0);
 					}
 
 					this.currentState = this.newState;
@@ -145,7 +135,7 @@ public class LiftIntake {
 	
 	public void setState(LiftIntakeState newState) {
 		if (this.currentState != newState) {			
-			if(newState.getDemogorgonPistonState()) {
+			if (newState.getDemogorgonPistonState()) {
 				demogorgonPiston.setPistonOn();
 			}
 			else {
