@@ -53,8 +53,7 @@ public class CmdAutoAim extends Command {
 
     private AutoAimState aimState = AutoAimState.SEARCHING;
 
-    public CmdAutoAim(Gyro gyro, Limelight limelight, PIDConstants offsetPID, int timeoutMs) {
-        super(timeoutMs/1000);
+    public CmdAutoAim(Gyro gyro, Limelight limelight, PIDConstants offsetPID) {
         this.gyro = gyro;
         this.limelight = limelight;
         this.offsetPID = offsetPID;
