@@ -1049,7 +1049,7 @@ public class SRXTankDrive implements ITankDrive {
 
 	}
 
-	public class CmdDynamicAdjust extends Command {
+	public class CmdTargetAlignSimple extends Command {
 		Gyro gyro;
 
 		PIDConstants offsetPID;
@@ -1071,7 +1071,7 @@ public class SRXTankDrive implements ITankDrive {
 		double horizOffset;
 
 		/**
-		 * Constructor for the CmdDynamicAdjust command.
+		 * Constructor for the CmdTargetAlignSimple command.
 		 * 
 		 * @param gyro
 		 * @param limelight
@@ -1079,7 +1079,7 @@ public class SRXTankDrive implements ITankDrive {
 		 * @param offsetPID
 		 * @param timeoutMs
 		 */
-		public CmdDynamicAdjust(Gyro gyro, Limelight limelight, double feedForwardPower, PIDConstants offsetPID,
+		public CmdTargetAlignSimple(Gyro gyro, Limelight limelight, double feedForwardPower, PIDConstants offsetPID,
 				int timeoutMs) {
 			super(timeoutMs / 1000.0);
 
@@ -1098,6 +1098,7 @@ public class SRXTankDrive implements ITankDrive {
 
 			data = limelight.getValues(5);
 			Log.info("CmdDynamicAdjust", String.valueOf(data.tx()));
+
 			this.previousTime = RobotController.getFPGATime();
 			this.previousError = data.tx();
 			gyro.setAngle(0);
@@ -1166,10 +1167,10 @@ public class SRXTankDrive implements ITankDrive {
 
 			//debug
 			if(isTimedOut()) {
-				Log.info("CmdDynamicAdjust", "TIMED OUT");
+				Log.info("CmdTargetAlignSimple", "Timed out.");
 			}
 			if(data.tx() == 0) {
-				Log.info("CmdDynamicAdjust", "HIT 0");
+				Log.info("CmdTargetAlignSimple", "tx = 0");
 			}
 			
 

@@ -18,6 +18,6 @@ public class CmdDynamicAdjustTest extends CommandGroup {
     public CmdDynamicAdjustTest(Gyro gyro, Limelight limelight) {
         SRXTankDrive drive = SRXTankDrive.getInstance();
         PIDConstants offsetPID = new PIDConstants(0, 0.0005, 0, 0.00009);
-        addSequential(drive.new CmdDynamicAdjust(gyro, limelight, 0.3, offsetPID, 10000));
+        addSequential(drive.new CmdTargetAlignSimple(gyro, limelight, 0.3, offsetPID, 10000));
     }
 }

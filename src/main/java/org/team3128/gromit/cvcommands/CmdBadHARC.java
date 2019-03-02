@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 import org.team3128.common.util.Log;
 
 
-public class CmdSimpleCVServo extends CommandGroup {
+public class CmdBadHARC extends CommandGroup {
     SRXTankDrive drive;
 
     private class NumberSet {
@@ -23,7 +23,7 @@ public class CmdSimpleCVServo extends CommandGroup {
     Direction inPlaceDir, arcDir;
     NumberSet ns;
 
-    public CmdSimpleCVServo(Limelight limelight) {
+    public CmdBadHARC(Limelight limelight) {
         SRXTankDrive drive = SRXTankDrive.getInstance();
         ns = new NumberSet();
 

@@ -8,7 +8,7 @@ import org.team3128.prebot.autonomous.*;
 
 import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.SRXTankDrive;
-import org.team3128.common.drive.SRXTankDrive.CmdDynamicAdjust;
+import org.team3128.common.drive.SRXTankDrive.CmdTargetAlignSimple;
 import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplier;
 import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplierSet;
 import org.team3128.common.drive.SRXTankDrive.Wheelbase;
@@ -71,7 +71,7 @@ public class MainPrebot extends NarwhalRobot {
     public DriveCalibrationUtility dcu;
     public Wheelbase calculatedWheelbase;
 
-    public CmdDynamicAdjust alignCommand;
+    public CmdTargetAlignSimple alignCommand;
 
     public Limelight limelight = new Limelight(0 * Length.in, 26 * Length.in, 6.15 * Length.in, 28.5 * Length.in, 14.5 * Length.in);
 	@Override
@@ -266,7 +266,7 @@ public class MainPrebot extends NarwhalRobot {
 		lm.addButtonDownListener("AlignToTarget", () -> { 
             offsetPID = new PIDConstants(0, 0.005, 0.0, 0);
 
-            alignCommand = tankDrive.new CmdDynamicAdjust(gyro, limelight, 0.3, offsetPID, 10000);
+            alignCommand = tankDrive.new CmdTargetAlignSimple(gyro, limelight, 0.3, offsetPID, 10000);
             alignCommand.start();
         });
         lm.addButtonUpListener("AlignToTarget", () -> {

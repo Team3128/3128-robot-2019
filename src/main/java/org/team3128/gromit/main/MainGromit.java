@@ -21,7 +21,7 @@ import org.team3128.common.util.Log;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
-import org.team3128.gromit.cvcommands.CmdSimpleCVServo;
+import org.team3128.gromit.cvcommands.CmdBadHARC;
 import org.team3128.gromit.mechanisms.Climber;
 import org.team3128.gromit.mechanisms.FourBar;
 // import org.team3128.gromit.mechanisms.GroundIntake;
@@ -132,6 +132,8 @@ public class MainGromit extends NarwhalRobot{
 
 	// CV!!!!!!
 	public Limelight limelight;
+
+	public boolean runningCommand = false;
 
 	// 4200
 	public double maxLiftSpeed = 0;
@@ -398,11 +400,11 @@ public class MainGromit extends NarwhalRobot{
 		});
 		NarwhalDashboard.addButton("simplecv", (boolean down) -> {
 			if (down) {
-				new CmdSimpleCVServo(limelight).start();
+				new CmdBadHARC(limelight).start();
 			}
 		});
 
-		//dcu.initNarwhalDashboard();
+		dcu.initNarwhalDashboard();
     }
 
     @Override
@@ -415,11 +417,13 @@ public class MainGromit extends NarwhalRobot{
 		listenerRight.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");
 		listenerRight.addMultiListener(() ->
 		{
-			double vert =     -1.0 * listenerRight.getAxis("MoveForwards");
-			double horiz =    -0.8 * listenerRight.getAxis("MoveTurn");
-			double throttle = -1.0 * listenerRight.getAxis("Throttle");
-
-			drive.arcadeDrive(vert, horiz, throttle, true);
+			if (!runningCommand) {
+				double vert =     -1.0 * listenerRight.getAxis("MoveForwards");
+				double horiz =    -0.8 * listenerRight.getAxis("MoveTurn");
+				double throttle = -1.0 * listenerRight.getAxis("Throttle");
+	
+				drive.arcadeDrive(vert, horiz, throttle, true);
+			}
 		}, "MoveForwards", "MoveTurn", "Throttle");
 
 		listenerRight.nameControl(new Button(2), "Gearshift");
