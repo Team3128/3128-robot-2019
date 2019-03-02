@@ -5,8 +5,11 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import org.team3128.prebot.autonomous.*;
+import org.team3128.prebot.util.PrebotDeepSpaceConstants;
+import org.team3128.gromit.cvcommands.*;
 
 import org.team3128.common.NarwhalRobot;
+import org.team3128.common.drive.DriveCommandRunning;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.drive.SRXTankDrive.CmdTargetAlignSimple;
 import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplier;
@@ -19,6 +22,7 @@ import org.team3128.common.hardware.navigation.NavX;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
+import org.team3128.common.vision.CmdAutoAim;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
@@ -71,7 +75,8 @@ public class MainPrebot extends NarwhalRobot {
     public DriveCalibrationUtility dcu;
     public Wheelbase calculatedWheelbase;
 
-    public CmdTargetAlignSimple alignCommand;
+    public CmdAutoAim alignCommand;
+    private DriveCommandRunning driveCmdRunning;
 
     public Limelight limelight = new Limelight(0 * Length.in, 26 * Length.in, 6.15 * Length.in, 28.5 * Length.in, 14.5 * Length.in);
 	@Override
@@ -145,61 +150,12 @@ public class MainPrebot extends NarwhalRobot {
 
         // DCU
 		DriveCalibrationUtility.initialize(gyro);
-		dcu = DriveCalibrationUtility.getInstance();
+        dcu = DriveCalibrationUtility.getInstance();
+        
+        offsetPID = new PIDConstants(0, 0.0175, 0.0, 0.001);
+        driveCmdRunning = new DriveCommandRunning();
 
         dcu.initNarwhalDashboard();
-
-        int timeMs = 4000;
-            /*
-        NarwhalDashboard.addButton("g_10_08", (boolean down) -> {
-            if (down) {
-                Log.info("cmdfeedfrwrd", "triggered");
-                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,ffpSetAvg,gyro,1.0,0.8,timeMs).start();
-            }
-        });
-        NarwhalDashboard.addButton("g_10_06", (boolean down) -> {
-            if (down) {
-                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper, gyro,1.0,0.6,timeMs).start();
-            }
-        });
-        NarwhalDashboard.addButton("g_10_04", (boolean down) -> {
-            if (down) {
-                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,1.0,0.4,timeMs).start();
-            }
-        });
-        NarwhalDashboard.addButton("g_10_02", (boolean down) -> {
-            if (down) {
-                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,1.0,0.2,timeMs).start();
-            }
-        });
-        NarwhalDashboard.addButton("g_08_10", (boolean down) -> {
-            if (down) {
-                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,0.8,1.0,timeMs).start();
-            }
-        });
-        NarwhalDashboard.addButton("g_06_10", (boolean down) -> {
-            if (down) {
-                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,0.6,1.0,timeMs).start();
-            }
-        });
-        NarwhalDashboard.addButton("g_04_10", (boolean down) -> {
-            if (down) {
-                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,0.4,1.0,timeMs).start();
-            }
-        });
-        NarwhalDashboard.addButton("g_02_10", (boolean down) -> {
-            if (down) {
-                tankDrive.new CmdGetFeedForwardPowerMultiplier(wrapper,gyro,0.2,1.0,timeMs).start();
-            }
-        });
-
-        NarwhalDashboard.addButton("flushCSV", (boolean down) -> {
-            if (down) {
-                System.out.println(wrapper.getCSV());
-            }
-        });
-        */
-        
     }
     
     @Override
@@ -236,12 +192,15 @@ public class MainPrebot extends NarwhalRobot {
 		lm.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");		
 
         lm.addMultiListener(() -> {
-			tankDrive.arcadeDrive(
-                -0.7 * RobotMath.thresh(lm.getAxis("MoveTurn"), 0.1),
-                -1.0 * RobotMath.thresh(lm.getAxis("MoveForwards"), 0.1),
-                -1.0 * lm.getAxis("Throttle"),
-                 true
-            );		
+            if (!driveCmdRunning.isRunning) {
+                tankDrive.arcadeDrive(
+                    -0.7 * RobotMath.thresh(lm.getAxis("MoveTurn"), 0.1),
+                    -1.0 * RobotMath.thresh(lm.getAxis("MoveForwards"), 0.1),
+                    -1.0 * lm.getAxis("Throttle"),
+                     true
+                );		
+            }
+			
         }, "MoveTurn", "MoveForwards", "Throttle");
 
         lm.nameControl(new Button(12), "FullSpeed");
@@ -264,9 +223,7 @@ public class MainPrebot extends NarwhalRobot {
 
 		lm.nameControl(ControllerExtreme3D.TRIGGER, "AlignToTarget");
 		lm.addButtonDownListener("AlignToTarget", () -> { 
-            offsetPID = new PIDConstants(0, 0.005, 0.0, 0);
-
-            alignCommand = tankDrive.new CmdTargetAlignSimple(gyro, limelight, 0.3, offsetPID, 10000);
+            alignCommand = new CmdAutoAim(gyro, limelight, offsetPID, driveCmdRunning, PrebotDeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 20.0 * Angle.DEGREES);
             alignCommand.start();
         });
         lm.addButtonUpListener("AlignToTarget", () -> {

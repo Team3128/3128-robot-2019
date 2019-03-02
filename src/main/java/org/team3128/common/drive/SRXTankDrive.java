@@ -285,6 +285,21 @@ public class SRXTankDrive implements ITankDrive {
 		rightMotors.set(ControlMode.PercentOutput, powR);
 	}
 
+	/**
+	 * Drive by providing motor powers for each side.
+	 *
+	 * @param powL the left side power.
+	 * @param powR the right side power.
+	 */
+	public void tankDrive(double powL, double powR, boolean useScalars) {
+		if (useScalars) {
+			powL *= leftSpeedScalar;
+			powR *= rightSpeedScalar;
+		}
+
+		tankDrive(powL, powR);
+	}
+
 	public void clearEncoders() {
 		leftMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
 		rightMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
@@ -466,25 +481,25 @@ public class SRXTankDrive implements ITankDrive {
 		EITHER,
 	}
 
-	double ccwLeftCutoff = 138;
-	double cwRightCutoff = 138;
+	// double ccwLeftCutoff = 138;
+	// double cwRightCutoff = 138;
 
-	double ccwRightCutoff = 170;
-	double cwLeftCutoff = 170;
+	// double ccwRightCutoff = 170;
+	// double cwLeftCutoff = 170;
 
-	double leftA = 6;
-	double leftB = 148;
-	double leftC = 0.291;
+	// double leftA = 6;
+	// double leftB = 148;
+	// double leftC = 0.291;
 
-	double leftFFCW = 0.3;
-	double leftFFCCW = 0.291;
+	// double leftFFCW = 0.3;
+	// double leftFFCCW = 0.291;
 
-	double rightA = 6;
-	double rightB = 148;
-	double rightC = 0.28;
+	// double rightA = 6;
+	// double rightB = 148;
+	// double rightC = 0.28;
 
-	double rightFFCCW = 0.35;
-	double rightFFCW = 0.28;
+	// double rightFFCCW = 0.35;
+	// double rightFFCW = 0.28;
 
 	/**
 	 * Command to move each side of the drivetrain a specified distance, using the
@@ -547,27 +562,27 @@ public class SRXTankDrive implements ITankDrive {
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
 			double rightSpeed = (robotMaxSpeed * power * ((useScalars) ? rightSpeedScalar : 1.0));
 
-			double angularVelocity = Math.toDegrees((rightSpeed - leftSpeed) / wheelBase);
+			// double angularVelocity = Math.toDegrees((rightSpeed - leftSpeed) / wheelBase);
 
-			double ffLeft = 12.0 / RobotController.getBatteryVoltage() * leftA / (angularVelocity + leftB) + leftC;
-			if (angularVelocity > ccwLeftCutoff) {
-				ffLeft = leftFFCCW;
-			} else if (angularVelocity < -cwLeftCutoff) {
-				ffLeft = leftFFCW;
-			}
+			// double ffLeft = 12.0 / RobotController.getBatteryVoltage() * leftA / (angularVelocity + leftB) + leftC;
+			// if (angularVelocity > ccwLeftCutoff) {
+			// 	ffLeft = leftFFCCW;
+			// } else if (angularVelocity < -cwLeftCutoff) {
+			// 	ffLeft = leftFFCW;
+			// }
 
-			double ffRight = 12.0 / RobotController.getBatteryVoltage() * rightA / (angularVelocity + rightB) + rightC;
-			if (angularVelocity < -cwRightCutoff) {
-				ffRight = rightFFCW;
-			} else if (angularVelocity > ccwRightCutoff) {
-				ffRight = rightFFCCW;
-			}
+			// double ffRight = 12.0 / RobotController.getBatteryVoltage() * rightA / (angularVelocity + rightB) + rightC;
+			// if (angularVelocity < -cwRightCutoff) {
+			// 	ffRight = rightFFCW;
+			// } else if (angularVelocity > ccwRightCutoff) {
+			// 	ffRight = rightFFCCW;
+			// }
 
-			leftMotors.config_kF(0, ffLeft);
-			leftMotors.config_kP(0, 0.05);
+			// leftMotors.config_kF(0, ffLeft);
+			// leftMotors.config_kP(0, 0.05);
 
-			rightMotors.config_kF(0, ffRight);
-			rightMotors.config_kP(0, 0.05);
+			// rightMotors.config_kF(0, ffRight);
+			// rightMotors.config_kP(0, 0.05);
 
 			if (leftAngle == 0) {
 				leftSpeed = 0;

@@ -33,10 +33,10 @@ public class CmdAutOptimusPrime extends Command {
     protected void initialize() {
         currentTY = limelight.getValue("ty", 1);
         if(gameElement == GameElement.CARGO){
-            tyThreshold = DeepSpaceConstants.UPPER_TARGET_TY_THRESHOLD;
+            tyThreshold = DeepSpaceConstants.UPPER_TY_OPTIMUS_THRESHOLD;
         }
         else{
-            tyThreshold = DeepSpaceConstants.LOWER_TARGET_TY_THRESHOLD;
+            tyThreshold = DeepSpaceConstants.LOWER_TY_OPTIMUS_THRESHOLD;
         }
         
         drive = SRXTankDrive.getInstance();
