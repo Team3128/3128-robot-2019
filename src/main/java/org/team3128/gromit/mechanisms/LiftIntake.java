@@ -7,9 +7,7 @@ import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.util.Log;
 
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * Control system for the mechanism controlling mechanisms 

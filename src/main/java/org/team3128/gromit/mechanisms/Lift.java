@@ -118,10 +118,7 @@ public class Lift
 
 	public boolean override = false;
 
-	private boolean cmdControlled = false;
-
-	private double lastHeight;
-
+	public boolean cmdControlled = false;
 
 	private static Lift instance = null;
 	public static Lift getInstance() {
@@ -242,7 +239,6 @@ public class Lift
 				setControlMode(LiftControlMode.POSITION_DOWN);
 			}
 	
-			lastHeight = getCurrentHeight();
 			Log.info("Lift", "Setting height to " + heightState.targetHeight + " cm.");
 			liftMotor.set(ControlMode.MotionMagic, heightState.targetHeight * ratio);
 		}

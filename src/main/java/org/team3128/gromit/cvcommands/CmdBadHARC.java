@@ -5,7 +5,6 @@ import org.team3128.common.util.units.Length;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.limelight.LimelightData;
 import org.team3128.common.util.RobotMath;
-import org.team3128.common.autonomous.primitives.CmdLambda;
 import org.team3128.common.drive.SRXTankDrive;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;

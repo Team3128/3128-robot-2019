@@ -59,7 +59,7 @@ public class CmdWheelbaseTest extends CommandGroup {
             wheelbase2 = 2*(Rleft - R);
             Log.info("round: ", Integer.toString(i));
             Log.info("wb1", Double.toString(wheelbase1));
-            Log.info("wb2", Double.toString(wheelbase1));
+            Log.info("wb2", Double.toString(wheelbase2));
         }
         //addSequential(drive.new CmdMoveForward(small_forward, 10000, false));
 

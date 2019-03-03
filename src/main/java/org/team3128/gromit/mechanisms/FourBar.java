@@ -142,7 +142,6 @@ public class FourBar
 
 			double kP;
 			double kD;
-			double kPitch;
 
 			while (true)
 			{

@@ -1,10 +1,6 @@
 package org.team3128.gromit.cvcommands;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-
 import org.team3128.common.drive.SRXTankDrive;
-import org.team3128.common.drive.TankDrive;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.util.Log;
 import org.team3128.gromit.main.MainGromit.GameElement;
@@ -13,7 +9,6 @@ import org.team3128.gromit.mechanisms.OptimusPrime;
 import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
 import org.team3128.gromit.util.DeepSpaceConstants;
 
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
 
 public class CmdAutOptimusPrime extends Command {

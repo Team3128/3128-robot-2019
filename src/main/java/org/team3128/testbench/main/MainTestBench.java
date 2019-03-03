@@ -52,7 +52,7 @@ public class MainTestBench extends NarwhalRobot {
     String currentLine;
     String newLine;
 
-    private int errorCase = 0;
+    // private int errorCase = 0;
     private int counter = 0;
 
     public double camAngle = 24.5;

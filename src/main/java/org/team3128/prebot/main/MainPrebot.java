@@ -6,14 +6,10 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import org.team3128.prebot.autonomous.*;
 import org.team3128.prebot.util.PrebotDeepSpaceConstants;
-import org.team3128.gromit.cvcommands.*;
 
 import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.DriveCommandRunning;
 import org.team3128.common.drive.SRXTankDrive;
-import org.team3128.common.drive.SRXTankDrive.CmdTargetAlignSimple;
-import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplier;
-import org.team3128.common.drive.SRXTankDrive.FeedForwardPowerMultiplierSet;
 import org.team3128.common.drive.SRXTankDrive.Wheelbase;
 import org.team3128.common.drive.calibrationutility.DriveCalibrationUtility;
 import org.team3128.common.hardware.limelight.Limelight;
@@ -26,20 +22,15 @@ import org.team3128.common.vision.CmdAutoAim;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
-import org.team3128.common.util.enums.Direction;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.listener.controltypes.Button;
 
-import org.team3128.common.hardware.limelight.*;
-
-import com.kauailabs.navx.frc.AHRS;
-
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
-import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import edu.wpi.first.networktables.NetworkTable;
@@ -253,6 +244,9 @@ public class MainPrebot extends NarwhalRobot {
 
         SmartDashboard.putNumber("Left Position", leftDriveFront.getSelectedSensorPosition());
         SmartDashboard.putNumber("Right Position", rightDriveFront.getSelectedSensorPosition());
+
+        NarwhalDashboard.put("time", DriverStation.getInstance().getMatchTime());
+		NarwhalDashboard.put("voltage", RobotController.getBatteryVoltage());
                 
         dcu.tickNarwhalDashboard();
     }

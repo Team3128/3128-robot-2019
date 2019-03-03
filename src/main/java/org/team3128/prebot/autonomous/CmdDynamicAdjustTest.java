@@ -1,7 +1,6 @@
 package org.team3128.prebot.autonomous;
 
 import org.team3128.common.util.datatypes.PIDConstants;
-import org.team3128.common.util.units.Length;
 
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.hardware.limelight.Limelight;

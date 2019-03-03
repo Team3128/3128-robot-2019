@@ -32,8 +32,6 @@ public class Forklift
 
 	public double error, currentPosition;
 
-	private IntakeState intakeState;
-
 	public enum ForkliftState
 	{
 		GROUND(0 * Length.ft),
@@ -264,7 +262,7 @@ public class Forklift
 		@Override
 		protected boolean isFinished()
 		{
-			return true || isTimedOut();
+			return done || isTimedOut();
 		}
 	}
 

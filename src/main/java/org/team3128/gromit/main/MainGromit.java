@@ -7,7 +7,6 @@ import org.team3128.common.drive.calibrationutility.DriveCalibrationUtility;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
-import org.team3128.common.hardware.navigation.AnalogDevicesGyro;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.hardware.navigation.NavX;
 import org.team3128.common.listener.ListenerManager;
@@ -44,7 +43,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
-
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -678,6 +677,8 @@ public class MainGromit extends NarwhalRobot{
 		SmartDashboard.putNumber("Left Position (nu)", leftDriveLeader.getSelectedSensorPosition());
 		SmartDashboard.putNumber("Right Position (nu)", rightDriveLeader.getSelectedSensorPosition());
 
+		NarwhalDashboard.put("time", DriverStation.getInstance().getMatchTime());
+		NarwhalDashboard.put("voltage", RobotController.getBatteryVoltage());
 
 		NarwhalDashboard.put("scoring_target", currentScoreTarget.getName());
 		NarwhalDashboard.put("game_element", currentGameElement.getName());
