@@ -47,8 +47,7 @@ public class MainPrebot extends NarwhalRobot {
 
     public Gyro gyro;
 
-    public PIDConstants leftMotionProfilePID, leftVelocityPID;
-    public PIDConstants rightMotionProfilePID, rightVelocityPID;
+    public PIDConstants leftMotionProfilePID, rightMotionProfilePID;
 
     public double speedScalar;
 
@@ -139,12 +138,14 @@ public class MainPrebot extends NarwhalRobot {
 		lm = new ListenerManager(joystick);
         addListenerManager(lm);
 
-        // DCU
-		DriveCalibrationUtility.initialize(gyro);
-        dcu = DriveCalibrationUtility.getInstance();
-        
+        // Vision
         offsetPID = new PIDConstants(0, 0.0175, 0.0, 0.001);
         driveCmdRunning = new DriveCommandRunning();
+
+        // DCU
+		DriveCalibrationUtility.initialize(gyro, offsetPID);
+        dcu = DriveCalibrationUtility.getInstance();
+        
 
         dcu.initNarwhalDashboard();
     }
