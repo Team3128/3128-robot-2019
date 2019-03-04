@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.RobotBase;
 
 public class MainWallacePractice extends MainGromit {
     Piston placeholder;    
-
     @Override
     protected void constructHardware() {
         wheelbase = 37 * Length.in;
@@ -26,13 +25,13 @@ public class MainWallacePractice extends MainGromit {
         shiftDownSpeed = -1;
 
         driveInvertCallback = () -> {
+            leftDriveLeader.setSensorPhase(true);
             leftDriveLeader.setInverted(false);
             leftDriveFollower.setInverted(false);
-            leftDriveLeader.setSensorPhase(true);
 
+            rightDriveLeader.setSensorPhase(true);
             rightDriveLeader.setInverted(false);
             rightDriveFollower.setInverted(false);
-            rightDriveLeader.setSensorPhase(true);
         };
 
         gearshiftPiston = new Piston(2, 5);

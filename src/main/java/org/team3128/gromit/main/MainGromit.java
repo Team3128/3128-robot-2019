@@ -20,6 +20,7 @@ import org.team3128.common.util.Log;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
+import org.team3128.gromit.autonomous.CmdTestDriveTrain;
 import org.team3128.gromit.cvcommands.CmdBadHARC;
 import org.team3128.gromit.mechanisms.Climber;
 import org.team3128.gromit.mechanisms.FourBar;
@@ -213,7 +214,7 @@ public class MainGromit extends NarwhalRobot{
 
 		// DCU
 		//DriveCalibrationUtility.initialize(gyro);
-		dcu = DriveCalibrationUtility.getInstance();
+		//dcu = DriveCalibrationUtility.getInstance();
 
 		compressor = new Compressor();
 
@@ -403,7 +404,7 @@ public class MainGromit extends NarwhalRobot{
 			}
 		});
 
-		dcu.initNarwhalDashboard();
+		//dcu.initNarwhalDashboard();
     }
 
     @Override
@@ -613,6 +614,7 @@ public class MainGromit extends NarwhalRobot{
 	protected void constructAutoPrograms()
 	{
 		NarwhalDashboard.addAuto("90 In Place", drive.new CmdInPlaceTurn(90, Direction.RIGHT, 1.0, 5000));
+		//NarwhalDashboard.addAuto("Test Drive Train", new CmdTestDriveTrain());
 	}
 
 	@Override
