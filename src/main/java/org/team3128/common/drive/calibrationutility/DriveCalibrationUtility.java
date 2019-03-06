@@ -57,9 +57,9 @@ public class DriveCalibrationUtility {
             }
         });
 
-        NarwhalDashboard.put("vision_p", visionPID.kP);
-		NarwhalDashboard.put("vision_i", visionPID.kI);
-        NarwhalDashboard.put("vision_d", visionPID.kD);
+        //NarwhalDashboard.put("vision_p", visionPID.kP);
+		//NarwhalDashboard.put("vision_i", visionPID.kI);
+        //NarwhalDashboard.put("vision_d", visionPID.kD);
         
         NarwhalDashboard.addNumDataListener("visionPID", (double constants[]) ->{
             visionPID.kP = constants[0];

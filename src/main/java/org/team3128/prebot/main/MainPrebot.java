@@ -139,7 +139,7 @@ public class MainPrebot extends NarwhalRobot {
         addListenerManager(lm);
 
         // Vision
-        offsetPID = new PIDConstants(0, 0.0175, 0.0, 0.001);
+        offsetPID = new PIDConstants(0, 0.02, 0.0, 0.00001);
         driveCmdRunning = new DriveCommandRunning();
 
         // DCU

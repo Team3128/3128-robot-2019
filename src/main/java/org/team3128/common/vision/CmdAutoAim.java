@@ -22,8 +22,8 @@ public class CmdAutoAim extends Command {
     PIDConstants offsetPID;
     Limelight limelight;
 
-    private final double FEED_FORWARD_POWER = 0.6;
-    private final double MINIMUM_POWER = 0.2;
+    private final double FEED_FORWARD_POWER = 0.7;
+    private final double MINIMUM_POWER = 0.3;
 
     private final double VELOCITY_THRESHOLD = 100;
     private final int VELOCITY_PLATEAU_COUNT = 10;
