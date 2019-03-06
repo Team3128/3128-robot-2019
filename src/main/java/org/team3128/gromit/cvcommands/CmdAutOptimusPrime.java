@@ -20,8 +20,8 @@ public class CmdAutOptimusPrime extends Command {
     double currentTY, tyThreshold;
     Limelight limelight;
     
-    public CmdAutOptimusPrime(GameElement gameElement, ScoreTarget scoreTarget) {
-        
+    public CmdAutOptimusPrime(Limelight limelight) {
+     this.limelight = limelight;   
     }
     
     @Override

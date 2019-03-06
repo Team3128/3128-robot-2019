@@ -28,8 +28,9 @@ public class MainWallacePractice extends MainGromit {
             leftDriveLeader.setSensorPhase(true);
             leftDriveLeader.setInverted(false);
             leftDriveFollower.setInverted(false);
+            
 
-            rightDriveLeader.setSensorPhase(true);
+            rightDriveLeader.setSensorPhase(false);
             rightDriveLeader.setInverted(false);
             rightDriveFollower.setInverted(false);
         };

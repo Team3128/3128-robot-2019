@@ -228,8 +228,8 @@ public class MainGromit extends NarwhalRobot{
         driveCmdRunning = new DriveCommandRunning();
 
         // DCU
-		DriveCalibrationUtility.initialize(gyro, offsetPID);
-        dcu = DriveCalibrationUtility.getInstance();
+		//DriveCalibrationUtility.initialize(gyro, offsetPID);
+		//dcu = DriveCalibrationUtility.getInstance();
 
 		compressor = new Compressor();
 
@@ -434,7 +434,8 @@ public class MainGromit extends NarwhalRobot{
 		{
 			if (!runningCommand) {
 				double vert =     -1.0 * listenerRight.getAxis("MoveForwards");
-				double horiz =    -0.8 * listenerRight.getAxis("MoveTurn");
+				//DEBUG: IF ANYTHING GOES WRONG, CHANGE TO -0.8 (ADHAM AND JUDE REMEMBER)
+				double horiz =    0.8 * listenerRight.getAxis("MoveTurn");
 				double throttle = -1.0 * listenerRight.getAxis("Throttle");
 	
 				drive.arcadeDrive(vert, horiz, throttle, true);
@@ -538,10 +539,10 @@ public class MainGromit extends NarwhalRobot{
 			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreTarget));
 		});
 
-		listenerRight.nameControl(new Button(4), "SetHeightSecondary");
-		listenerRight.addButtonDownListener("SetHeightSecondary", () ->
+		listenerRight.nameControl(new Button(4), "Zero");
+		listenerRight.addButtonDownListener("Zero", () ->
 		{
-			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreTarget));
+			optimusPrime.setState(RobotState.ZERO);
 		});
 
 		// MANUAL CONTROLS AND OVERRIDES
@@ -701,6 +702,6 @@ public class MainGromit extends NarwhalRobot{
 
 		NarwhalDashboard.put("gear", drive.isInHighGear());
 
-		dcu.tickNarwhalDashboard();
+		//dcu.tickNarwhalDashboard();
 	}
 }

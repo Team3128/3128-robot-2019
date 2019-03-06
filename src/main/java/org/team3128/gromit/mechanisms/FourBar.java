@@ -25,6 +25,7 @@ public class FourBar
 	private final double allowableError = 2 * Angle.DEGREES;
 
     public enum FourBarState {
+		ZERO(90*Angle.DEGREES), //DEBUG
 		SHIP_AND_LOADING(-55 * Angle.DEGREES),
 		// HATCH_DROP_SHIP_LOADING(-53 * Angle.DEGREES),
 
