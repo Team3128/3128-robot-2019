@@ -228,8 +228,8 @@ public class MainGromit extends NarwhalRobot{
         driveCmdRunning = new DriveCommandRunning();
 
         // DCU
-		//DriveCalibrationUtility.initialize(gyro, offsetPID);
-		//dcu = DriveCalibrationUtility.getInstance();
+		DriveCalibrationUtility.initialize(gyro, offsetPID);
+		dcu = DriveCalibrationUtility.getInstance();
 
 		compressor = new Compressor();
 
@@ -419,7 +419,7 @@ public class MainGromit extends NarwhalRobot{
 			}
 		});
 
-		//dcu.initNarwhalDashboard();
+		dcu.initNarwhalDashboard();
     }
 
     @Override
@@ -487,6 +487,7 @@ public class MainGromit extends NarwhalRobot{
 		// Optimus Prime Controls
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "AutoPrime");
 		listenerRight.addButtonDownListener("AutoPrime", () -> {
+			optimusPrime.setState(RobotState.VISION);
             alignCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning, offsetPID);
             alignCommand.start();
         });
@@ -644,6 +645,7 @@ public class MainGromit extends NarwhalRobot{
 	@Override
 	protected void autonomousInit() {
 		drive.shiftToLow();
+		optimusPrime.setState(RobotState.REST); //DEBUG
 	}
 
 
@@ -702,6 +704,6 @@ public class MainGromit extends NarwhalRobot{
 
 		NarwhalDashboard.put("gear", drive.isInHighGear());
 
-		//dcu.tickNarwhalDashboard();
+		dcu.tickNarwhalDashboard();
 	}
 }

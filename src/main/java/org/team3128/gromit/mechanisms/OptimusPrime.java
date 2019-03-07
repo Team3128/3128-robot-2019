@@ -25,6 +25,7 @@ public class OptimusPrime {
     public enum RobotState {
         ZERO(LiftHeightState.BASE, FourBarState.ZERO),
         REST(LiftHeightState.BASE, FourBarState.CARGO_HIGH),
+        VISION(LiftHeightState.VISION, FourBarState.HATCH_HIGH),
 
         INTAKE_FLOOR_CARGO(LiftHeightState.INTAKE_FLOOR_CARGO, FourBarState.CARGO_INTAKE),
         

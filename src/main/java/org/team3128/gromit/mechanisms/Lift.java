@@ -26,6 +26,7 @@ public class Lift
 		BASE(0 * Length.ft),
 		//6.3
 		INTAKE_FLOOR_CARGO(7 * Length.in),
+		VISION(12*Length.in),
 
 		LOW_CARGO(40 * Length.in),
 		MID_CARGO(75 * Length.in),
