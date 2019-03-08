@@ -96,7 +96,7 @@ public class LiftIntake {
 							this.setIntakePower(-0.2);
 						}
 						else {
-							this.setIntakePower(-0.6);
+							this.setIntakePower(-1.0);
 						}
 					}
 				}

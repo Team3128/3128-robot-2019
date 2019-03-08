@@ -134,4 +134,11 @@ public class Limelight
     public void blinkLED() {
         limelightTable.getEntry("ledMode").setNumber(2);
     }
+    public void driverMode(int setting){
+        if(setting >=0 && setting <=2){
+            limelightTable.getEntry("stream").setNumber(setting);
+        } else {
+            limelightTable.getEntry("stream").setNumber(0);
+        }
+    }
 }

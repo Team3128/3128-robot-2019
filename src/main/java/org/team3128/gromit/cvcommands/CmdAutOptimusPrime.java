@@ -12,7 +12,7 @@ import org.team3128.gromit.util.DeepSpaceConstants;
 import edu.wpi.first.wpilibj.command.Command;
 
 public class CmdAutOptimusPrime extends Command {
-    SRXTankDrive drive;
+    //SRXTankDrive drive;
     OptimusPrime optimusPrime;
     
     GameElement gameElement;
@@ -20,8 +20,10 @@ public class CmdAutOptimusPrime extends Command {
     double currentTY, tyThreshold;
     Limelight limelight;
     
-    public CmdAutOptimusPrime(Limelight limelight) {
+    public CmdAutOptimusPrime(Limelight limelight, GameElement gameElement, ScoreTarget scoreTarget) {
      this.limelight = limelight;   
+     this.gameElement = gameElement;
+     this.scoreTarget = scoreTarget;
     }
     
     @Override
@@ -29,12 +31,14 @@ public class CmdAutOptimusPrime extends Command {
         currentTY = limelight.getValue("ty", 1);
         if(gameElement == GameElement.CARGO){
             tyThreshold = DeepSpaceConstants.UPPER_TY_OPTIMUS_THRESHOLD;
+            Log.info("CmdAutOptimusPrime", "CARGO OPTIMUS THRESH");
         }
         else{
             tyThreshold = DeepSpaceConstants.LOWER_TY_OPTIMUS_THRESHOLD;
+            Log.info("CmdAutOptimusPrime", "CARGO OPTIMUS THRESH");
         }
         
-        drive = SRXTankDrive.getInstance();
+        //drive = SRXTankDrive.getInstance();
         optimusPrime = OptimusPrime.getInstance();
     }
     
@@ -45,8 +49,9 @@ public class CmdAutOptimusPrime extends Command {
     
     @Override
     protected boolean isFinished() {
-        currentTY = limelight.getValue("ty", 1);
+        currentTY = limelight.getValue("ty", 2);
         if(currentTY > tyThreshold){
+            Log.info("AutOptimusPrime", "Entering desired state");
             optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
             return true;
         }

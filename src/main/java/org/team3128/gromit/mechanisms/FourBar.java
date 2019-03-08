@@ -26,14 +26,16 @@ public class FourBar
 
     public enum FourBarState {
 		ZERO(90*Angle.DEGREES), //DEBUG
+		//INIT(180 * Angle.DEGREES),
 		SHIP_AND_LOADING(-55 * Angle.DEGREES),
 		// HATCH_DROP_SHIP_LOADING(-53 * Angle.DEGREES),
 
 		ROCKET_LOW(-67 * Angle.DEGREES), 
 		// HATCH_DROP_ROCKET_LOW(-65 * Angle.DEGREES),
 		
-		CARGO_INTAKE(-22 * Angle.DEGREES),
+		CARGO_INTAKE(-20 * Angle.DEGREES),
 
+		HATCH_LOW(20 * Angle.DEGREES),
 		HATCH_HIGH(64 * Angle.DEGREES),
 		CARGO_HIGH(76 * Angle.DEGREES);
 		//68

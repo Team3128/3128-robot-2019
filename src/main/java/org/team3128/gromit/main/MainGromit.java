@@ -1,5 +1,5 @@
 package org.team3128.gromit.main;
-
+import org.team3128.common.vision.CmdAutoAim;
 import org.team3128.gromit.util.*;
 import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.DriveCommandRunning;
@@ -25,7 +25,6 @@ import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
 import org.team3128.common.vision.CmdAutoAim;
 import org.team3128.gromit.autonomous.CmdAutoPrime;
-import org.team3128.gromit.autonomous.CmdTestDriveTrain;
 import org.team3128.gromit.cvcommands.CmdBadHARC;
 import org.team3128.gromit.mechanisms.Climber;
 import org.team3128.gromit.mechanisms.FourBar;
@@ -81,6 +80,9 @@ public class MainGromit extends NarwhalRobot{
 	public TalonSRX rightDriveLeader;
 	public VictorSPX rightDriveFollower;
 
+	// drive temp
+	public double maxLeftSpeed, maxRightSpeed;
+
 	// Pneumatics
 	public Compressor compressor;
 
@@ -132,6 +134,7 @@ public class MainGromit extends NarwhalRobot{
 	public ListenerManager listenerRight;
 
 	public CmdAutoPrime alignCommand;
+	//public CmdInitAuto cmdInitAuto;
 
 	// Miscellaneous
 	public PowerDistributionPanel powerDistPanel;
@@ -149,6 +152,10 @@ public class MainGromit extends NarwhalRobot{
 
 	// 7510
 	public double minLiftSpeed = 0;
+
+	// starting debug
+	//public int startingSensorPos = 7000; 
+	//public int startingFourBarPos = -110; 
 
 	public enum ManualControlMode {
         LIFT,
@@ -170,7 +177,7 @@ public class MainGromit extends NarwhalRobot{
 			return name;
 		}
 	}
-	GameElement currentGameElement = GameElement.CARGO;
+	GameElement currentGameElement = GameElement.HATCH_PANEL;
 
 	public enum ScoreTarget {
 		ROCKET_TOP("top"),
@@ -435,7 +442,7 @@ public class MainGromit extends NarwhalRobot{
 			if (!runningCommand) {
 				double vert =     -1.0 * listenerRight.getAxis("MoveForwards");
 				//DEBUG: IF ANYTHING GOES WRONG, CHANGE TO -0.8 (ADHAM AND JUDE REMEMBER)
-				double horiz =    0.8 * listenerRight.getAxis("MoveTurn");
+				double horiz =    -0.8 * listenerRight.getAxis("MoveTurn");
 				double throttle = -1.0 * listenerRight.getAxis("Throttle");
 	
 				drive.arcadeDrive(vert, horiz, throttle, true);
@@ -487,9 +494,15 @@ public class MainGromit extends NarwhalRobot{
 		// Optimus Prime Controls
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "AutoPrime");
 		listenerRight.addButtonDownListener("AutoPrime", () -> {
-			optimusPrime.setState(RobotState.VISION);
-            alignCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning, offsetPID);
-            alignCommand.start();
+			
+			//optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
+			//optimusPrime.setState(RobotState.VISION);
+
+
+			//alignCommand = new CmdAutoAim(gyro, limelight, offsetPID, driveCmdRunning, DeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 20.0 * Angle.DEGREES);
+			
+			alignCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning, offsetPID, currentGameElement, currentScoreTarget);
+			alignCommand.start();
         });
         listenerRight.addButtonUpListener("AutoPrime", () -> {
             alignCommand.cancel();
@@ -543,6 +556,7 @@ public class MainGromit extends NarwhalRobot{
 		listenerRight.nameControl(new Button(4), "Zero");
 		listenerRight.addButtonDownListener("Zero", () ->
 		{
+			Log.info("LIFTPOS", "" + liftMotorLeader.getSelectedSensorPosition(0));
 			optimusPrime.setState(RobotState.ZERO);
 		});
 
@@ -645,7 +659,12 @@ public class MainGromit extends NarwhalRobot{
 	@Override
 	protected void autonomousInit() {
 		drive.shiftToLow();
-		optimusPrime.setState(RobotState.REST); //DEBUG
+		//Log.info("LIFT TEST0", "" + liftMotorLeader.getSelectedSensorPosition(0));
+		//liftMotorLeader.setSelectedSensorPosition(startingSensorPos, 0, Constants.CAN_TIMEOUT);
+		//Log.info("LIFT TEST1", "" + liftMotorLeader.getSelectedSensorPosition(0));
+		//fourBarMotor.setSelectedSensorPosition(startingFourBarPos, 0, Constants.CAN_TIMEOUT);
+		//cmdInitAuto = new CmdInitAuto();
+		//cmdInitAuto.start();
 	}
 
 
@@ -672,6 +691,13 @@ public class MainGromit extends NarwhalRobot{
 	protected void updateDashboard()
 	{
 		//Log.info("roll, pitch", String.valueOf(gyro.getRoll()) + ", " + String.valueOf(gyro.getPitch()));
+
+		maxLeftSpeed = Math.max(leftDriveLeader.getSelectedSensorVelocity(), maxLeftSpeed);
+        maxRightSpeed = Math.max(rightDriveLeader.getSelectedSensorVelocity(), maxRightSpeed);
+
+        SmartDashboard.putNumber("Max Left Speed", maxLeftSpeed);
+        SmartDashboard.putNumber("Max Right Speed", maxRightSpeed);
+
 		SmartDashboard.putNumber("pitch", gyro.getPitch());
 		SmartDashboard.putBoolean("Lift: Can Raise", lift.canRaise);
 		SmartDashboard.putBoolean("Lift: Can Lower", lift.canLower);

@@ -168,7 +168,7 @@ public class DriveCalibrationUtility {
 
         double averagePosition = (drive.getLeftMotors().getSelectedSensorPosition() + drive.getRightMotors().getSelectedSensorPosition()) / 2;
 
-        return 100 * 4096 / averagePosition;
+        return 100 * averagePosition/4096;
     }
 
     public double getLeftKf() {

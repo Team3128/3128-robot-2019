@@ -10,6 +10,9 @@ import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.units.Angle;
+import org.team3128.gromit.main.MainGromit.GameElement;
+import org.team3128.gromit.mechanisms.OptimusPrime;
+import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
 
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
@@ -23,7 +26,7 @@ public class CmdAutoAim extends Command {
     Limelight limelight;
 
     private final double FEED_FORWARD_POWER = 0.7;
-    private final double MINIMUM_POWER = 0.3;
+    private final double MINIMUM_POWER = 0.6;
 
     private final double VELOCITY_THRESHOLD = 100;
     private final int VELOCITY_PLATEAU_COUNT = 10;
@@ -40,6 +43,8 @@ public class CmdAutoAim extends Command {
     private double currentTime, previousTime;
     private double feedbackPower;
     private double leftVel, rightVel;
+
+    private OptimusPrime op;
 
     double leftPower;
     double rightPower;
@@ -68,6 +73,8 @@ public class CmdAutoAim extends Command {
 
     @Override
     protected void initialize() {
+        op = OptimusPrime.getInstance();
+        op.setState(RobotState.DEPOSIT_LOW_HATCH);
         drive = SRXTankDrive.getInstance();
 
         limelight.turnOnLED();
@@ -140,10 +147,11 @@ public class CmdAutoAim extends Command {
                     Log.info("CmdDynamicAdjust", "L: " + leftPower + "; R: " + rightPower);
                     
                     previousVerticalAngle = limelight.getValue("ty", 1);
-                    multiplier = 1.0 - (1.0 - MINIMUM_POWER) * RobotMath.clamp((previousVerticalAngle - tyDecelerateThreshold)/(decelerateAngleRange - tyDecelerateThreshold), 0.0, 1.0);
+                    Log.info("CmdAutoAim", "DECELERATING INIT");
+                    multiplier = 1.0 - (1.0 - MINIMUM_POWER) * RobotMath.clamp(1.5*(previousVerticalAngle - tyDecelerateThreshold)/(decelerateAngleRange - tyDecelerateThreshold), 0.0, 1.0);
                     Log.info("CmdAutoAim", "multipier = " + multiplier);
 
-                    drive.tankDrive(multiplier * rightPower, multiplier * leftPower);
+                    drive.tankDrive(-multiplier * rightPower, multiplier * leftPower);
 
                     previousTime = currentTime;
                     previousError = currentError;

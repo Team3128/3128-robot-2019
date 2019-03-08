@@ -15,6 +15,7 @@ import org.team3128.gromit.cvcommands.CmdAutOptimusPrime;
 import org.team3128.gromit.main.MainGromit;
 import org.team3128.gromit.main.MainGromit.GameElement;
 import org.team3128.gromit.main.MainGromit.ScoreTarget;
+import org.team3128.gromit.mechanisms.OptimusPrime;
 import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
 import org.team3128.gromit.util.DeepSpaceConstants;
 
@@ -23,12 +24,11 @@ import org.team3128.common.hardware.navigation.Gyro;
 
 
 public class CmdAutoPrime extends CommandGroup {
-    public CmdAutoPrime(Gyro gyro, Limelight limelight, DriveCommandRunning cmdRunning, PIDConstants offsetPID) {
-        SRXTankDrive drive = SRXTankDrive.getInstance();
 
-        addSequential(//new CmdRunInParallel(
-            new CmdAutoAim(gyro, limelight, offsetPID, cmdRunning, DeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 20.0 * Angle.DEGREES)//,
-            //new CmdAutOptimusPrime(limelight)
-        );
+    public CmdAutoPrime(Gyro gyro, Limelight limelight, DriveCommandRunning cmdRunning, PIDConstants offsetPID, GameElement gameElement, ScoreTarget scoreTarget) {
+        addSequential(new CmdRunInParallel(
+            new CmdAutoAim(gyro, limelight, offsetPID, cmdRunning, DeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 20.0 * Angle.DEGREES),
+            new CmdAutOptimusPrime(limelight, gameElement, scoreTarget)
+        ));
     }
 }

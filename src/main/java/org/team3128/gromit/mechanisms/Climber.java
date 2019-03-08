@@ -40,12 +40,12 @@ public class Climber {
             drive = SRXTankDrive.getInstance();
 
             addSequential(new CmdDeployClimberPiston());
-            addSequential(drive.new CmdDriveUntilStop(0.6, 1500));
+            addSequential(drive.new CmdDriveUntilStop(-0.6, 1500));
             addSequential(new CmdRetractClimberPiston());
 
             addSequential(new CmdSetBackLegPosition(13600, 3000));
 
-            addSequential(drive.new CmdDriveUntilStop(0.4, 700));
+            addSequential(drive.new CmdDriveUntilStop(-0.4, 700));
 
             addSequential(new CmdSetBackLegPosition(100, 2000));
         }
@@ -58,12 +58,12 @@ public class Climber {
             drive = SRXTankDrive.getInstance();
 
             addSequential(new CmdDeployClimberPiston());
-            addSequential(drive.new CmdDriveUntilStop(0.6, 1000));
+            addSequential(drive.new CmdDriveUntilStop(-0.6, 1000));
             addSequential(new CmdRetractClimberPiston());
 
             addSequential(new CmdSetBackLegPosition(18500, 5000));
 
-            addSequential(drive.new CmdDriveUntilStop(0.3, 3000));
+            addSequential(drive.new CmdDriveUntilStop(-0.3, 3000));
 
             addSequential(new CmdSetBackLegPosition(100, 2000));
         }

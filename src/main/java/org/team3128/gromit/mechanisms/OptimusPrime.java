@@ -3,6 +3,7 @@ package org.team3128.gromit.mechanisms;
 import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 
+import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 import org.team3128.common.autonomous.primitives.CmdRunInParallel;
@@ -23,13 +24,15 @@ import org.team3128.gromit.mechanisms.FourBar.FourBarState;
 
 public class OptimusPrime {
     public enum RobotState {
+        //STARTING(LiftHeightState.STARTING, FourBarState.ROCKET_LOW),
+        //INIT(LiftHeightState.INIT_BASE, FourBarState.ZERO),
+        
         ZERO(LiftHeightState.BASE, FourBarState.ZERO),
         REST(LiftHeightState.BASE, FourBarState.CARGO_HIGH),
-        VISION(LiftHeightState.VISION, FourBarState.HATCH_HIGH),
 
         INTAKE_FLOOR_CARGO(LiftHeightState.INTAKE_FLOOR_CARGO, FourBarState.CARGO_INTAKE),
         
-        DEPOSIT_LOW_HATCH(LiftHeightState.LOW_HATCH, FourBarState.ROCKET_LOW),
+        DEPOSIT_LOW_HATCH(LiftHeightState.BASE, FourBarState.HATCH_LOW),
         DEPOSIT_MID_HATCH(LiftHeightState.MID_HATCH, FourBarState.ROCKET_LOW),
         DEPOSIT_TOP_HATCH(LiftHeightState.TOP_HATCH, FourBarState.HATCH_HIGH),
         
@@ -38,7 +41,8 @@ public class OptimusPrime {
         DEPOSIT_TOP_CARGO(LiftHeightState.TOP_CARGO, FourBarState.CARGO_HIGH),
         
         LOADING_AND_SHIP_CARGO(LiftHeightState.LOADING_SHIP_CARGO, FourBarState.SHIP_AND_LOADING),
-        LOADING_AND_SHIP_HATCH(LiftHeightState.LOADING_SHIP_HATCH, FourBarState.SHIP_AND_LOADING);
+        //LOADING_AND_SHIP_HATCH(LiftHeightState.LOADING_SHIP_HATCH, FourBarState.SHIP_AND_LOADING);
+        LOADING_AND_SHIP_HATCH(LiftHeightState.BASE, FourBarState.HATCH_LOW);  //DEBUG
         
         public LiftHeightState targetLiftState;
         public FourBarState targetFourBarState;
@@ -142,4 +146,42 @@ public class OptimusPrime {
             //TODO
         }
     }
+
+    /*
+    public class CmdSetState extends Command{
+        RobotState state;
+        public CmdSetState(RobotState robotState) {
+            this.state = robotState;
+		}
+		
+		@Override
+		protected void initialize() {
+				
+		}
+		
+		@Override
+		protected void execute() {
+        }
+		
+		@Override
+		protected boolean isFinished() {
+            if(state == RobotState.STARTING){
+                Lift.getInstance().setState(LiftHeightState.STARTING);
+                try{
+                    Thread.sleep(800);
+                } catch(InterruptedException io){
+                    io.printStackTrace();
+                }
+            } else {
+                OptimusPrime.getInstance().setState(state);
+            }
+            return true;
+		}
+		
+		@Override
+		protected void end() {
+		}
+	
+    }
+    */
 }

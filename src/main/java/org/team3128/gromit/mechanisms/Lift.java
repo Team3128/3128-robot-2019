@@ -23,17 +23,21 @@ import edu.wpi.first.wpilibj.command.Command;
 public class Lift
 {
 	public enum LiftHeightState {
-		BASE(0 * Length.ft),
+		//INIT_BASE(-15 * Length.in),
+		//STARTING(18 * Length.in),
+		
+		BASE(0 * Length.in),
+		
 		//6.3
-		INTAKE_FLOOR_CARGO(7 * Length.in),
-		VISION(12*Length.in),
+		INTAKE_FLOOR_CARGO(5 * Length.in),
+		VISION(53*Length.in),
 
-		LOW_CARGO(40 * Length.in),
-		MID_CARGO(75 * Length.in),
+		LOW_CARGO(42 * Length.in),
+		MID_CARGO(77 * Length.in),
 		TOP_CARGO(78 * Length.in),
 		
         LOW_HATCH(18.5 * Length.in),
-        MID_HATCH(54 * Length.in),
+        MID_HATCH(53 * Length.in),
 		TOP_HATCH(59 * Length.in),
 		
         LOADING_SHIP_CARGO(57.5 * Length.in),
@@ -158,7 +162,8 @@ public class Lift
 			{
 				if (this.getLimitSwitch() != previousSwitchState)
 				{
-					this.liftMotor.setSelectedSensorPosition(limitSwitchLocation, 170, Constants.CAN_TIMEOUT);
+					//debug
+					this.liftMotor.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
 					previousSwitchState = this.getLimitSwitch();
 				}
 
@@ -256,7 +261,7 @@ public class Lift
 	{
 		return !limitSwitch.get();
 	}
-
+/*
 	public class CmdZero extends Command {
 		public CmdZero() {
 			super(0.2);
@@ -285,6 +290,7 @@ public class Lift
 			end();
 		}
 	}
+	*/
 
 	public class CmdHeightControl extends Command
 	{

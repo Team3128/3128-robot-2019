@@ -17,7 +17,7 @@ public class MainGromitCompetition extends MainGromit {
         wheelbase = 37 * Length.in;
         driveMaxSpeed = 5800;
         //gearRatio = 2.9 + 54/990;
-        wheelCirc = 6.55 * Length.in;
+        wheelCirc = 12.01 * Length.in;
 
         leftSpeedScalar = 1.00;
         rightSpeedScalar = 1.00;
@@ -33,7 +33,7 @@ public class MainGromitCompetition extends MainGromit {
 
             rightDriveLeader.setInverted(true);
             rightDriveFollower.setInverted(true);
-            rightDriveLeader.setSensorPhase(true);
+            rightDriveLeader.setSensorPhase(false);
         };
 
         gearshiftPiston = new Piston(3, 4);
@@ -55,7 +55,7 @@ public class MainGromitCompetition extends MainGromit {
         fourBarSwitchPosition = +90 * Angle.DEGREES;
         fourBarMaxVelocity = 100;
         
-        cargoBumperSwitch = new DigitalInput(3);
+        cargoBumperSwitch = new DigitalInput(1);
         
         super.constructHardware();
 
@@ -74,6 +74,9 @@ public class MainGromitCompetition extends MainGromit {
 
         // Climber Invert
         climbMotor.setSensorPhase(true);
+
+        limelight.driverMode(2);
+        
     }
 
     public static void main(String... args) {
