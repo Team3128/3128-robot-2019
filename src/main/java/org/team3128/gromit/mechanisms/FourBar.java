@@ -33,9 +33,10 @@ public class FourBar
 		ROCKET_LOW(-67 * Angle.DEGREES), 
 		// HATCH_DROP_ROCKET_LOW(-65 * Angle.DEGREES),
 		
-		CARGO_INTAKE(-20 * Angle.DEGREES),
-
-		HATCH_LOW(20 * Angle.DEGREES),
+		CARGO_INTAKE(-28 * Angle.DEGREES),
+		//17
+		//HATCH_LOW(15 * Angle.DEGREES),
+		HATCH_LOW(-67 * Angle.DEGREES),
 		HATCH_HIGH(64 * Angle.DEGREES),
 		CARGO_HIGH(76 * Angle.DEGREES);
 		//68
@@ -191,10 +192,10 @@ public class FourBar
 						// }
 
 						if (this.error > 0) {
-							kP = 0.25;
+							kP = 0.285;
 						}
 						else {
-							kP = 0.005;
+							kP = 0.01;
 						}
 
 						kD = 0*0.05;

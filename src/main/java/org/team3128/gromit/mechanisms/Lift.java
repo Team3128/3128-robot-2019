@@ -25,11 +25,12 @@ public class Lift
 	public enum LiftHeightState {
 		//INIT_BASE(-15 * Length.in),
 		//STARTING(18 * Length.in),
-		
+
 		BASE(0 * Length.in),
+		ALT_INTAKE_LOW_HATCH(18.75 * Length.in),
 		
 		//6.3
-		INTAKE_FLOOR_CARGO(5 * Length.in),
+		INTAKE_FLOOR_CARGO(4.5 * Length.in),
 		VISION(53*Length.in),
 
 		LOW_CARGO(42 * Length.in),

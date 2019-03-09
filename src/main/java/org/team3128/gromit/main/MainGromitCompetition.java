@@ -75,7 +75,10 @@ public class MainGromitCompetition extends MainGromit {
         // Climber Invert
         climbMotor.setSensorPhase(true);
 
+        //2 is big camera for lars KEEP AT 2
         limelight.driverMode(2);
+        limelight.turnOffLED();
+
         
     }
 

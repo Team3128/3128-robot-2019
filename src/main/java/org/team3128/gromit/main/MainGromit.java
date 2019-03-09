@@ -133,7 +133,8 @@ public class MainGromit extends NarwhalRobot{
 	public ListenerManager listenerLeft;
 	public ListenerManager listenerRight;
 
-	public CmdAutoPrime alignCommand;
+	public CmdAutoAim triggerCommand;
+	
 	//public CmdInitAuto cmdInitAuto;
 
 	// Miscellaneous
@@ -495,23 +496,21 @@ public class MainGromit extends NarwhalRobot{
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "AutoPrime");
 		listenerRight.addButtonDownListener("AutoPrime", () -> {
 			
-			//optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
-			//optimusPrime.setState(RobotState.VISION);
+			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreTarget));
+			triggerCommand = new CmdAutoAim(gyro, limelight, offsetPID, driveCmdRunning, DeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 20.0 * Angle.DEGREES);
+			triggerCommand.start();
 
-
-			//alignCommand = new CmdAutoAim(gyro, limelight, offsetPID, driveCmdRunning, DeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 20.0 * Angle.DEGREES);
-			
-			alignCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning, offsetPID, currentGameElement, currentScoreTarget);
-			alignCommand.start();
+			/*triggerCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning, offsetPID, currentGameElement, currentScoreTarget);
+			triggerCommand.start();*/
         });
         listenerRight.addButtonUpListener("AutoPrime", () -> {
-            alignCommand.cancel();
-            alignCommand = null;
+            triggerCommand.cancel();
+            triggerCommand = null;
         });
 
 		listenerRight.nameControl(new Button(6), "RestState");
 		listenerRight.addButtonDownListener("RestState" , () -> {
-			optimusPrime.setState(RobotState.REST);
+			optimusPrime.setState(RobotState.ZERO);
 		});
 
 		// Game Element Controls
@@ -556,7 +555,7 @@ public class MainGromit extends NarwhalRobot{
 		listenerRight.nameControl(new Button(4), "Zero");
 		listenerRight.addButtonDownListener("Zero", () ->
 		{
-			Log.info("LIFTPOS", "" + liftMotorLeader.getSelectedSensorPosition(0));
+			//Log.info("LIFTPOS", "" + liftMotorLeader.getSelectedSensorPosition(0));
 			optimusPrime.setState(RobotState.ZERO);
 		});
 
@@ -605,12 +604,12 @@ public class MainGromit extends NarwhalRobot{
 
 		listenerLeft.nameControl(new Button(7), "Climb1to2");
         listenerLeft.addButtonDownListener("Climb1to2", () -> {
-            climber.new CmdClimb1to2().start();
+            //climber.new CmdClimb1to2().start();
         });
 
         listenerLeft.nameControl(new Button(8), "Climb2to3");
-        listenerLeft.addButtonDownListener("Climb1to2", () -> {
-            climber.new CmdClimb2to3().start();
+        listenerLeft.addButtonDownListener("Climb2to3", () -> {
+            //climber.new CmdClimb2to3().start();
         });
 
         listenerLeft.nameControl(new Button(9), "ClimbPistonExtend");
@@ -659,6 +658,7 @@ public class MainGromit extends NarwhalRobot{
 	@Override
 	protected void autonomousInit() {
 		drive.shiftToLow();
+		limelight.driverMode(2);
 		//Log.info("LIFT TEST0", "" + liftMotorLeader.getSelectedSensorPosition(0));
 		//liftMotorLeader.setSelectedSensorPosition(startingSensorPos, 0, Constants.CAN_TIMEOUT);
 		//Log.info("LIFT TEST1", "" + liftMotorLeader.getSelectedSensorPosition(0));

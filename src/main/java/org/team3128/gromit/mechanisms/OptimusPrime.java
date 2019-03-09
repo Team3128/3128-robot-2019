@@ -32,7 +32,8 @@ public class OptimusPrime {
 
         INTAKE_FLOOR_CARGO(LiftHeightState.INTAKE_FLOOR_CARGO, FourBarState.CARGO_INTAKE),
         
-        DEPOSIT_LOW_HATCH(LiftHeightState.BASE, FourBarState.HATCH_LOW),
+        //DEPOSIT_LOW_HATCH(LiftHeightState.BASE, FourBarState.HATCH_LOW),
+        DEPOSIT_LOW_HATCH(LiftHeightState.ALT_INTAKE_LOW_HATCH, FourBarState.HATCH_LOW),
         DEPOSIT_MID_HATCH(LiftHeightState.MID_HATCH, FourBarState.ROCKET_LOW),
         DEPOSIT_TOP_HATCH(LiftHeightState.TOP_HATCH, FourBarState.HATCH_HIGH),
         
@@ -42,7 +43,7 @@ public class OptimusPrime {
         
         LOADING_AND_SHIP_CARGO(LiftHeightState.LOADING_SHIP_CARGO, FourBarState.SHIP_AND_LOADING),
         //LOADING_AND_SHIP_HATCH(LiftHeightState.LOADING_SHIP_HATCH, FourBarState.SHIP_AND_LOADING);
-        LOADING_AND_SHIP_HATCH(LiftHeightState.BASE, FourBarState.HATCH_LOW);  //DEBUG
+        LOADING_AND_SHIP_HATCH(LiftHeightState.ALT_INTAKE_LOW_HATCH, FourBarState.HATCH_LOW);  //DEBUG
         
         public LiftHeightState targetLiftState;
         public FourBarState targetFourBarState;

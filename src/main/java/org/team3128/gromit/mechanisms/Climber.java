@@ -3,6 +3,7 @@ package org.team3128.gromit.mechanisms;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
+import org.team3128.common.autonomous.primitives.CmdRunInParallel;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.util.Log;
@@ -38,16 +39,21 @@ public class Climber {
 
         public CmdClimb1to2() {
             drive = SRXTankDrive.getInstance();
+            drive.shiftToLow();
 
             addSequential(new CmdDeployClimberPiston());
             addSequential(drive.new CmdDriveUntilStop(-0.6, 1500));
             addSequential(new CmdRetractClimberPiston());
+            
+            addSequential(new CmdSetBackLegPosition(10000, 3000));
 
-            addSequential(new CmdSetBackLegPosition(13600, 3000));
+            addSequential(drive.new CmdDriveUntilStop(-0.3, 700));
 
-            addSequential(drive.new CmdDriveUntilStop(-0.4, 700));
-
-            addSequential(new CmdSetBackLegPosition(100, 2000));
+            //addSequential(new CmdSetBackLegPosition(50, 2000));
+            addSequential(new CmdRunInParallel(
+                drive.new CmdDriveUntilStop(-0.5, 2000),
+                new CmdSetBackLegPosition(50, 2000)
+            ));
         }
     }
 
@@ -56,6 +62,7 @@ public class Climber {
 
         public CmdClimb2to3() {
             drive = SRXTankDrive.getInstance();
+            drive.shiftToLow();
 
             addSequential(new CmdDeployClimberPiston());
             addSequential(drive.new CmdDriveUntilStop(-0.6, 1000));
@@ -65,7 +72,7 @@ public class Climber {
 
             addSequential(drive.new CmdDriveUntilStop(-0.3, 3000));
 
-            addSequential(new CmdSetBackLegPosition(100, 2000));
+            addSequential(new CmdSetBackLegPosition(0, 2000));
         }
     }
 

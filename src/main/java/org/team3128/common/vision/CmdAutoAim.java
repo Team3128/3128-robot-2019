@@ -25,8 +25,9 @@ public class CmdAutoAim extends Command {
     PIDConstants offsetPID;
     Limelight limelight;
 
-    private final double FEED_FORWARD_POWER = 0.7;
+    private final double FEED_FORWARD_POWER = 0.55;
     private final double MINIMUM_POWER = 0.6;
+    private final double MINIMUM_POWER_BLIND = 0.3;
 
     private final double VELOCITY_THRESHOLD = 100;
     private final int VELOCITY_PLATEAU_COUNT = 10;
@@ -74,7 +75,6 @@ public class CmdAutoAim extends Command {
     @Override
     protected void initialize() {
         op = OptimusPrime.getInstance();
-        op.setState(RobotState.DEPOSIT_LOW_HATCH);
         drive = SRXTankDrive.getInstance();
 
         limelight.turnOnLED();
@@ -116,7 +116,7 @@ public class CmdAutoAim extends Command {
                         Log.info("CmdAutoAim", "Going to blind.");
 
                         aimState = AutoAimState.BLIND;
-                        drive.tankDrive(MINIMUM_POWER, MINIMUM_POWER);
+                        //drive.tankDrive(MINIMUM_POWER, MINIMUM_POWER);
 
                         cmdRunning.isRunning = true;
                     }
@@ -162,6 +162,7 @@ public class CmdAutoAim extends Command {
                 break;
 
             case BLIND:
+                drive.stopMovement();
                 Log.info("CmdAutoAim", "Driving blind...");
                 break;
         }
