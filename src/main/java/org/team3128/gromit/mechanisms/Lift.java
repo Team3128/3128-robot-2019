@@ -34,15 +34,16 @@ public class Lift
 		VISION(53*Length.in),
 
 		LOW_CARGO(42 * Length.in),
-		MID_CARGO(77 * Length.in),
+		MID_CARGO(51 * Length.in),
 		TOP_CARGO(78 * Length.in),
 		
         LOW_HATCH(18.5 * Length.in),
         MID_HATCH(53 * Length.in),
-		TOP_HATCH(59 * Length.in),
+		TOP_HATCH(63 * Length.in),
 		
-        LOADING_SHIP_CARGO(57.5 * Length.in),
-        LOADING_SHIP_HATCH(16.5 * Length.in);
+		//57.5
+        LOADING_SHIP_CARGO(40 * Length.in);
+        //LOADING_SHIP_HATCH(16.5 * Length.in);
 
 		public double targetHeight;
 
