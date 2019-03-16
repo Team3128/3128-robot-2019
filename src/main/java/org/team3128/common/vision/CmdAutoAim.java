@@ -10,7 +10,7 @@ import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.units.Angle;
-import org.team3128.gromit.main.MainGromit.GameElement;
+import org.team3128.gromit.main.MainDeepSpaceRobot.GameElement;
 import org.team3128.gromit.mechanisms.OptimusPrime;
 import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
 

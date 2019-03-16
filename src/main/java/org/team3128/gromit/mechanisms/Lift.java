@@ -26,6 +26,7 @@ public class Lift
 		//INIT_BASE(-15 * Length.in),
 		//STARTING(18 * Length.in),
 
+		ZEROING(-3 * Length.in),
 		BASE(0 * Length.in),
 		ALT_INTAKE_LOW_HATCH(18.75 * Length.in),
 		
@@ -137,16 +138,18 @@ public class Lift
 		return null;
 	}
 
-	public static void initialize(LiftHeightState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int liftMaxVelocity) {
-		instance = new Lift(state, liftMotor, softStopLimitSwitch, liftMaxVelocity);
+	public static void initialize(LiftHeightState state, TalonSRX liftMotor, DigitalInput limitSwitch, int limitSwitchLocation, int liftMaxVelocity) {
+		instance = new Lift(state, liftMotor, limitSwitch, limitSwitchLocation, liftMaxVelocity);
 	}
 
-	private Lift(LiftHeightState state, TalonSRX liftMotor, DigitalInput softStopLimitSwitch, int liftMaxVelocity) {
+	private Lift(LiftHeightState state, TalonSRX liftMotor, DigitalInput limitSwitch, int limitSwitchLocation, int liftMaxVelocity) {
 		this.liftMotor = liftMotor;
 		this.heightState = state;
 
-		this.limitSwitch = softStopLimitSwitch;
+		this.limitSwitch = limitSwitch;
 		this.liftMaxVelocity = liftMaxVelocity;
+
+		this.limitSwitchLocation = limitSwitchLocation;
 
 		setControlMode(LiftControlMode.PERCENT);
 
@@ -164,8 +167,14 @@ public class Lift
 			{
 				if (this.getLimitSwitch() != previousSwitchState)
 				{
-					//debug
-					this.liftMotor.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+					//Adham: I don't think we need this if statement because I can't see a state where we hit the limit switch and don't want the lift to actually zero.
+					if (this.controlMode == LiftControlMode.POSITION_DOWN && this.heightState == LiftHeightState.ZEROING) {
+						this.powerControl(0);
+					}
+
+					this.liftMotor.setSelectedSensorPosition(this.limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
+
+					this.heightState = LiftHeightState.BASE;
 					previousSwitchState = this.getLimitSwitch();
 				}
 

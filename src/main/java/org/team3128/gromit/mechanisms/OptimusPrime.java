@@ -8,8 +8,8 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 
 import org.team3128.common.autonomous.primitives.CmdRunInParallel;
 import org.team3128.common.util.Log;
-import org.team3128.gromit.main.MainGromit.GameElement;
-import org.team3128.gromit.main.MainGromit.ScoreTarget;
+import org.team3128.gromit.main.MainDeepSpaceRobot.GameElement;
+import org.team3128.gromit.main.MainDeepSpaceRobot.ScoreTarget;
 import org.team3128.gromit.mechanisms.LiftIntake;
 
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;
@@ -27,7 +27,7 @@ public class OptimusPrime {
         //STARTING(LiftHeightState.STARTING, FourBarState.ROCKET_LOW),
         //INIT(LiftHeightState.INIT_BASE, FourBarState.ZERO),
         
-        ZERO(LiftHeightState.BASE, FourBarState.ZERO),
+        ZERO(LiftHeightState.BASE, FourBarState.VERTICAL),
         REST(LiftHeightState.BASE, FourBarState.CARGO_HIGH),
 
         INTAKE_FLOOR_CARGO(LiftHeightState.INTAKE_FLOOR_CARGO, FourBarState.CARGO_INTAKE),
