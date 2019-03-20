@@ -25,13 +25,13 @@ public class Lift
 	public enum LiftHeightState {
 		//INIT_BASE(-15 * Length.in),
 		//STARTING(18 * Length.in),
-
+		/*
 		ZEROING(-3 * Length.in),
 		BASE(0 * Length.in),
-		ALT_INTAKE_LOW_HATCH(18.75 * Length.in),
+		//ALT_INTAKE_LOW_HATCH(18.75 * Length.in),
 		
-		//6.3
-		INTAKE_FLOOR_CARGO(4.5 * Length.in),
+		//4.5
+		INTAKE_FLOOR_CARGO(8 * Length.in),
 		VISION(53*Length.in),
 
 		LOW_CARGO(42 * Length.in),
@@ -43,9 +43,45 @@ public class Lift
 		TOP_HATCH(63 * Length.in),
 		
 		//57.5
-        LOADING_SHIP_CARGO(40 * Length.in);
+        LOADING_SHIP_CARGO(30 * Length.in);
         //LOADING_SHIP_HATCH(16.5 * Length.in);
+		*/
 
+		ZEROING(-3 * Length.in),
+		BASE(0 * Length.in),
+		//ALT_INTAKE_LOW_HATCH(18.75 * Length.in),
+		
+		//4.5
+		/*
+		INTAKE_FLOOR_CARGO(8 * Length.in),
+		VISION(53*Length.in),
+
+		LOW_CARGO(42 * Length.in),
+		MID_CARGO(51 * Length.in),
+		TOP_CARGO(78 * Length.in),
+		
+        LOW_HATCH(16 * Length.in),
+        MID_HATCH(53 * Length.in),
+		TOP_HATCH(63 * Length.in),
+		
+		//57.5
+        LOADING_SHIP_CARGO(30 * Length.in);
+		//LOADING_SHIP_HATCH(16.5 * Length.in);
+		*/
+		INTAKE_FLOOR_CARGO(6.5 * Length.in),
+		VISION(24*Length.in),
+
+		LOW_CARGO(39 * Length.in),
+		MID_CARGO(42 * Length.in),
+		TOP_CARGO(75 * Length.in),
+		
+        LOW_HATCH(16 * Length.in),
+        MID_HATCH(53 * Length.in),
+		TOP_HATCH(59 * Length.in),
+		
+		//57.5
+        LOADING_SHIP_CARGO(30 * Length.in),
+		LOADING_SHIP_HATCH(17 * Length.in);
 		public double targetHeight;
 
 		private LiftHeightState(double height)
@@ -160,18 +196,32 @@ public class Lift
 
 		liftThread = new Thread(() ->
 		{
+			int zeroVelocityCount = 0;
+
 			double target = 0;
 			boolean previousSwitchState = false;
 
 			while (true)
 			{
-				if (this.getLimitSwitch() != previousSwitchState)
-				{
-					//Adham: I don't think we need this if statement because I can't see a state where we hit the limit switch and don't want the lift to actually zero.
-					if (this.controlMode == LiftControlMode.POSITION_DOWN && this.heightState == LiftHeightState.ZEROING) {
-						this.powerControl(0);
+				if (this.heightState == LiftHeightState.ZEROING) {
+					if (Math.abs(liftMotor.getSelectedSensorVelocity()) < 10) {
+						zeroVelocityCount += 1;
+					}
+					else {
+						zeroVelocityCount = 0;
 					}
 
+					if (zeroVelocityCount > 5 || this.getLimitSwitch()) {
+						this.powerControl(0);
+
+						this.heightState = LiftHeightState.BASE;
+						Log.info("Lift", "Zeroing sequence hit soft/hard stop. Braking now...");
+
+						zeroVelocityCount = 0;
+					}
+				}
+				
+				if (this.getLimitSwitch() != previousSwitchState) {
 					this.liftMotor.setSelectedSensorPosition(this.limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
 
 					this.heightState = LiftHeightState.BASE;
@@ -245,7 +295,6 @@ public class Lift
 	public void setState(LiftHeightState liftState)
 	{
 		heightState = liftState;
-
 		if (Math.abs(getCurrentHeight() - heightState.targetHeight) > 1 * Length.in) {
 			if (getCurrentHeight() < heightState.targetHeight)
 			{

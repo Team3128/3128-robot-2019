@@ -1,5 +1,7 @@
 package org.team3128.gromit.main;
 
+import com.ctre.phoenix.motorcontrol.InvertType;
+
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
@@ -26,26 +28,17 @@ public class MainWallace extends MainDeepSpaceRobot {
         // TODO: 6ft/s, 7ft/s
         shiftUpSpeed = 100000;
         shiftDownSpeed = -1;
-
-        driveInvertCallback = () -> {
-            leftDriveLeader.setInverted(true);
-            leftDriveFollower.setInverted(true);
-            leftDriveLeader.setSensorPhase(true);
-
-            rightDriveLeader.setInverted(true);
-            rightDriveFollower.setInverted(true);
-            rightDriveLeader.setSensorPhase(true);
-        };
-
-        gearshiftPiston = new Piston(2, 6);
+    
+        //26
+        gearshiftPiston = new Piston(5, 2);
         gearshiftPiston.setPistonOn();
 
         placeholder1 = new Piston(1, 0);
         placeholder1.setPistonOff();
 
-        demogorgonPiston = new Piston(3, 7);
+        demogorgonPiston = new Piston(3, 4);
 
-        placeholder2 = new Piston(4, 5);
+        placeholder2 = new Piston(7, 6);
         placeholder2.setPistonOn();
 
         liftLimitSwitch = new DigitalInput(0);
@@ -53,13 +46,23 @@ public class MainWallace extends MainDeepSpaceRobot {
         liftMaxVelocity = 4200;
 
         fourBarLimitSwitch = new DigitalInput(1);
-        fourBarRatio = 4800 / (180 * Angle.DEGREES);
+        fourBarRatio = 4600 / (180 * Angle.DEGREES);
         fourBarSwitchPosition = +99 * Angle.DEGREES;
         fourBarMaxVelocity = 100;
         
         cargoBumperSwitch = new DigitalInput(2);
         
         super.constructHardware();
+
+        leftDriveLeader.setInverted(true);
+        leftDriveFollower.setInverted(InvertType.FollowMaster);
+
+        leftDriveLeader.setSensorPhase(true);
+
+        rightDriveLeader.setInverted(true);
+        rightDriveFollower.setInverted(InvertType.FollowMaster);
+
+        rightDriveLeader.setSensorPhase(true);
 
         // Lift Inverts
         liftMotorLeader.setInverted(false);

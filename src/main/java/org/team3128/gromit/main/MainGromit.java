@@ -39,15 +39,13 @@ public class MainGromit extends MainDeepSpaceRobot {
         shiftUpSpeed = 100000;
         shiftDownSpeed = -1;
 
-        driveInvertCallback = () -> {
-            leftDriveLeader.setInverted(true);
-            leftDriveFollower.setInverted(true);
-            leftDriveLeader.setSensorPhase(true);
+        leftDriveLeader.setInverted(true);
+        leftDriveFollower.setInverted(true);
+        leftDriveLeader.setSensorPhase(true);
 
-            rightDriveLeader.setInverted(true);
-            rightDriveFollower.setInverted(true);
-            rightDriveLeader.setSensorPhase(false);
-        };
+        rightDriveLeader.setInverted(true);
+        rightDriveFollower.setInverted(true);
+        rightDriveLeader.setSensorPhase(false);
 
         gearshiftPiston = new Piston(3, 4);
         gearshiftPiston.setPistonOn();

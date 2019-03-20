@@ -24,14 +24,16 @@ public class FourBar
 	private final double allowableError = 2 * Angle.DEGREES;
 
     public enum FourBarState {
-		ZEROING(92*Angle.DEGREES),
+		ZEROING(100*Angle.DEGREES),
 
 		VERTICAL(90*Angle.DEGREES), //DEBUG
 		SHIP_AND_LOADING(-55 * Angle.DEGREES),
 		// HATCH_DROP_SHIP_LOADING(-53 * Angle.DEGREES),
 
 		ROCKET_LOW(-67 * Angle.DEGREES), 
-		CARGO_MID(64 * Angle.DEGREES),
+		//64
+		CARGO_MID(80 * Angle.DEGREES),
+		CARGO_LOADING_STATION(55 * Angle.DEGREES),
 		// HATCH_DROP_ROCKET_LOW(-65 * Angle.DEGREES),
 		
 		CARGO_INTAKE(-22 * Angle.DEGREES),
@@ -145,6 +147,7 @@ public class FourBar
 				
 		fourBarThread = new Thread(() ->
 		{
+			int zeroVelocityCount = 0;
 			double target = 0;
 
 			double setPoint = 0;
@@ -154,15 +157,27 @@ public class FourBar
 
 			while (true)
 			{
+				if (this.state == FourBarState.ZEROING && this.controlMode == FourBarControlMode.POSITION) {
+					if (Math.abs(fourBarMotor.getSelectedSensorVelocity()) < 10) {
+						zeroVelocityCount += 1;
+					}
+					else {
+						zeroVelocityCount = 0;
+					}
+
+					if (zeroVelocityCount > 5 || this.getLimitSwitch() /** || maybe cleverly implement current limiting*/) {
+						this.state = FourBarState.VERTICAL;
+						Log.info("FourBar", "Zeroing sequence hit hard/soft stop. Braking now...");
+
+						this.angleControl(85.0 * Angle.DEGREES);
+
+						zeroVelocityCount = 0;
+					}
+				}
+
 				if (this.getLimitSwitch())
 				{
 					this.setCurrentAngle(this.limitSwitchAngle);
-
-					if (this.controlMode == FourBarControlMode.POSITION && this.state == FourBarState.ZEROING) {
-						Log.info("FourBar", "Zero Reached // braking now");
-						//this.brake();
-						this.angleControl(85.0 * Angle.DEGREES);
-					}
 
 					this.state = FourBarState.VERTICAL;
 				}
@@ -204,7 +219,7 @@ public class FourBar
 						// }
 
 						if (this.error > 0) {
-							kP = 0.285;
+							kP = 0.23;
 						}
 						else {
 							kP = 0.01;

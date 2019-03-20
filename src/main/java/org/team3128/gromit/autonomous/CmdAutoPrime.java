@@ -26,8 +26,8 @@ import org.team3128.common.hardware.navigation.Gyro;
 public class CmdAutoPrime extends CommandGroup {
 
     public CmdAutoPrime(Gyro gyro, Limelight limelight, DriveCommandRunning cmdRunning, PIDConstants offsetPID, GameElement gameElement, ScoreTarget scoreTarget) {
-    addSequential(new CmdRunInParallel(
-            new CmdAutoAim(gyro, limelight, offsetPID, cmdRunning, DeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 20.0 * Angle.DEGREES),
+        addSequential(new CmdRunInParallel(
+            new CmdAutoAim(gyro, limelight, offsetPID, cmdRunning, DeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 30.0 * Angle.DEGREES),
             new CmdAutOptimusPrime(limelight, gameElement, scoreTarget)
         ));
     }

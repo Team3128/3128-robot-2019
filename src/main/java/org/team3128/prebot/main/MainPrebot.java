@@ -96,21 +96,7 @@ public class MainPrebot extends NarwhalRobot {
         double wheelBase = 32.3 * Length.in;
         int robotFreeSpeed = 3700;
 
-        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, wheelBase, robotFreeSpeed,
-            () -> {
-                // Log.info("SRXTankDrive", "Inverting drive motors.");
-
-                // leftDriveFront.setInverted(true);
-                // leftDriveMiddle.setInverted(true);
-                // leftDriveBack.setInverted(true);
-                
-                // rightDriveFront.setInverted(false);
-                // rightDriveMiddle.setInverted(false);
-                // rightDriveBack.setInverted(false);
-
-                // leftDriveFront.setSensorPhase(true);
-                // rightDriveFront.setSensorPhase(true);
-            });
+        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, wheelBase, robotFreeSpeed);
 
         leftDriveFront.setInverted(true);
         leftDriveMiddle.setInverted(true);

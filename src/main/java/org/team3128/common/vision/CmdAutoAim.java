@@ -26,8 +26,7 @@ public class CmdAutoAim extends Command {
     Limelight limelight;
 
     private final double FEED_FORWARD_POWER = 0.55;
-    private final double MINIMUM_POWER = 0.6;
-    private final double MINIMUM_POWER_BLIND = 0.3;
+    private final double MINIMUM_POWER = 0.1;
 
     private final double VELOCITY_THRESHOLD = 100;
     private final int VELOCITY_PLATEAU_COUNT = 10;

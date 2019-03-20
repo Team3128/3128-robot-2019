@@ -136,10 +136,9 @@ public class MainGuido extends NarwhalRobot
 		gyro = new AnalogDevicesGyro();
 		
 		// create SRXTankDrive
-		SRXTankDrive.initialize(leftDriveLeader, rightDriveLeader, wheelCirc, 25.25 * Length.in, lowGearMaxSpeed,
-		() -> {
-			invertSetup();
-		});
+		SRXTankDrive.initialize(leftDriveLeader, rightDriveLeader, wheelCirc, 25.25 * Length.in, lowGearMaxSpeed);
+
+		invertSetup();
 		drive = SRXTankDrive.getInstance();
 		
 		shiftUpSpeed = 5.0 * Length.ft * 60 / wheelCirc;

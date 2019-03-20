@@ -104,12 +104,6 @@ public class SRXTankDrive implements ITankDrive {
 	 */
 	private double leftSpeedScalar, rightSpeedScalar;
 
-	/**
-	 * Callbacks to be executed when the robot is switched between operator control
-	 * and autonomous control to ensure all drive motors are driving forward.
-	 */
-	private SRXInvertCallback teleopInvertCallback, autoInvertCallback;
-
 	private enum DriveMode {
 		TELEOP(NeutralMode.Coast), AUTONOMOUS(NeutralMode.Brake);
 
@@ -176,12 +170,12 @@ public class SRXTankDrive implements ITankDrive {
 	 *                          driving on the ground at 100% throttle
 	 */
 	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase,
-			int robotMaxSpeed, SRXInvertCallback driveInverts) {
-		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, wheelBase, robotMaxSpeed, driveInverts);
+			int robotMaxSpeed) {
+		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, wheelBase, robotMaxSpeed);
 	}
 
 	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase,
-			int robotMaxSpeed, SRXInvertCallback driveInverts) {
+			int robotMaxSpeed) {
 		this.leftMotors = leftMotors;
 		this.rightMotors = rightMotors;
 
@@ -192,8 +186,6 @@ public class SRXTankDrive implements ITankDrive {
 
 		leftSpeedScalar = 1;
 		rightSpeedScalar = 1;
-
-		driveInverts.invertMotors();
 
 		configureDriveMode(DriveMode.TELEOP);
 
@@ -249,8 +241,8 @@ public class SRXTankDrive implements ITankDrive {
 		joyY *= throttle;
 		joyX *= throttle;
 
-		spdR = rightSpeedScalar * RobotMath.clampPosNeg1(joyY + joyX);
 		spdL = leftSpeedScalar * RobotMath.clampPosNeg1(joyY - joyX);
+		spdR = rightSpeedScalar * RobotMath.clampPosNeg1(joyY + joyX);
 
 		leftMotors.set(ControlMode.PercentOutput, spdL);
 		rightMotors.set(ControlMode.PercentOutput, spdR);

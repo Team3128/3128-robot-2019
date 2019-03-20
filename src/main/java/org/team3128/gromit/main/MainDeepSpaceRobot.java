@@ -1,4 +1,5 @@
 package org.team3128.gromit.main;
+
 import org.team3128.common.vision.CmdAutoAim;
 import org.team3128.gromit.util.*;
 import org.team3128.common.NarwhalRobot;
@@ -50,6 +51,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -70,7 +72,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
     public double wheelbase;
 	public int driveMaxSpeed;
 
-	public SRXInvertCallback driveInvertCallback;
 	public double leftSpeedScalar, rightSpeedScalar;
 
 	public DriveCalibrationUtility dcu;
@@ -129,13 +130,15 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 	public ListenerManager listenerLeft;
 	public ListenerManager listenerRight;
 
-	public CmdAutoAim triggerCommand;
+	public Command triggerCommand;
 	
 	//public CmdInitAuto cmdInitAuto;
 
 	// Miscellaneous
 	public PowerDistributionPanel powerDistPanel;
 	public DriverStation ds;
+
+	public boolean ledOn = false;
 
 	// CV!!!!!!
 	public Limelight limelight;
@@ -208,7 +211,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
         rightDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
 		rightDriveFollower.follow(rightDriveLeader);
 
-		SRXTankDrive.initialize(rightDriveLeader, leftDriveLeader, wheelCirc, wheelbase, driveMaxSpeed, driveInvertCallback);
+		SRXTankDrive.initialize(leftDriveLeader, rightDriveLeader, wheelCirc, wheelbase, driveMaxSpeed);
         drive = SRXTankDrive.getInstance();
 
 		drive.setLeftSpeedScalar(leftSpeedScalar);
@@ -228,7 +231,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 		
         // Vision
-        offsetPID = new PIDConstants(0, 0.02, 0.0, 0.00001);
+        offsetPID = new PIDConstants(0, 0.024, 0.0, 0.00001);
         driveCmdRunning = new DriveCommandRunning();
 
         // DCU
@@ -385,6 +388,17 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 			}
 		});
 
+		NarwhalDashboard.addButton("limelight_led", (boolean down) -> {
+			if (!ledOn) {
+				limelight.turnOnLED();
+			}
+			else {
+				limelight.turnOffLED();
+			}
+
+			ledOn = !ledOn;
+		});
+
 		dcu.initNarwhalDashboard();
     }
 
@@ -399,8 +413,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerRight.addMultiListener(() ->
 		{
 			if (!runningCommand) {
-				double vert =     driveInverted*-1.0 * listenerRight.getAxis("MoveForwards");
-				//DEBUG: IF ANYTHING GOES WRONG, TAKE OUT THE driveInverted VARIABLE
+				double vert =     -1.0 * listenerRight.getAxis("MoveForwards");
 				double horiz =    -0.8 * listenerRight.getAxis("MoveTurn");
 				double throttle = -1.0 * listenerRight.getAxis("Throttle");
 	
@@ -413,7 +426,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 		// Intake/Outtake Controls
 		listenerRight.nameControl(new Button(5), "DemogorgonGrab");
-        listenerRight.addButtonDownListener("DemogorgonGrab", () -> {
+		listenerRight.addButtonDownListener("DemogorgonGrab", () -> {
 			liftIntake.setState(LiftIntakeState.DEMOGORGON_RELEASED);
 		});
 		listenerRight.addButtonUpListener("DemogorgonGrab", () -> {
@@ -453,22 +466,26 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		// Optimus Prime Controls
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "AutoPrime");
 		listenerRight.addButtonDownListener("AutoPrime", () -> {
-			
 			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreTarget));
-			triggerCommand = new CmdAutoAim(gyro, limelight, offsetPID, driveCmdRunning, DeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 20.0 * Angle.DEGREES);
-			triggerCommand.start();
 
-			/*triggerCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning, offsetPID, currentGameElement, currentScoreTarget);
-			triggerCommand.start();*/
+			//triggerCommand = new CmdAutoPrime(gyro, limelight, cmdRunning, offsetPID, gameElement, scoreTarget);
+			
+			// triggerCommand = new CmdAutoAim(gyro, limelight, offsetPID, driveCmdRunning, DeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 20.0 * Angle.DEGREES);
+			// triggerCommand.start();
+
+			triggerCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning, offsetPID, currentGameElement, currentScoreTarget);
+			triggerCommand.start();
         });
         listenerRight.addButtonUpListener("AutoPrime", () -> {
             triggerCommand.cancel();
             triggerCommand = null;
         });
 
-		listenerRight.nameControl(new Button(6), "RestState");
-		listenerRight.addButtonDownListener("RestState" , () -> {
-			optimusPrime.setState(RobotState.ZERO);
+		listenerRight.nameControl(new Button(6), "Zero1");
+		listenerRight.addButtonDownListener("Zero1", () ->
+		{
+			fourBar.setState(FourBarState.ZEROING);
+			lift.setState(LiftHeightState.ZEROING);
 		});
 
 		// Game Element Controls
@@ -515,10 +532,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		{
 			fourBar.setState(FourBarState.ZEROING);
 			lift.setState(LiftHeightState.ZEROING);
-		});
-		listenerRight.addButtonUpListener("Zero", () -> {
-			fourBar.brake();
-			lift.powerControl(0);
 		});
 
 		// MANUAL CONTROLS AND OVERRIDES
@@ -656,6 +669,9 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 		SmartDashboard.putNumber("Left Position (nu)", leftDriveLeader.getSelectedSensorPosition());
 		SmartDashboard.putNumber("Right Position (nu)", rightDriveLeader.getSelectedSensorPosition());
+
+		SmartDashboard.putNumber("Lift Current", liftMotorLeader.getOutputCurrent());
+		SmartDashboard.putNumber("Four Bar Current", fourBarMotor.getOutputCurrent());
 
 		NarwhalDashboard.put("time", DriverStation.getInstance().getMatchTime());
 		NarwhalDashboard.put("voltage", RobotController.getBatteryVoltage());
