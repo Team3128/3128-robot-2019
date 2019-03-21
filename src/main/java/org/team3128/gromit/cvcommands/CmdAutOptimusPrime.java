@@ -17,18 +17,27 @@ public class CmdAutOptimusPrime extends Command {
     //SRXTankDrive drive;
     OptimusPrime optimusPrime;
     Lift lift;
-    
+
+    Limelight limelight;
+
     GameElement gameElement;
     ScoreTarget scoreTarget;
-    double currentTY, tyThreshold;
-    Limelight limelight;
     
+    private double targetHeight;
+    private boolean intakingHatchPanel;
+
+    private double approximateDistance;
     boolean inThreshold;
     
-    public CmdAutOptimusPrime(Limelight limelight, GameElement gameElement, ScoreTarget scoreTarget) {
-        this.limelight = limelight;   
+    public CmdAutOptimusPrime(Limelight limelight, GameElement gameElement, ScoreTarget scoreTarget, boolean intakingHatchPanel) {
+        this.limelight = limelight;
+
+        targetHeight = DeepSpaceConstants.getVisionTargetHeight(gameElement, scoreTarget);
+        
         this.gameElement = gameElement;
         this.scoreTarget = scoreTarget;
+
+        this.intakingHatchPanel = intakingHatchPanel;
         
         optimusPrime = OptimusPrime.getInstance();
         lift = Lift.getInstance();
@@ -36,15 +45,11 @@ public class CmdAutOptimusPrime extends Command {
     
     @Override
     protected void initialize() {        
-        if (gameElement == GameElement.CARGO) {
-            tyThreshold = DeepSpaceConstants.UPPER_TY_OPTIMUS_THRESHOLD;
+        if (intakingHatchPanel) {
+            optimusPrime.setState(RobotState.VISION_STATE);
         }
         else {
-            tyThreshold = DeepSpaceConstants.LOWER_TY_OPTIMUS_THRESHOLD;
-        }
-
-        if (gameElement == GameElement.HATCH_PANEL && (scoreTarget == ScoreTarget.CARGO_SHIP || scoreTarget == ScoreTarget.ROCKET_LOW)) {
-            optimusPrime.setState(RobotState.VISION_STATE);
+            optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
         }
                 
         inThreshold = false;
@@ -52,11 +57,11 @@ public class CmdAutOptimusPrime extends Command {
     
     @Override
     protected void execute() {
-        if (lift.getCurrentHeight() > lift.heightState.targetHeight - 4 * Length.cm && limelight.hasValidTarget()) {
-            currentTY = limelight.getValue("ty", 2);
+        if (limelight.hasValidTarget()) {
+            approximateDistance = limelight.getApproximateDistance(targetHeight, 2);
         
-            if (currentTY > tyThreshold) {
-                Log.info("AutOptimusPrime", "Within threshold");
+            if (approximateDistance < DeepSpaceConstants.AUTOPTIMUS_DISTANCE) {
+                Log.info("AutOptimusPrime", "Reached threshold distance.");
                 optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
                 
                 inThreshold = true;
