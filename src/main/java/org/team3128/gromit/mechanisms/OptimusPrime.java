@@ -3,7 +3,6 @@ package org.team3128.gromit.mechanisms;
 import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 
-import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 import org.team3128.common.autonomous.primitives.CmdRunInParallel;

@@ -1,46 +1,44 @@
 package org.team3128.gromit.main;
 
-import org.team3128.common.vision.CmdAutoAim;
-import org.team3128.gromit.util.*;
 import org.team3128.common.NarwhalRobot;
+
 import org.team3128.common.drive.DriveCommandRunning;
-import org.team3128.common.drive.SRXInvertCallback;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.drive.calibrationutility.DriveCalibrationUtility;
+
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.hardware.navigation.NavX;
+
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.POVValue;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.listener.controltypes.Button;
 import org.team3128.common.listener.controltypes.POV;
+
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
+
 import org.team3128.common.util.Constants;
-import org.team3128.common.util.Log;
 import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
-import org.team3128.common.vision.CmdAutoAim;
+
 import org.team3128.gromit.autonomous.CmdAutoPrime;
+
 import org.team3128.gromit.cvcommands.CmdBadHARC;
-import org.team3128.gromit.mechanisms.Climber;
+
 import org.team3128.gromit.mechanisms.FourBar;
-// import org.team3128.gromit.mechanisms.GroundIntake;
 import org.team3128.gromit.mechanisms.Lift;
 import org.team3128.gromit.mechanisms.LiftIntake;
 import org.team3128.gromit.mechanisms.OptimusPrime;
-import org.team3128.gromit.mechanisms.FourBar.FourBarControlMode;
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;
-// import org.team3128.gromit.mechanisms.GroundIntake.GroundIntakeState;
 import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
@@ -52,7 +50,6 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
-import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 
@@ -484,8 +481,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerRight.nameControl(new Button(6), "Zero1");
 		listenerRight.addButtonDownListener("Zero1", () ->
 		{
-			fourBar.setState(FourBarState.ZEROING);
-			lift.setState(LiftHeightState.ZEROING);
+			fourBar.zero();
 		});
 
 		// Game Element Controls
@@ -530,7 +526,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerRight.nameControl(new Button(4), "Zero");
 		listenerRight.addButtonDownListener("Zero", () ->
 		{
-			fourBar.setState(FourBarState.ZEROING);
+			fourBar.zero();
 			lift.setState(LiftHeightState.ZEROING);
 		});
 
@@ -594,10 +590,19 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		NarwhalDashboard.addAuto("90 In Place", drive.new CmdInPlaceTurn(90, Direction.RIGHT, 1.0, 5000));
 		//NarwhalDashboard.addAuto("Test Drive Train", new CmdTestDriveTrain());
 	}
+	
+	@Override
+	protected void disabledInit() {
+		fourBar.disabled = true;
+		lift.disabled = true;
+	}
 
 	@Override
 	protected void teleopInit()
 	{
+		fourBar.disabled = false;
+		lift.disabled = false;
+
 		drive.shiftToLow();
 
 		fourBar.brake();
@@ -606,14 +611,11 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 	@Override
 	protected void autonomousInit() {
+		fourBar.disabled = false;
+		lift.disabled = false;
+
 		drive.shiftToLow();
 		limelight.driverMode(2);
-		//Log.info("LIFT TEST0", "" + liftMotorLeader.getSelectedSensorPosition(0));
-		//liftMotorLeader.setSelectedSensorPosition(startingSensorPos, 0, Constants.CAN_TIMEOUT);
-		//Log.info("LIFT TEST1", "" + liftMotorLeader.getSelectedSensorPosition(0));
-		//fourBarMotor.setSelectedSensorPosition(startingFourBarPos, 0, Constants.CAN_TIMEOUT);
-		//cmdInitAuto = new CmdInitAuto();
-		//cmdInitAuto.start();
 	}
 
 
