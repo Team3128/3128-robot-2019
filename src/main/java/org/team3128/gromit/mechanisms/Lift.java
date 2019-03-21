@@ -68,6 +68,7 @@ public class Lift
         LOADING_SHIP_CARGO(30 * Length.in);
 		//LOADING_SHIP_HATCH(16.5 * Length.in);
 		*/
+		
 		INTAKE_FLOOR_CARGO(6.5 * Length.in),
 		VISION(24*Length.in),
 
@@ -82,6 +83,7 @@ public class Lift
 		//57.5
         LOADING_SHIP_CARGO(30 * Length.in),
 		LOADING_SHIP_HATCH(17 * Length.in);
+
 		public double targetHeight;
 
 		private LiftHeightState(double height)

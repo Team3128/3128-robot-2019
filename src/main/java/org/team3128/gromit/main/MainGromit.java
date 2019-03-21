@@ -29,7 +29,6 @@ public class MainGromit extends MainDeepSpaceRobot {
     protected void constructHardware() {
         wheelbase = 37 * Length.in;
         driveMaxSpeed = 5800;
-        //gearRatio = 2.9 + 54/990;
         wheelCirc = 12.01 * Length.in;
 
         leftSpeedScalar = 1.00;
@@ -39,14 +38,6 @@ public class MainGromit extends MainDeepSpaceRobot {
         shiftUpSpeed = 100000;
         shiftDownSpeed = -1;
 
-        leftDriveLeader.setInverted(true);
-        leftDriveFollower.setInverted(true);
-        leftDriveLeader.setSensorPhase(true);
-
-        rightDriveLeader.setInverted(true);
-        rightDriveFollower.setInverted(true);
-        rightDriveLeader.setSensorPhase(false);
-
         gearshiftPiston = new Piston(3, 4);
         gearshiftPiston.setPistonOn();
 
@@ -54,6 +45,7 @@ public class MainGromit extends MainDeepSpaceRobot {
         climbPiston.setPistonOff();
 
         demogorgonPiston = new Piston(7, 0);
+        demogorgonPiston.setPistonOn();
 
         placeholder = new Piston(2, 5);
         placeholder.setPistonOn();
@@ -108,7 +100,16 @@ public class MainGromit extends MainDeepSpaceRobot {
 				climbMotor.setSelectedSensorPosition(0);
 				climbMotor.set(ControlMode.PercentOutput, 0);
 			}
-		});
+        });
+        
+        // Drive Innverts
+        leftDriveLeader.setInverted(true);
+        leftDriveFollower.setInverted(true);
+        leftDriveLeader.setSensorPhase(true);
+
+        rightDriveLeader.setInverted(true);
+        rightDriveFollower.setInverted(true);
+        rightDriveLeader.setSensorPhase(false);
 
         // Lift Inverts
         liftMotorLeader.setInverted(false);
@@ -129,8 +130,6 @@ public class MainGromit extends MainDeepSpaceRobot {
         //2 is big camera for lars KEEP AT 2
         limelight.driverMode(2);
         limelight.turnOffLED();
-
-        
     }
 
     @Override
