@@ -19,6 +19,7 @@ import org.team3128.common.util.Constants;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
 import org.team3128.common.vision.CmdAutoAim;
+import org.team3128.gromit.util.DeepSpaceConstants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
@@ -58,7 +59,7 @@ public class MainPrebot extends NarwhalRobot {
     public NetworkTable table;
     public NetworkTable table2;
 
-    PIDConstants offsetPID;
+    PIDConstants visionPID, blindPID;
 
     public NetworkTable limelightTable;
 
@@ -68,7 +69,7 @@ public class MainPrebot extends NarwhalRobot {
     public CmdAutoAim alignCommand;
     private DriveCommandRunning driveCmdRunning;
 
-    public Limelight limelight = new Limelight(0 * Length.in, 26 * Length.in, 6.15 * Length.in, 28.5 * Length.in, 14.5 * Length.in);
+    public Limelight limelight = new Limelight(0 * Length.in, 26 * Angle.DEGREES, 6.15 * Length.in, 14.5 * Length.in);
 	@Override
 	protected void constructHardware()
 	{
@@ -125,11 +126,12 @@ public class MainPrebot extends NarwhalRobot {
         addListenerManager(lm);
 
         // Vision
-        offsetPID = new PIDConstants(0, 0.02, 0.0, 0.00001);
+        visionPID = new PIDConstants(0, 0.02, 0.0, 0.00001);
+        blindPID = new PIDConstants(0.1, 0, 0, 0);
         driveCmdRunning = new DriveCommandRunning();
 
         // DCU
-		DriveCalibrationUtility.initialize(gyro, offsetPID);
+		DriveCalibrationUtility.initialize(gyro, visionPID);
         dcu = DriveCalibrationUtility.getInstance();
         
 
@@ -201,7 +203,9 @@ public class MainPrebot extends NarwhalRobot {
 
 		lm.nameControl(ControllerExtreme3D.TRIGGER, "AlignToTarget");
 		lm.addButtonDownListener("AlignToTarget", () -> { 
-            alignCommand = new CmdAutoAim(gyro, limelight, offsetPID, driveCmdRunning, PrebotDeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 20.0 * Angle.DEGREES);
+            alignCommand = new CmdAutoAim(gyro, limelight, visionPID, driveCmdRunning,
+            -1 * Angle.DEGREES, 14.5 * Length.in, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
+            blindPID);
             alignCommand.start();
         });
         lm.addButtonUpListener("AlignToTarget", () -> {

@@ -71,7 +71,7 @@ public class MainTestBench extends NarwhalRobot {
 	protected void constructHardware()
 	{
         newLine = "";
-        limelight = new Limelight(0 * Length.in, camAngle, camHeight, lowerTargetHeight, w);
+        limelight = new Limelight(0 * Length.in, camAngle, camHeight, w);
         newLine = "tx,ty,ts,ta,thoriz,tvert,tshort,tlong,deltax,deltay,theta,calculatedDist,theta0,theta1,d0,d1\n";
         NarwhalDashboard.put("counter", String.valueOf(counter));
         boi1 = new TalonSRX(1);
@@ -133,7 +133,7 @@ public class MainTestBench extends NarwhalRobot {
             limelight.turnOnLED();
 
             LimelightData data = limelight.getValues(1000);
-            CalculatedData calcData = limelight.doMath(data);
+            CalculatedData calcData = limelight.doMath(data, lowerTargetHeight);
 
             newLine += data.tx() + ",";
             newLine += data.ty() + ",";

@@ -118,7 +118,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 	public OptimusPrime optimusPrime;
 
 	// Vision
-	public PIDConstants offsetPID;
+	public PIDConstants visionPID, blindPID;
     private DriveCommandRunning driveCmdRunning;
 
 	// Controls
@@ -228,11 +228,12 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 		
         // Vision
-        offsetPID = new PIDConstants(0, 0.024, 0.0, 0.00001);
+		visionPID = new PIDConstants(0.55, 0.024, 0.0, 0.00001);
+		blindPID = new PIDConstants(0.1, 0, 0, 0);
         driveCmdRunning = new DriveCommandRunning();
 
         // DCU
-		DriveCalibrationUtility.initialize(gyro, offsetPID);
+		DriveCalibrationUtility.initialize(gyro, visionPID);
 		dcu = DriveCalibrationUtility.getInstance();
 
 		compressor = new Compressor();
@@ -251,21 +252,19 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		// groundIntake = GroundIntake.getInstance();
 
 		// Create Lift
-		liftState = LiftHeightState.BASE;
 		liftMotorLeader = new TalonSRX(20);
 		liftMotorFollower = new VictorSPX(21);
 
 		liftMotorFollower.follow(liftMotorLeader);
 
-		Lift.initialize(liftState, liftMotorLeader, liftLimitSwitch, liftSwitchPosition, liftMaxVelocity);
+		Lift.initialize(LiftHeightState.BASE, liftMotorLeader, liftLimitSwitch, liftSwitchPosition, liftMaxVelocity);
 		lift = Lift.getInstance();
 
 
 		// Create Lift Intake
-		liftIntakeState = LiftIntake.LiftIntakeState.DEMOGORGON_HOLDING;
 		liftIntakeMotor = new VictorSPX(31);
 
-		LiftIntake.initialize(liftIntakeMotor, liftIntakeState, demogorgonPiston, cargoBumperSwitch);
+		LiftIntake.initialize(liftIntakeMotor, LiftIntakeState.DEMOGORGON_HOLDING, demogorgonPiston, cargoBumperSwitch);
 		liftIntake = LiftIntake.getInstance();
 
 		// Create Optimus Prime
@@ -286,7 +285,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerRight = new ListenerManager(rightJoystick);
 		addListenerManager(listenerRight);
 
-		limelight = new Limelight(7 * Length.in, 26 * Length.in, 6.15 * Length.in, 28.5 * Length.in, 14.5 * Length.in);
+		limelight = new Limelight(7 * Length.in, 26 * Angle.DEGREES, 6.15 * Length.in, 14.5 * Length.in);
 
 		// NarwhalDashboard: Driver Controls
 
@@ -465,12 +464,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerRight.addButtonDownListener("AutoPrime", () -> {
 			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreTarget));
 
-			//triggerCommand = new CmdAutoPrime(gyro, limelight, cmdRunning, offsetPID, gameElement, scoreTarget);
-			
-			// triggerCommand = new CmdAutoAim(gyro, limelight, offsetPID, driveCmdRunning, DeepSpaceConstants.LOWER_TY_DECELERATE_THRESHOLD, 20.0 * Angle.DEGREES);
-			// triggerCommand.start();
-
-			triggerCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning, offsetPID, currentGameElement, currentScoreTarget);
+			triggerCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning, visionPID, blindPID, currentGameElement, currentScoreTarget, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED));
 			triggerCommand.start();
         });
         listenerRight.addButtonUpListener("AutoPrime", () -> {

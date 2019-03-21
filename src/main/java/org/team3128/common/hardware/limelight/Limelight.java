@@ -22,6 +22,13 @@ public class Limelight
     public NetworkTable limelightTable, calcValsTable;
     public NetworkTableEntry nd, nd0, nd1, ntheta, ntheta0, ntheta1, ndeltax, ndeltay, camtran;
     
+    /**
+     * 
+     * @param centerDist - The vertical distance between the center of the robot's wheelbase and the camera
+     * @param cameraAngle - The vertical angle of the limelight
+     * @param cameraHeight - The height off of the ground of the limelight
+     * @param targetWidth - The width of the target
+     */
     public Limelight(double centerDist, double cameraAngle, double cameraHeight, double targetWidth) {
         this.centerDist = centerDist;
         this.cameraAngle = cameraAngle;
