@@ -244,13 +244,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		FourBar.initialize(fourBarMotor, fourBarState, fourBarLimitSwitch, fourBarRatio, fourBarSwitchPosition, fourBarMaxVelocity);
 		fourBar = FourBar.getInstance();
 
-		// Create Ground Intake
-		// groundIntakeState = GroundIntake.GroundIntakeState.RETRACTED;
-		// groundIntakeMotor = new VictorSPX(99);
-
-		// GroundIntake.initialize(groundIntakeMotor, groundIntakeState, groundIntakePistons, false);
-		// groundIntake = GroundIntake.getInstance();
-
 		// Create Lift
 		liftMotorLeader = new TalonSRX(20);
 		liftMotorFollower = new VictorSPX(21);
@@ -288,7 +281,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		limelight = new Limelight(7 * Length.in, 26 * Angle.DEGREES, 6.15 * Length.in, 14.5 * Length.in);
 
 		// NarwhalDashboard: Driver Controls
-
 		NarwhalDashboard.addButton("setTarget_rocket_top", (boolean down) -> {
 			if (down) {
 				currentScoreTarget = ScoreTarget.ROCKET_TOP;
@@ -321,6 +313,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 			}
 		});
 
+		// NarwhalDashboard: Debug Controls
 		NarwhalDashboard.addButton("fourbar_high", (boolean down) -> {
 			if (down) {
 				fourBar.setState(FourBarState.CARGO_HIGH);
@@ -462,21 +455,15 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		// Optimus Prime Controls
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "AutoPrime");
 		listenerRight.addButtonDownListener("AutoPrime", () -> {
-			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreTarget));
-
-			triggerCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning, visionPID, blindPID, currentGameElement, currentScoreTarget, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED));
+			triggerCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning,
+				visionPID, blindPID, currentGameElement, currentScoreTarget,
+				(liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED));
 			triggerCommand.start();
         });
         listenerRight.addButtonUpListener("AutoPrime", () -> {
             triggerCommand.cancel();
             triggerCommand = null;
         });
-
-		listenerRight.nameControl(new Button(6), "Zero1");
-		listenerRight.addButtonDownListener("Zero1", () ->
-		{
-			fourBar.zero();
-		});
 
 		// Game Element Controls
 		listenerRight.nameControl(new Button(12), "SelectHatchPanel");
@@ -489,13 +476,12 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 			currentGameElement = GameElement.CARGO;
 		});
 
-		// Scoring Structure Controls
+		// Scoring Target Controls
 		listenerRight.nameControl(new Button(8), "SelectCargoShip");
 		listenerRight.addButtonDownListener("SelectCargoShip", () -> {
 			currentScoreTarget = ScoreTarget.CARGO_SHIP;
 		});
 
-		// Height Controls
 		listenerRight.nameControl(new Button(7), "SelectTopLevel");
 		listenerRight.addButtonDownListener("SelectTopLevel", () -> {
 			currentScoreTarget = ScoreTarget.ROCKET_TOP;
@@ -512,14 +498,12 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		});
 
 		listenerRight.nameControl(new Button(3), "SetHeight");
-		listenerRight.addButtonDownListener("SetHeight", () ->
-		{
+		listenerRight.addButtonDownListener("SetHeight", () -> {
 			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreTarget));
 		});
 
 		listenerRight.nameControl(new Button(4), "Zero");
-		listenerRight.addButtonDownListener("Zero", () ->
-		{
+		listenerRight.addButtonDownListener("Zero", () -> {
 			fourBar.zero();
 			lift.setState(LiftHeightState.ZEROING);
 		});
@@ -581,7 +565,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 	@Override
 	protected void constructAutoPrograms()
 	{
-		NarwhalDashboard.addAuto("90 In Place", drive.new CmdInPlaceTurn(90, Direction.RIGHT, 1.0, 5000));
+		//NarwhalDashboard.addAuto("90 In Place", drive.new CmdInPlaceTurn(90, Direction.RIGHT, 1.0, 5000));
 		//NarwhalDashboard.addAuto("Test Drive Train", new CmdTestDriveTrain());
 	}
 	
@@ -592,8 +576,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 	}
 
 	@Override
-	protected void teleopInit()
-	{
+	protected void teleopInit() {
 		fourBar.disabled = false;
 		lift.disabled = false;
 
@@ -612,13 +595,15 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		limelight.driverMode(2);
 	}
 
-
 	private GameElement lastAutoGameElement = null;
+	private GameElement currentAutoGameElement = null;
 	@Override
 	protected void teleopPeriodic() {
-		if (getCurrentGameElement() != lastAutoGameElement) {
-			currentGameElement = getCurrentGameElement();
-			lastAutoGameElement = currentGameElement;
+		currentAutoGameElement = getCurrentGameElement();
+
+		if (currentAutoGameElement != lastAutoGameElement) {
+			currentGameElement = currentAutoGameElement;
+			lastAutoGameElement = currentAutoGameElement;
 		}
 	}
 
@@ -630,7 +615,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 			return GameElement.HATCH_PANEL;
 		}
 	}
-
 
 	@Override
 	protected void updateDashboard()
