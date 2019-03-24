@@ -42,16 +42,16 @@ public class Climber {
             drive.shiftToLow();
 
             addSequential(new CmdDeployClimberPiston());
-            addSequential(drive.new CmdDriveUntilStop(-0.6, 1500));
+            addSequential(drive.new CmdDriveUntilStop(0.6, 1500));
             addSequential(new CmdRetractClimberPiston());
             
             addSequential(new CmdSetBackLegPosition(10000, 3000));
 
-            addSequential(drive.new CmdDriveUntilStop(-0.3, 700));
+            addSequential(drive.new CmdDriveUntilStop(0.3, 700));
 
             //addSequential(new CmdSetBackLegPosition(50, 2000));
             addSequential(new CmdRunInParallel(
-                drive.new CmdDriveUntilStop(-0.5, 2000),
+                drive.new CmdDriveUntilStop(0.5, 2000),
                 new CmdSetBackLegPosition(50, 2000)
             ));
         }
@@ -65,12 +65,12 @@ public class Climber {
             drive.shiftToLow();
 
             addSequential(new CmdDeployClimberPiston());
-            addSequential(drive.new CmdDriveUntilStop(-0.6, 1000));
+            addSequential(drive.new CmdDriveUntilStop(0.6, 1000));
             addSequential(new CmdRetractClimberPiston());
 
             addSequential(new CmdSetBackLegPosition(18500, 5000));
 
-            addSequential(drive.new CmdDriveUntilStop(-0.3, 3000));
+            addSequential(drive.new CmdDriveUntilStop(0.3, 3000));
 
             addSequential(new CmdSetBackLegPosition(0, 2000));
         }

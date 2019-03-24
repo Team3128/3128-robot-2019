@@ -16,7 +16,6 @@ public class MainWallace extends MainDeepSpaceRobot {
 
     @Override
     protected void constructHardware() {
-        driveInverted = -1;
         wheelbase = 37 * Length.in;
         driveMaxSpeed = 5800;
         //gearRatio = 2.9 + 54/990;

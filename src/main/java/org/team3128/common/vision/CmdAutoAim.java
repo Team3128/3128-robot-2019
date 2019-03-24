@@ -10,6 +10,7 @@ import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.units.Angle;
+import org.team3128.common.util.units.Length;
 
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
@@ -49,6 +50,8 @@ public class CmdAutoAim extends Command {
 
     private double leftPower, rightPower;
 
+    private boolean visionStating;
+
     int tvCount;
     int plateauReachedCount;
 
@@ -60,7 +63,7 @@ public class CmdAutoAim extends Command {
 
     public CmdAutoAim(Gyro gyro, Limelight limelight, PIDConstants visionPID, DriveCommandRunning cmdRunning,
             double goalHorizontalOffset, double targetHeight, double decelerationStartDistance, double decelerationEndDistance,
-            PIDConstants blindPID) {
+            PIDConstants blindPID, boolean visionStating) {
         this.gyro = gyro;
         this.limelight = limelight;
         this.visionPID = visionPID;
@@ -75,6 +78,7 @@ public class CmdAutoAim extends Command {
         this.decelerationEndDistance = decelerationEndDistance;
 
         this.blindPID = blindPID;
+        this.visionStating = visionStating;
     }
 
     @Override
@@ -117,7 +121,7 @@ public class CmdAutoAim extends Command {
                 if (!limelight.hasValidTarget()) {
                     Log.info("CmdAutoAim", "No valid target.");
 
-                    if (previousVerticalAngle > 20 * Angle.DEGREES) {
+                    if (previousVerticalAngle > 20 * Angle.DEGREES || (visionStating && previousVerticalAngle > -7 * Angle.DEGREES)) {
                         Log.info("CmdAutoAim", "Going to blind.");
 
                         gyro.setAngle(0);
@@ -134,7 +138,7 @@ public class CmdAutoAim extends Command {
                 else {
                     currentHorizontalOffset = limelight.getValue("tx", 5);
 
-                    currentTime = RobotController.getFPGATime() / 1000000.0;
+                    currentTime = RobotController.getFPGATime();
                     currentError = goalHorizontalOffset - currentHorizontalOffset;
 
                     /**
@@ -145,15 +149,17 @@ public class CmdAutoAim extends Command {
                     feedbackPower += visionPID.kP * currentError;
                     feedbackPower += visionPID.kD * (currentError - previousError)/(currentTime - previousTime);
                     
-                    rightPower = RobotMath.clamp(visionPID.kF - feedbackPower, -1, 1);
-                    leftPower = RobotMath.clamp(visionPID.kF + feedbackPower, -1, 1);
+                    leftPower = RobotMath.clamp(visionPID.kF - feedbackPower, -1, 1);
+                    rightPower = RobotMath.clamp(visionPID.kF + feedbackPower, -1, 1);
                     
                     Log.info("CmdAutoAim", "L: " + leftPower + "; R: " + rightPower);
                     
                     previousVerticalAngle = limelight.getValue("ty", 2);
                     approximateDistance = limelight.calculateDistanceFromTY(previousVerticalAngle, targetHeight);
 
-                    multiplier = 1.0 - (1.0 - blindPID.kF) * RobotMath.clamp((decelerationStartDistance - approximateDistance)/(decelerationStartDistance - decelerationEndDistance), 0.0, 1.0);
+                    Log.info("CmdAutoAim", "distance = " + (approximateDistance / Length.in) + " inches");
+
+                    multiplier = 1.0 - (1.0 - visionPID.kF) * RobotMath.clamp((decelerationStartDistance - approximateDistance)/(decelerationStartDistance - decelerationEndDistance), 0.0, 1.0);
                     Log.info("CmdAutoAim", "Power Multipier = " + multiplier);
 
                     drive.tankDrive(multiplier * leftPower, multiplier * rightPower);
@@ -163,6 +169,7 @@ public class CmdAutoAim extends Command {
                     Log.info("CmdAutoAim", "Error:" + currentError);
                 }
                 
+
                 break;
 
             case BLIND:
@@ -196,7 +203,7 @@ public class CmdAutoAim extends Command {
 
     @Override
     protected boolean isFinished() {
-        if (aimState == AutoAimState.BLIND || aimState == AutoAimState.FEEDBACK) {
+        if (aimState == AutoAimState.BLIND) {
             leftVel = Math.abs(drive.getLeftMotors().getSelectedSensorVelocity(0));
             rightVel = Math.abs(drive.getRightMotors().getSelectedSensorVelocity(0));
 

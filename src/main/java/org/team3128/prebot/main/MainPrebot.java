@@ -205,7 +205,7 @@ public class MainPrebot extends NarwhalRobot {
 		lm.addButtonDownListener("AlignToTarget", () -> { 
             alignCommand = new CmdAutoAim(gyro, limelight, visionPID, driveCmdRunning,
             -1 * Angle.DEGREES, 14.5 * Length.in, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
-            blindPID);
+            blindPID, false);
             alignCommand.start();
         });
         lm.addButtonUpListener("AlignToTarget", () -> {

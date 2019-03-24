@@ -33,12 +33,12 @@ public class OptimusPrime {
 
         VISION_STATE(LiftHeightState.VISION, FourBarState.HATCH_LOW),
         
-        DEPOSIT_LOW_HATCH(LiftHeightState.LOADING_SHIP_HATCH, FourBarState.HATCH_LOW),
-        DEPOSIT_MID_HATCH(LiftHeightState.MID_HATCH, FourBarState.ROCKET_LOW),
+        DEPOSIT_LOW_HATCH(LiftHeightState.LOW_HATCH, FourBarState.HATCH_LOW),
+        DEPOSIT_MID_HATCH(LiftHeightState.MID_HATCH, FourBarState.HATCH_HIGH),
         DEPOSIT_TOP_HATCH(LiftHeightState.TOP_HATCH, FourBarState.HATCH_HIGH),
         
-        DEPOSIT_LOW_CARGO(LiftHeightState.LOW_CARGO, FourBarState.ROCKET_LOW),
-        DEPOSIT_MID_CARGO(LiftHeightState.MID_CARGO, FourBarState.CARGO_MID),
+        DEPOSIT_LOW_CARGO(LiftHeightState.LOW_CARGO, FourBarState.CARGO_LOW),
+        DEPOSIT_MID_CARGO(LiftHeightState.MID_CARGO, FourBarState.CARGO_LOW),
         DEPOSIT_TOP_CARGO(LiftHeightState.TOP_CARGO, FourBarState.CARGO_HIGH),
         
         LOADING_AND_SHIP_CARGO(LiftHeightState.LOADING_SHIP_CARGO, FourBarState.CARGO_MID),

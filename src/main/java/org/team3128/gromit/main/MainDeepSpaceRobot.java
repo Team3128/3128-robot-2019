@@ -21,6 +21,7 @@ import org.team3128.common.listener.controltypes.POV;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 
 import org.team3128.common.util.Constants;
+import org.team3128.common.util.Log;
 import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
@@ -152,8 +153,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 	//public int startingSensorPos = 7000; 
 	//public int startingFourBarPos = -110; 
 
-	public int driveInverted = 1;
-
 	public enum ManualControlMode {
         LIFT,
         FOUR_BAR;
@@ -196,11 +195,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
     @Override
     protected void constructHardware() {
 
-		// Construct and Configure Drivetrain
-		leftDriveLeader = new TalonSRX(15);
-		leftDriveFollower = new VictorSPX(16);
-		rightDriveLeader = new TalonSRX(10);
-		rightDriveFollower = new VictorSPX(11);
 
 		leftDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
 		leftDriveFollower.follow(leftDriveLeader);
@@ -228,9 +222,9 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 		
         // Vision
-		visionPID = new PIDConstants(0.55, 0.024, 0.0, 0.00001);
-		blindPID = new PIDConstants(0.1, 0, 0, 0);
-        driveCmdRunning = new DriveCommandRunning();
+		visionPID = new PIDConstants(0.55, 0.028, 0.0, 0.00001);
+		blindPID = new PIDConstants(0.23, 0, 0, 0);
+		driveCmdRunning = new DriveCommandRunning();
 
         // DCU
 		DriveCalibrationUtility.initialize(gyro, visionPID);
@@ -278,7 +272,8 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerRight = new ListenerManager(rightJoystick);
 		addListenerManager(listenerRight);
 
-		limelight = new Limelight(7 * Length.in, 26 * Angle.DEGREES, 6.15 * Length.in, 14.5 * Length.in);
+		limelight = new Limelight(5.5 * Length.in, 38 * Angle.DEGREES, 6.15 * Length.in, 14.5 * Length.in); //7, 25
+		
 
 		// NarwhalDashboard: Driver Controls
 		NarwhalDashboard.addButton("setTarget_rocket_top", (boolean down) -> {
@@ -326,7 +321,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		});
 		NarwhalDashboard.addButton("fourbar_rocket_low", (boolean down) -> {
 			if (down) {
-				fourBar.setState(FourBarState.ROCKET_LOW);
+				fourBar.setState(FourBarState.CARGO_LOW);
 			}
 		});
 		NarwhalDashboard.addButton("fourbar_intake", (boolean down) -> {
@@ -401,12 +396,13 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerRight.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");
 		listenerRight.addMultiListener(() ->
 		{
+			Log.info("MainDeepSpaceRobot", "Trying to drive...");
 			if (!runningCommand) {
 				double vert =     -1.0 * listenerRight.getAxis("MoveForwards");
 				double horiz =    -0.8 * listenerRight.getAxis("MoveTurn");
 				double throttle = -1.0 * listenerRight.getAxis("Throttle");
-	
-				drive.arcadeDrive(vert, horiz, throttle, true);
+
+				drive.arcadeDrive(horiz, vert, throttle, true);
 			}
 		}, "MoveForwards", "MoveTurn", "Throttle");
 
@@ -435,9 +431,9 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 				case 3:
 				case 4:
 				case 5:
-					if (optimusPrime.robotState != RobotState.LOADING_AND_SHIP_HATCH) {
+					// if (optimusPrime.robotState != RobotState.LOADING_AND_SHIP_HATCH) {
 						optimusPrime.setState(RobotState.INTAKE_FLOOR_CARGO);
-					}
+					// }
 
 					liftIntake.setState(LiftIntakeState.CARGO_INTAKE);
 					
@@ -576,6 +572,12 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 	}
 
 	@Override
+	protected void disabledPeriodic() {
+		limelight.driverMode(2);
+		limelight.turnOffLED();
+	}
+
+	@Override
 	protected void teleopInit() {
 		fourBar.disabled = false;
 		lift.disabled = false;
@@ -592,7 +594,14 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		lift.disabled = false;
 
 		drive.shiftToLow();
-		limelight.driverMode(2);
+
+		driveCmdRunning.isRunning = false;
+	}
+
+	@Override
+	protected void autonomousPeriodic() {
+		listenerRight.tick();
+		listenerLeft.tick();
 	}
 
 	private GameElement lastAutoGameElement = null;

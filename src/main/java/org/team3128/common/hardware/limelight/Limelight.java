@@ -104,7 +104,7 @@ public class Limelight
     }
 
     public double calculateDistanceFromTY(double ty, double targetHeight) {
-        return RobotMath.tan(ty + cameraAngle) / (targetHeight - cameraHeight);
+        return  (targetHeight - cameraHeight) / RobotMath.tan(ty + cameraAngle);
     }
     
     public CalculatedData doMath(LimelightData inputData, double targetHeight) {

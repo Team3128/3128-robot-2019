@@ -27,11 +27,12 @@ public class CmdAutoPrime extends CommandGroup {
 
     public CmdAutoPrime(Gyro gyro, Limelight limelight, DriveCommandRunning cmdRunning, PIDConstants visionPID, PIDConstants blindPID, GameElement gameElement, ScoreTarget scoreTarget, boolean intakingHatchPanel) {
         double targetHeight = DeepSpaceConstants.getVisionTargetHeight(gameElement, scoreTarget);
+        boolean visionStating = !intakingHatchPanel && gameElement == GameElement.HATCH_PANEL && (scoreTarget == ScoreTarget.CARGO_SHIP || scoreTarget == ScoreTarget.ROCKET_LOW);
         
         addSequential(new CmdRunInParallel(
             new CmdAutoAim(gyro, limelight, visionPID, cmdRunning,
                 -1 * Angle.DEGREES, targetHeight, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
-                blindPID),
+                blindPID, visionStating),
             new CmdAutOptimusPrime(limelight, gameElement, scoreTarget, intakingHatchPanel)
         ));
     }

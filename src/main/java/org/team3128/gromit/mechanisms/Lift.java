@@ -23,65 +23,23 @@ import edu.wpi.first.wpilibj.command.Command;
 public class Lift
 {
 	public enum LiftHeightState {
-		//INIT_BASE(-15 * Length.in),
-		//STARTING(18 * Length.in),
-		/*
 		ZEROING(-3 * Length.in),
 		BASE(0 * Length.in),
-		//ALT_INTAKE_LOW_HATCH(18.75 * Length.in),
 		
-		//4.5
-		INTAKE_FLOOR_CARGO(8 * Length.in),
-		VISION(53*Length.in),
-
-		LOW_CARGO(42 * Length.in),
-		MID_CARGO(51 * Length.in),
-		TOP_CARGO(78 * Length.in),
-		
-        LOW_HATCH(18.5 * Length.in),
-        MID_HATCH(53 * Length.in),
-		TOP_HATCH(63 * Length.in),
-		
-		//57.5
-        LOADING_SHIP_CARGO(30 * Length.in);
-        //LOADING_SHIP_HATCH(16.5 * Length.in);
-		*/
-
-		ZEROING(-3 * Length.in),
-		BASE(0 * Length.in),
-		//ALT_INTAKE_LOW_HATCH(18.75 * Length.in),
-		
-		//4.5
-		/*
-		INTAKE_FLOOR_CARGO(8 * Length.in),
-		VISION(53*Length.in),
-
-		LOW_CARGO(42 * Length.in),
-		MID_CARGO(51 * Length.in),
-		TOP_CARGO(78 * Length.in),
-		
-        LOW_HATCH(16 * Length.in),
-        MID_HATCH(53 * Length.in),
-		TOP_HATCH(63 * Length.in),
-		
-		//57.5
-        LOADING_SHIP_CARGO(30 * Length.in);
-		//LOADING_SHIP_HATCH(16.5 * Length.in);
-		*/
 		INTAKE_FLOOR_CARGO(6.5 * Length.in),
-		VISION(24*Length.in),
+		VISION(35*Length.in),
 
-		LOW_CARGO(39 * Length.in),
-		MID_CARGO(42 * Length.in),
-		TOP_CARGO(75 * Length.in),
+		LOW_CARGO(14.75 * Length.in),
+		MID_CARGO(50 * Length.in),
+		TOP_CARGO(80 * Length.in),
 		
-        LOW_HATCH(16 * Length.in),
-        MID_HATCH(53 * Length.in),
-		TOP_HATCH(59 * Length.in),
+        LOW_HATCH(21 * Length.in),
+        MID_HATCH(30.5 * Length.in),
+		TOP_HATCH(64 * Length.in),
 		
 		//57.5
         LOADING_SHIP_CARGO(30 * Length.in),
-		LOADING_SHIP_HATCH(17 * Length.in);
+		LOADING_SHIP_HATCH(21 * Length.in);
 		public double targetHeight;
 
 		private LiftHeightState(double height)

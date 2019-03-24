@@ -953,8 +953,8 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void initialize() {
-			arcadeDrive(-1 * power, 0, 1.0, false);
-
+			tankDrive(power, power, true);
+			
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
@@ -970,8 +970,7 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected void end() {
-			leftMotors.set(ControlMode.PercentOutput, 0);
-			rightMotors.set(ControlMode.PercentOutput, 0);
+			stopMovement();
 
 			if (isTimedOut()) {
 				Log.unusual("CmdDriveUntilStopped", "Timed out.");

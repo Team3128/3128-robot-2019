@@ -26,6 +26,8 @@ public class CmdAutOptimusPrime extends Command {
     private double targetHeight;
     private boolean intakingHatchPanel;
 
+    private boolean visionStating;
+
     private double approximateDistance;
     boolean inThreshold;
     
@@ -44,8 +46,10 @@ public class CmdAutOptimusPrime extends Command {
     }
     
     @Override
-    protected void initialize() {        
-        if (intakingHatchPanel) {
+    protected void initialize() {
+        visionStating = !intakingHatchPanel && gameElement == GameElement.HATCH_PANEL && (scoreTarget == ScoreTarget.CARGO_SHIP || scoreTarget == ScoreTarget.ROCKET_LOW);
+
+        if (visionStating) {
             optimusPrime.setState(RobotState.VISION_STATE);
         }
         else {
@@ -58,14 +62,16 @@ public class CmdAutOptimusPrime extends Command {
     @Override
     protected void execute() {
         if (limelight.hasValidTarget()) {
-            approximateDistance = limelight.getApproximateDistance(targetHeight, 2);
+            if (!visionStating || lift.getCurrentHeight() - lift.heightState.targetHeight > -2 * Length.in) {
+                approximateDistance = limelight.getApproximateDistance(targetHeight, 2);
         
-            if (approximateDistance < DeepSpaceConstants.AUTOPTIMUS_DISTANCE) {
-                Log.info("AutOptimusPrime", "Reached threshold distance.");
-                optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
-                
-                inThreshold = true;
-            }
+                if (approximateDistance < DeepSpaceConstants.AUTOPTIMUS_DISTANCE) {
+                    Log.info("AutOptimusPrime", "Reached threshold distance.");
+                    optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
+                    
+                    inThreshold = true;
+                }
+            }   
         }
     }
     

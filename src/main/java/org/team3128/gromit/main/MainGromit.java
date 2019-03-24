@@ -1,7 +1,9 @@
 package org.team3128.gromit.main;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.listener.controltypes.Button;
@@ -39,14 +41,6 @@ public class MainGromit extends MainDeepSpaceRobot {
         shiftUpSpeed = 100000;
         shiftDownSpeed = -1;
 
-        leftDriveLeader.setInverted(true);
-        leftDriveFollower.setInverted(true);
-        leftDriveLeader.setSensorPhase(true);
-
-        rightDriveLeader.setInverted(true);
-        rightDriveFollower.setInverted(true);
-        rightDriveLeader.setSensorPhase(false);
-
         gearshiftPiston = new Piston(3, 4);
         gearshiftPiston.setPistonOn();
 
@@ -59,17 +53,31 @@ public class MainGromit extends MainDeepSpaceRobot {
         placeholder.setPistonOn();
 
         liftLimitSwitch = new DigitalInput(2);
-        liftSwitchPosition = 170;
+        liftSwitchPosition = 40;//170;
         liftMaxVelocity = 4200;
 
         fourBarLimitSwitch = new DigitalInput(0);
-        fourBarRatio = 4550 / (180 * Angle.DEGREES);
-        fourBarSwitchPosition = +90 * Angle.DEGREES;
+        fourBarRatio = 4600 / (180 * Angle.DEGREES); //4550
+        fourBarSwitchPosition = +96 * Angle.DEGREES;
         fourBarMaxVelocity = 100;
         
         cargoBumperSwitch = new DigitalInput(1);
+
+        // Construct and Configure Drivetrain
+		leftDriveLeader = new TalonSRX(10);
+		leftDriveFollower = new VictorSPX(11);
+		rightDriveLeader = new TalonSRX(15);
+		rightDriveFollower = new VictorSPX(16);
         
         super.constructHardware();
+
+        leftDriveLeader.setInverted(InvertType.None);
+        leftDriveFollower.setInverted(InvertType.FollowMaster);
+        leftDriveLeader.setSensorPhase(false);
+
+        rightDriveLeader.setInverted(InvertType.InvertMotorOutput);
+        rightDriveFollower.setInverted(InvertType.FollowMaster);
+        rightDriveLeader.setSensorPhase(true);
 
         // Create the Climber
 		climbMotor = new TalonSRX(40);

@@ -25,7 +25,7 @@ public class FourBar
 		SHIP_AND_LOADING(-55 * Angle.DEGREES),
 		// HATCH_DROP_SHIP_LOADING(-53 * Angle.DEGREES),
 
-		ROCKET_LOW(-67 * Angle.DEGREES), 
+		CARGO_LOW(80 * Angle.DEGREES), 
 		//64
 		CARGO_MID(80 * Angle.DEGREES),
 		CARGO_LOADING_STATION(55 * Angle.DEGREES),
@@ -37,7 +37,7 @@ public class FourBar
 		HATCH_LOW(-60 * Angle.DEGREES),
 		//64
 		HATCH_HIGH(54 * Angle.DEGREES),
-		CARGO_HIGH(76 * Angle.DEGREES);
+		CARGO_HIGH(82 * Angle.DEGREES);
 		//68
 		public double targetAngle;
 
@@ -95,7 +95,7 @@ public class FourBar
 	public double PEAK_BRAKE_POWER = 0.15;
 	public double BRAKE_TRIG_FUDGE = 0.095;
 
-	public double ZERO_VELOCITY = 30 * Angle.DEGREES * ratio / 10.0;
+	public double ZEROING_VELOCITY = 30 * Angle.DEGREES * ratio / 10.0;
 
 	public double maxAngle = +95.0 * Angle.DEGREES;
 	public double minAngle = -90.0 * Angle.DEGREES;
@@ -156,14 +156,14 @@ public class FourBar
 			{
 				// Zeroing Logic
 				if (this.controlMode == FourBarControlMode.ZEROING) {
-					if (Math.abs(fourBarMotor.getSelectedSensorVelocity()) < 10) {
+					if (Math.abs(fourBarMotor.getSelectedSensorVelocity()) < 5) {
 						zeroVelocityCount += 1;
 					}
 					else {
 						zeroVelocityCount = 0;
 					}
 
-					if (zeroVelocityCount > 5 || this.getLimitSwitch() /** || maybe cleverly implement current limiting*/) {
+					if (zeroVelocityCount > 30 || this.getLimitSwitch() /** || maybe cleverly implement current limiting*/) {
 						this.state = FourBarState.VERTICAL;
 						Log.info("FourBar", "Zeroing sequence hit hard/soft stop. Braking now...");
 
@@ -227,10 +227,10 @@ public class FourBar
 						lastError = this.error;
 						this.error = desiredTarget - fourBarMotor.getSelectedSensorVelocity();
 
-						kP = 0;
+						kP = 0.3;
 						kD = 0;
 
-						currentTarget = kP * this.error + kD * (this.error - lastError) * 1000000 / (RobotController.getFPGATime() - this.lastTime);
+						currentTarget = 0.7 /** + kP * this.error + kD * (this.error - lastError) * 1000000 / (RobotController.getFPGATime() - this.lastTime) */;
 						this.lastTime = RobotController.getFPGATime();
 					}
 
@@ -267,7 +267,7 @@ public class FourBar
 	}
 
 	public void setCurrentAngle(double angle) {
-		Log.info("FourBar", "Setting current angle to " + angle + " degrees.");
+		//Log.info("FourBar", "Setting current angle to " + angle + " degrees.");
 		fourBarMotor.setSelectedSensorPosition((int) (angle * ratio), 0, Constants.CAN_TIMEOUT);
 	}
 
@@ -297,7 +297,7 @@ public class FourBar
 	public void zero() {
 		setControlMode(FourBarControlMode.ZEROING);
 
-		desiredTarget = ZERO_VELOCITY;
+		desiredTarget = ZEROING_VELOCITY;
 
 		lastTime = RobotController.getFPGATime();
 		lastError = desiredTarget - fourBarMotor.getSelectedSensorVelocity();

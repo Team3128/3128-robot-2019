@@ -271,10 +271,12 @@ public abstract class NarwhalRobot extends RobotBase {
                 Scheduler.getInstance().removeAll();
 
                 setupAutoChooser();
+                
                 zeroOutListeners();
-
                 autonomousInit();
-                runAutoProgram();
+                recountAllControls();
+
+                //runAutoProgram();
 
                 LiveWindow.setEnabled(false);
                 Shuffleboard.disableActuatorWidgets();
