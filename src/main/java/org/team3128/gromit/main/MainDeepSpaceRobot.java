@@ -222,7 +222,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 		
         // Vision
-		visionPID = new PIDConstants(0.55, 0.028, 0.0, 0.00001);
+		visionPID = new PIDConstants(0.57, 0.032, 0.0, 0.00003);
 		blindPID = new PIDConstants(0.23, 0, 0, 0);
 		driveCmdRunning = new DriveCommandRunning();
 

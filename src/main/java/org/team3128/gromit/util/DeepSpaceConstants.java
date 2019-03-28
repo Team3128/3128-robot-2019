@@ -7,6 +7,9 @@ import org.team3128.gromit.main.MainDeepSpaceRobot.ScoreTarget;
 public class DeepSpaceConstants {
     public static double AUTOPTIMUS_DISTANCE = 3 * Length.ft;
 
+    public static double VISION_TARGET_POINT = 1 * Length.ft;
+    public static double VISION_TX_ALIGN_THRESHOLD = 6 * Length.in;
+
     public static double DECELERATE_START_DISTANCE = 4 * Length.ft;
     public static double DECELERATE_END_DISTANCE = 2 * Length.ft;
 

@@ -67,6 +67,9 @@ public class CmdAutOptimusPrime extends Command {
         
                 if (approximateDistance < DeepSpaceConstants.AUTOPTIMUS_DISTANCE) {
                     Log.info("AutOptimusPrime", "Reached threshold distance.");
+                    if(visionStating){
+                        limelight.turnOffLED();
+                    }
                     optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
                     
                     inThreshold = true;
