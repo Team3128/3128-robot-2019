@@ -1,7 +1,5 @@
 package org.team3128.common.vision;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-
 import org.team3128.common.drive.DriveCommandRunning;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.hardware.limelight.Limelight;
@@ -9,61 +7,55 @@ import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
-import org.team3128.common.util.units.Angle;
-import org.team3128.common.util.units.Length;
 
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
 
-public class CmdAutoAim extends Command {
+public class CmdContinuousPursuit extends Command {
     SRXTankDrive drive;
     Gyro gyro;
 
     Limelight limelight;
 
-    // private final double FEED_FORWARD_POWER = 0.55;
-    // private final double MINIMUM_POWER = 0.1;
-
     private final double VELOCITY_THRESHOLD = 100;
     private final int VELOCITY_PLATEAU_COUNT = 10;
 
-    double decelerationStartDistance, decelerationEndDistance;
+    private double decelerationStartDistance, decelerationStopDistance;
+    private double finalPower;
     DriveCommandRunning cmdRunning;
 
-    private PIDConstants visionPID, blindPID;
+    private PIDConstants visionPID;
 
     private double multiplier;
 
-    private double goalHorizontalOffset;
-    private double targetHeight;
+    private double goalHorizontalOffset, goalSkew;
+    private double currentHorizontalOffset, currentSkew;
 
-    private double currentHorizontalOffset;
+    private double targetHeight;
     private double previousVerticalAngle, approximateDistance;
 
-    private double currentAngle;
-
-    private double currentError, previousError;
+    private double currentAngleError, previousAngleError;
+    private double skewError;
     private double currentTime, previousTime;
 
     private double feedbackPower;
+    private double leftFeedforwardMultiplier, rightFeedforwardMultiplier;
     private double leftVel, rightVel;
 
     private double leftPower, rightPower;
 
-    private boolean visionStating;
+    private int targetFoundCount;
+    private int plateauReachedCount;
 
-    int targetFoundCount;
-    int plateauReachedCount;
-
-    private enum AutoAimState {
-        SEARCHING, FEEDBACK, BLIND;
+    private enum ContinuousPursuitState {
+        SEARCHING, FEEDBACK;
     }
 
-    private AutoAimState aimState = AutoAimState.SEARCHING;
+    private ContinuousPursuitState aimState = ContinuousPursuitState.SEARCHING;
 
-    public CmdAutoAim(Gyro gyro, Limelight limelight, PIDConstants visionPID, DriveCommandRunning cmdRunning,
-            double goalHorizontalOffset, double targetHeight, double decelerationStartDistance, double decelerationEndDistance,
-            PIDConstants blindPID, boolean visionStating) {
+    public CmdContinuousPursuit(Gyro gyro, Limelight limelight, PIDConstants visionPID, DriveCommandRunning cmdRunning,
+            double goalHorizontalOffset, double targetHeight, double decelerationStartDistance, double decelerationStopDistance,
+            double finalPower) {
         this.gyro = gyro;
         this.limelight = limelight;
         this.visionPID = visionPID;
@@ -75,10 +67,9 @@ public class CmdAutoAim extends Command {
         this.targetHeight = targetHeight;
 
         this.decelerationStartDistance = decelerationStartDistance;
-        this.decelerationEndDistance = decelerationEndDistance;
+        this.decelerationStopDistance = decelerationStopDistance;
 
-        this.blindPID = blindPID;
-        this.visionStating = visionStating;
+        this.finalPower = finalPower;
     }
 
     @Override
@@ -109,11 +100,11 @@ public class CmdAutoAim extends Command {
                     currentHorizontalOffset = limelight.getValue("tx", 5);
 
                     previousTime = RobotController.getFPGATime();
-                    previousError = goalHorizontalOffset - currentHorizontalOffset;
+                    previousAngleError = goalHorizontalOffset - currentHorizontalOffset;
 
                     cmdRunning.isRunning = true;
 
-                    aimState = AutoAimState.FEEDBACK;
+                    aimState = ContinuousPursuitState.FEEDBACK;
                 }
 
                 break;
@@ -121,84 +112,64 @@ public class CmdAutoAim extends Command {
             case FEEDBACK:
                 if (!limelight.hasValidTarget()) {
                     Log.info("CmdAutoAim", "No valid target.");
+                    Log.info("CmdAutoAim", "Returning to SEARCHING...");
 
-                    if (previousVerticalAngle > 20 * Angle.DEGREES || (visionStating && previousVerticalAngle > -7 * Angle.DEGREES)) {
-                        Log.info("CmdAutoAim", "Switching to BLIND...");
+                    aimState = ContinuousPursuitState.SEARCHING;
 
-                        gyro.setAngle(0);
-                        aimState = AutoAimState.BLIND;
-                    }
-                    else {
-                        Log.info("CmdAutoAim", "Returning to SEARCHING...");
-
-                        aimState = AutoAimState.SEARCHING;
-
-                        cmdRunning.isRunning = false;
-                    }
+                    cmdRunning.isRunning = false;
                 }
                 else {
                     currentHorizontalOffset = limelight.getValue("tx", 5);
+                    currentSkew = limelight.getValue("ts", 5);
 
                     currentTime = RobotController.getFPGATime();
-                    currentError = goalHorizontalOffset - currentHorizontalOffset;
 
                     /**
                      * PID feedback loop for the left and right powers based on the horizontal offset errors.
+                     * Postitive angle error means the target is to the right of the robot.
                      */
+                    currentAngleError = goalHorizontalOffset - currentHorizontalOffset;
+
                     feedbackPower = 0;
 
-                    feedbackPower += visionPID.kP * currentError;
-                    feedbackPower += visionPID.kD * (currentError - previousError)/(currentTime - previousTime);
+                    feedbackPower += visionPID.kP * currentAngleError;
+                    feedbackPower += visionPID.kD * (currentAngleError - previousAngleError)/(currentTime - previousTime);
+
+                    /**
+                     * Adjusting the motor feed-forward proportionally to current skew
+                     */
+
+                    skewError = goalSkew - currentSkew;
+
+                    leftFeedforwardMultiplier = (currentAngleError > 0)
+
                     
+                    /**
+                     * Set the motor powers.
+                     */
                     leftPower = RobotMath.clamp(visionPID.kF - feedbackPower, -1, 1);
                     rightPower = RobotMath.clamp(visionPID.kF + feedbackPower, -1, 1);
-                                        
+                    
+                    
                     previousVerticalAngle = limelight.getValue("ty", 2);
                     approximateDistance = limelight.calculateDistanceFromTY(previousVerticalAngle, targetHeight);
 
-                    multiplier = 1.0 - (1.0 - blindPID.kF/visionPID.kF) * RobotMath.clamp((decelerationStartDistance - approximateDistance)/(decelerationStartDistance - decelerationEndDistance), 0.0, 1.0);
+
+                    multiplier = 1.0 - (1.0 - finalPower / visionPID.kF) * RobotMath.clamp((decelerationStartDistance - approximateDistance)/(decelerationStartDistance - decelerationStopDistance), 0.0, 1.0);
 
                     drive.tankDrive(multiplier * leftPower, multiplier * rightPower);
 
                     previousTime = currentTime;
-                    previousError = currentError;
+                    previousAngleError = currentAngleError;
                 }
                 
-
-                break;
-
-            case BLIND:
-                currentAngle = gyro.getAngle();
-
-                currentTime = RobotController.getFPGATime() / 1000000.0;
-                currentError = -currentAngle;
-
-                /**
-                 * PID feedback loop for the left and right powers based on the gyro angle
-                 */
-                feedbackPower = 0;
-
-                feedbackPower += blindPID.kP * currentError;
-                feedbackPower += blindPID.kD * (currentError - previousError)/(currentTime - previousTime);
-                
-                rightPower = RobotMath.clamp(blindPID.kF - feedbackPower, -1, 1);
-                leftPower = RobotMath.clamp(blindPID.kF + feedbackPower, -1, 1);
-                
-                Log.info("CmdAutoAim", "L: " + leftPower + "; R: " + rightPower);
-
-                drive.tankDrive(leftPower, rightPower);
-
-                previousTime = currentTime;
-                previousError = currentError;
-                Log.info("CmdAutoAim", "Error:" + currentError);
-
                 break;
         }
     }
 
     @Override
     protected boolean isFinished() {
-        if (aimState == AutoAimState.BLIND) {
+        if (aimState == ContinuousPursuitState.FEEDBACK) {
             leftVel = Math.abs(drive.getLeftMotors().getSelectedSensorVelocity(0));
             rightVel = Math.abs(drive.getRightMotors().getSelectedSensorVelocity(0));
 
