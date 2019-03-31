@@ -31,7 +31,6 @@ public class MainGromit extends MainDeepSpaceRobot {
     protected void constructHardware() {
         wheelbase = 37 * Length.in;
         driveMaxSpeed = 5800;
-        //gearRatio = 2.9 + 54/990;
         wheelCirc = 12.01 * Length.in;
 
         leftSpeedScalar = 1.00;
@@ -62,6 +61,9 @@ public class MainGromit extends MainDeepSpaceRobot {
         fourBarMaxVelocity = 100;
         
         cargoBumperSwitch = new DigitalInput(1);
+
+        bottomLLHeight = 6.15 * Length.in;
+        topLLHeight =      43 * Length.in;
 
         // Construct and Configure Drivetrain
 		leftDriveLeader = new TalonSRX(10);
@@ -133,12 +135,6 @@ public class MainGromit extends MainDeepSpaceRobot {
 
         // Climber Invert
         climbMotor.setSensorPhase(true);
-
-        //2 is big camera for lars KEEP AT 2
-        limelight.driverMode(2);
-        limelight.turnOffLED();
-
-        
     }
 
     @Override

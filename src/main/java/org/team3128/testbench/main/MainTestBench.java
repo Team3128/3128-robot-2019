@@ -7,7 +7,7 @@ import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.util.units.Length;
-import org.team3128.common.hardware.limelight.CalculatedData;
+import org.team3128.common.hardware.limelight.LEDMode;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.limelight.LimelightData;
 
@@ -71,7 +71,7 @@ public class MainTestBench extends NarwhalRobot {
 	protected void constructHardware()
 	{
         newLine = "";
-        limelight = new Limelight(0 * Length.in, camAngle, camHeight, w);
+        limelight = new Limelight("limelight", camAngle, camHeight, w);
         newLine = "tx,ty,ts,ta,thoriz,tvert,tshort,tlong,deltax,deltay,theta,calculatedDist,theta0,theta1,d0,d1\n";
         NarwhalDashboard.put("counter", String.valueOf(counter));
         boi1 = new TalonSRX(1);
@@ -109,10 +109,10 @@ public class MainTestBench extends NarwhalRobot {
         listenerRight.nameControl(new Button(2), "LightOn");
 		listenerRight.addButtonDownListener("LightOn", () -> {
             if(ledToggle == 0){
-                limelight.turnOnLED();
+                limelight.setLEDMode(LEDMode.ON);
                 ledToggle = 1;
             } else {
-                limelight.turnOffLED();
+                limelight.setLEDMode(LEDMode.OFF);
                 ledToggle = 0;
             }
         });
@@ -129,36 +129,36 @@ public class MainTestBench extends NarwhalRobot {
         });
 
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "limelightVals");
-		listenerRight.addButtonDownListener("limelightVals", () -> {
-            limelight.turnOnLED();
+		// listenerRight.addButtonDownListener("limelightVals", () -> {
+        //     limelight.setLEDMode(LEDMode.ON);
 
-            LimelightData data = limelight.getValues(1000);
-            CalculatedData calcData = limelight.doMath(data, lowerTargetHeight);
+        //     LimelightData data = limelight.getValues(1000);
+        //     CalculatedData calcData = limelight.doMath(data, lowerTargetHeight);
 
-            newLine += data.tx() + ",";
-            newLine += data.ty() + ",";
-            newLine += data.shear() + ",";
-            newLine += data.area() + ",";
-            newLine += data.boxWidth() + ",";
-            newLine += data.boxHeight() + ",";
-            newLine += data.fittedShort() + ",";
-            newLine += data.fittedLong() + ",";
+        //     newLine += data.tx() + ",";
+        //     newLine += data.ty() + ",";
+        //     newLine += data.shear() + ",";
+        //     newLine += data.area() + ",";
+        //     newLine += data.boxWidth() + ",";
+        //     newLine += data.boxHeight() + ",";
+        //     newLine += data.fittedShort() + ",";
+        //     newLine += data.fittedLong() + ",";
 
-            newLine += calcData.dX + ",";
-            newLine += calcData.dY + ",";
-            newLine += calcData.theta + ",";
-            newLine += calcData.d + ",";
+        //     newLine += calcData.dX + ",";
+        //     newLine += calcData.dY + ",";
+        //     newLine += calcData.theta + ",";
+        //     newLine += calcData.d + ",";
             
-            newLine += calcData.theta0 + ",";
-            newLine += calcData.theta1 + ",";
-            newLine += calcData.d0 + ",";
-            newLine += calcData.d1 + ",";
+        //     newLine += calcData.theta0 + ",";
+        //     newLine += calcData.theta1 + ",";
+        //     newLine += calcData.d0 + ",";
+        //     newLine += calcData.d1 + ",";
 
-            Log.info("MainTestBench", "Datums recorded.");
+        //     Log.info("MainTestBench", "Datums recorded.");
             
-            counter++;
-            newLine += "\n";
-        });
+        //     counter++;
+        //     newLine += "\n";
+        // });
         
         listenerRight.nameControl(new Button(9), "deleteLastLine");
         listenerRight.addButtonDownListener("deleteLastLine", () -> {
@@ -222,7 +222,7 @@ public class MainTestBench extends NarwhalRobot {
 
     @Override
     protected void disabledInit() {
-        limelight.turnOffLED();
+        limelight.setLEDMode(LEDMode.OFF);
     }
 
     @Override

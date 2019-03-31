@@ -156,7 +156,7 @@ public class FourBar
 			{
 				// Zeroing Logic
 				if (this.controlMode == FourBarControlMode.ZEROING) {
-					if (Math.abs(fourBarMotor.getSelectedSensorVelocity()) < 5) {
+					if (Math.abs(fourBarMotor.getSelectedSensorVelocity()) < 2) {
 						zeroVelocityCount += 1;
 					}
 					else {

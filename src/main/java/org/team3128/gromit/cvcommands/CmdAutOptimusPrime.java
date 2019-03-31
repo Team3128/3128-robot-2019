@@ -1,6 +1,7 @@
 package org.team3128.gromit.cvcommands;
 
 import org.team3128.common.drive.SRXTankDrive;
+import org.team3128.common.hardware.limelight.LEDMode;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.units.Length;
@@ -63,12 +64,12 @@ public class CmdAutOptimusPrime extends Command {
     protected void execute() {
         if (limelight.hasValidTarget()) {
             if (!visionStating || lift.getCurrentHeight() - lift.heightState.targetHeight > -2 * Length.in) {
-                approximateDistance = limelight.getApproximateDistance(targetHeight, 2);
+                approximateDistance = limelight.getYPrime(targetHeight, 2);
         
                 if (approximateDistance < DeepSpaceConstants.AUTOPTIMUS_DISTANCE) {
                     Log.info("AutOptimusPrime", "Reached threshold distance.");
                     if(visionStating){
-                        limelight.turnOffLED();
+                        limelight.setLEDMode(LEDMode.OFF);
                     }
                     optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
                     

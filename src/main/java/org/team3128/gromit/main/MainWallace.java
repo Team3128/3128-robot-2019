@@ -1,6 +1,8 @@
 package org.team3128.gromit.main;
 
 import com.ctre.phoenix.motorcontrol.InvertType;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.util.units.Angle;
@@ -50,10 +52,19 @@ public class MainWallace extends MainDeepSpaceRobot {
         fourBarMaxVelocity = 100;
         
         cargoBumperSwitch = new DigitalInput(2);
+
+        // Construct and Configure Drivetrain
+		leftDriveLeader = new TalonSRX(15);
+		leftDriveFollower = new VictorSPX(16);
+		rightDriveLeader = new TalonSRX(10);
+        rightDriveFollower = new VictorSPX(11);
+        
+        bottomLLHeight = 5.375 * Length.in;
+        topLLHeight =       43 * Length.in;
         
         super.constructHardware();
 
-        leftDriveLeader.setInverted(true);
+        leftDriveLeader.setInverted(false);
         leftDriveFollower.setInverted(InvertType.FollowMaster);
 
         leftDriveLeader.setSensorPhase(true);
@@ -76,10 +87,6 @@ public class MainWallace extends MainDeepSpaceRobot {
         // FourBar Invert
         fourBarMotor.setInverted(false);
         fourBarMotor.setSensorPhase(false);
-
-        //2 is big camera for lars KEEP AT 2
-        limelight.driverMode(2);
-        limelight.turnOffLED();
     }
     /*
     @Override

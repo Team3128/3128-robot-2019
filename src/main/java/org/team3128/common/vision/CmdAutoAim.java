@@ -4,7 +4,9 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 
 import org.team3128.common.drive.DriveCommandRunning;
 import org.team3128.common.drive.SRXTankDrive;
+import org.team3128.common.hardware.limelight.LEDMode;
 import org.team3128.common.hardware.limelight.Limelight;
+import org.team3128.common.hardware.limelight.LimelightKey;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
@@ -85,7 +87,7 @@ public class CmdAutoAim extends Command {
     protected void initialize() {
         drive = SRXTankDrive.getInstance();
 
-        limelight.turnOnLED();
+        limelight.setLEDMode(LEDMode.ON);
         cmdRunning.isRunning = false;
     }
 
@@ -106,7 +108,7 @@ public class CmdAutoAim extends Command {
 
                     drive.tankDrive(visionPID.kF, visionPID.kF);
 
-                    currentHorizontalOffset = limelight.getValue("tx", 5);
+                    currentHorizontalOffset = limelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
 
                     previousTime = RobotController.getFPGATime();
                     previousError = goalHorizontalOffset - currentHorizontalOffset;
@@ -122,7 +124,7 @@ public class CmdAutoAim extends Command {
                 if (!limelight.hasValidTarget()) {
                     Log.info("CmdAutoAim", "No valid target.");
 
-                    if (previousVerticalAngle > 20 * Angle.DEGREES || (visionStating && previousVerticalAngle > -7 * Angle.DEGREES)) {
+                    if (previousVerticalAngle > 20 * Angle.DEGREES) {
                         Log.info("CmdAutoAim", "Switching to BLIND...");
 
                         gyro.setAngle(0);
@@ -137,7 +139,7 @@ public class CmdAutoAim extends Command {
                     }
                 }
                 else {
-                    currentHorizontalOffset = limelight.getValue("tx", 5);
+                    currentHorizontalOffset = limelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
 
                     currentTime = RobotController.getFPGATime();
                     currentError = goalHorizontalOffset - currentHorizontalOffset;
@@ -153,8 +155,8 @@ public class CmdAutoAim extends Command {
                     leftPower = RobotMath.clamp(visionPID.kF - feedbackPower, -1, 1);
                     rightPower = RobotMath.clamp(visionPID.kF + feedbackPower, -1, 1);
                                         
-                    previousVerticalAngle = limelight.getValue("ty", 2);
-                    approximateDistance = limelight.calculateDistanceFromTY(previousVerticalAngle, targetHeight);
+                    previousVerticalAngle = limelight.getValue(LimelightKey.VERTICAL_OFFSET, 2);
+                    approximateDistance = limelight.calculateYPrimeFromTY(previousVerticalAngle, targetHeight);
 
                     multiplier = 1.0 - (1.0 - blindPID.kF/visionPID.kF) * RobotMath.clamp((decelerationStartDistance - approximateDistance)/(decelerationStartDistance - decelerationEndDistance), 0.0, 1.0);
 
@@ -218,7 +220,7 @@ public class CmdAutoAim extends Command {
     @Override
     protected void end() {
         drive.stopMovement();
-        limelight.turnOffLED();
+        limelight.setLEDMode(LEDMode.OFF);
 
         cmdRunning.isRunning = false;
 
@@ -228,7 +230,7 @@ public class CmdAutoAim extends Command {
     @Override
     protected void interrupted() {
         drive.stopMovement();
-        limelight.turnOffLED();
+        limelight.setLEDMode(LEDMode.OFF);
 
         cmdRunning.isRunning = false;
 

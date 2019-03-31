@@ -5,8 +5,11 @@ import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.DriveCommandRunning;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.drive.calibrationutility.DriveCalibrationUtility;
-
+import org.team3128.common.hardware.limelight.Compute2D;
+import org.team3128.common.hardware.limelight.LEDMode;
 import org.team3128.common.hardware.limelight.Limelight;
+import org.team3128.common.hardware.limelight.Compute2D.Compute2DInput;
+import org.team3128.common.hardware.limelight.Compute2D.Compute2DLocalization;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
 import org.team3128.common.hardware.navigation.Gyro;
@@ -29,8 +32,6 @@ import org.team3128.common.util.units.Length;
 
 import org.team3128.gromit.autonomous.CmdAutoPrime;
 
-import org.team3128.gromit.cvcommands.CmdBadHARC;
-
 import org.team3128.gromit.mechanisms.FourBar;
 import org.team3128.gromit.mechanisms.Lift;
 import org.team3128.gromit.mechanisms.LiftIntake;
@@ -39,6 +40,7 @@ import org.team3128.gromit.mechanisms.FourBar.FourBarState;
 import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
+import org.team3128.gromit.util.DeepSpaceConstants;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
@@ -139,7 +141,8 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 	public boolean ledOn = false;
 
 	// CV!!!!!!
-	public Limelight limelight;
+	public Limelight topLimelight, bottomLimelight;
+	public double bottomLLHeight, topLLHeight;
 
 	public boolean runningCommand = false;
 
@@ -194,8 +197,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
     @Override
     protected void constructHardware() {
-
-
 		leftDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
 		leftDriveFollower.follow(leftDriveLeader);
 
@@ -272,9 +273,9 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerRight = new ListenerManager(rightJoystick);
 		addListenerManager(listenerRight);
 
-		limelight = new Limelight(5.5 * Length.in, 38 * Angle.DEGREES, 6.15 * Length.in, 14.5 * Length.in); //7, 25
+		topLimelight =    new Limelight("limelight-top",    -15 * Angle.DEGREES,     topLLHeight, 14.5 * Length.in);
+		bottomLimelight = new Limelight("limelight-bottom",  38 * Angle.DEGREES,  bottomLLHeight, 14.5 * Length.in);
 		
-
 		// NarwhalDashboard: Driver Controls
 		NarwhalDashboard.addButton("setTarget_rocket_top", (boolean down) -> {
 			if (down) {
@@ -366,21 +367,26 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 				drive.new CmdArcTurn(30 * Length.in, 90 * Angle.DEGREES, Direction.RIGHT, 0.8, 5000).start();;
 			}
 		});
-		NarwhalDashboard.addButton("simplecv", (boolean down) -> {
-			if (down) {
-				new CmdBadHARC(limelight).start();
-			}
-		});
 
 		NarwhalDashboard.addButton("limelight_led", (boolean down) -> {
 			if (!ledOn) {
-				limelight.turnOnLED();
+				topLimelight.setLEDMode(LEDMode.ON);
+				bottomLimelight.setLEDMode(LEDMode.ON);
 			}
 			else {
-				limelight.turnOffLED();
+				topLimelight.setLEDMode(LEDMode.OFF);
+				bottomLimelight.setLEDMode(LEDMode.OFF);
 			}
 
 			ledOn = !ledOn;
+		});
+
+		NarwhalDashboard.addButton("compute2D", (boolean down) -> {
+			if (down) {
+				Compute2DLocalization locale = Compute2D.compute2D(bottomLimelight, Compute2D.getInput(bottomLimelight, 3), DeepSpaceConstants.LOW_VISION_TARGET_HEIGHT);
+
+				Log.info("MainDeepSpaceRobot", "locale = " + locale);
+			}
 		});
 
 		dcu.initNarwhalDashboard();
@@ -396,10 +402,9 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerRight.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");
 		listenerRight.addMultiListener(() ->
 		{
-			Log.info("MainDeepSpaceRobot", "Trying to drive...");
 			if (!runningCommand) {
-				double vert =     -1.0 * listenerRight.getAxis("MoveForwards");
 				double horiz =    -0.8 * listenerRight.getAxis("MoveTurn");
+				double vert =     -1.0 * listenerRight.getAxis("MoveForwards");
 				double throttle = -1.0 * listenerRight.getAxis("Throttle");
 
 				drive.arcadeDrive(horiz, vert, throttle, true);
@@ -451,7 +456,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		// Optimus Prime Controls
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "AutoPrime");
 		listenerRight.addButtonDownListener("AutoPrime", () -> {
-			triggerCommand = new CmdAutoPrime(gyro, limelight, driveCmdRunning,
+			triggerCommand = new CmdAutoPrime(gyro, bottomLimelight, driveCmdRunning,
 				visionPID, blindPID, currentGameElement, currentScoreTarget,
 				(liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED));
 			triggerCommand.start();
@@ -573,8 +578,8 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 	@Override
 	protected void disabledPeriodic() {
-		limelight.driverMode(2);
-		limelight.turnOffLED();
+		topLimelight.setLEDMode(LEDMode.OFF);
+		bottomLimelight.setLEDMode(LEDMode.OFF);
 	}
 
 	@Override
