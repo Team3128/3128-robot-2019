@@ -18,7 +18,7 @@ import org.team3128.common.hardware.navigation.NavX;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
-import org.team3128.common.vision.CmdAutoAim;
+import org.team3128.common.vision.CmdHorizontalOffsetFeedbackDrive;
 import org.team3128.gromit.util.DeepSpaceConstants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
@@ -66,7 +66,7 @@ public class MainPrebot extends NarwhalRobot {
     public DriveCalibrationUtility dcu;
     public Wheelbase calculatedWheelbase;
 
-    public CmdAutoAim alignCommand;
+    public CmdHorizontalOffsetFeedbackDrive alignCommand;
     private DriveCommandRunning driveCmdRunning;
 
     public Limelight limelight = new Limelight("limelight", 26 * Angle.DEGREES, 6.15 * Length.in, 14.5 * Length.in);
@@ -203,10 +203,10 @@ public class MainPrebot extends NarwhalRobot {
 
 		lm.nameControl(ControllerExtreme3D.TRIGGER, "AlignToTarget");
 		lm.addButtonDownListener("AlignToTarget", () -> { 
-            alignCommand = new CmdAutoAim(gyro, limelight, visionPID, driveCmdRunning,
-            -1 * Angle.DEGREES, 14.5 * Length.in, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
-            blindPID, false);
-            alignCommand.start();
+            // alignCommand = new CmdHorizontalOffsetFeedbackDrive(gyro, limelight, visionPID, driveCmdRunning,
+            // -1 * Angle.DEGREES, 14.5 * Length.in, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
+            // blindPID, false);
+            // alignCommand.start();
         });
         lm.addButtonUpListener("AlignToTarget", () -> {
             alignCommand.cancel();

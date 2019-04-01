@@ -1,9 +1,6 @@
 package org.team3128.common.vision;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-
 import org.team3128.common.drive.DriveCommandRunning;
-import org.team3128.gromit.util.DeepSpaceConstants;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.hardware.limelight.LEDMode;
 import org.team3128.common.hardware.limelight.Limelight;
@@ -13,33 +10,31 @@ import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.units.Angle;
-import org.team3128.common.util.units.Length;
 
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
 
-public class CmdContinuousPerpendicularAlign extends Command {
+public class CmdHorizontalOffsetFeedbackDrive extends Command {
     SRXTankDrive drive;
     Gyro gyro;
 
     Limelight limelight;
 
-    DriveCommandRunning cmdRunning;
+    // private final double FEED_FORWARD_POWER = 0.55;
+    // private final double MINIMUM_POWER = 0.1;
 
     private final double VELOCITY_THRESHOLD = 100;
     private final int VELOCITY_PLATEAU_COUNT = 10;
 
-
-    private boolean visionStating;
-
-    // MTA Variables
-    private double x, y, yaw;
-
-    // MTB Variables
-    PIDConstants mtAPID, mtBPID;
-
     double decelerationStartDistance, decelerationEndDistance;
-    double targetHeight, goalHorizontalOffset;
+    DriveCommandRunning cmdRunning;
+
+    private PIDConstants visionPID, blindPID;
+
+    private double multiplier;
+
+    private double goalHorizontalOffset;
+    private double targetHeight;
 
     private double currentHorizontalOffset;
     private double previousVerticalAngle, approximateDistance;
@@ -49,26 +44,30 @@ public class CmdContinuousPerpendicularAlign extends Command {
     private double currentError, previousError;
     private double currentTime, previousTime;
 
-    private double feedbackPower, multiplier;
+    private double feedbackPower;
     private double leftVel, rightVel;
 
     private double leftPower, rightPower;
 
-    int tvCount;
+    private double blindThreshold;
+
+    int targetFoundCount;
     int plateauReachedCount;
 
-    private enum ContinuousPerpendicularAlignState {
-        SEARCHING, MTB_TURNING, MTB_APPROACHING, MTA_FEEDBACK;
+    private enum HorizontalOffsetFeedbackDriveState {
+        SEARCHING, FEEDBACK, BLIND;
     }
 
-    private ContinuousPerpendicularAlignState aimState;
+    private HorizontalOffsetFeedbackDriveState aimState = HorizontalOffsetFeedbackDriveState.SEARCHING;
 
-    public CmdContinuousPerpendicularAlign(Gyro gyro, Limelight limelight, PIDConstants mtAPID, DriveCommandRunning cmdRunning,
-            double goalHorizontalOffset, double targetHeight, double decelerationStartDistance, double decelerationEndDistance,
-            PIDConstants mtBPID, boolean visionStating) {
+    public CmdHorizontalOffsetFeedbackDrive(
+            Gyro gyro, Limelight limelight, DriveCommandRunning cmdRunning, double targetHeight,
+            PIDConstants visionPID, double goalHorizontalOffset, double decelerationStartDistance, double decelerationEndDistance,
+            PIDConstants blindPID, double blindThreshold) {
+
         this.gyro = gyro;
         this.limelight = limelight;
-        this.mtAPID = mtAPID;
+        this.visionPID = visionPID;
 
         this.cmdRunning = cmdRunning;
 
@@ -79,27 +78,16 @@ public class CmdContinuousPerpendicularAlign extends Command {
         this.decelerationStartDistance = decelerationStartDistance;
         this.decelerationEndDistance = decelerationEndDistance;
 
-        this.mtBPID = mtBPID;
-        this.visionStating = visionStating;
+        this.blindPID = blindPID;
+        this.blindThreshold = blindThreshold;
     }
 
     @Override
     protected void initialize() {
         drive = SRXTankDrive.getInstance();
+
         limelight.setLEDMode(LEDMode.ON);
-
-        // Don't think this is a good thing...
-        if(limelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5) <= DeepSpaceConstants.VISION_TX_ALIGN_THRESHOLD){
-            goalHorizontalOffset = 0;
-        } else {
-            double tempX = limelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
-            double tempY = limelight.getValue(LimelightKey.VERTICAL_OFFSET, 5);
-            goalHorizontalOffset = RobotMath.atan((DeepSpaceConstants.VISION_TARGET_POINT + tempX)/tempY) - RobotMath.atan(tempX/tempY);
-        }
-
         cmdRunning.isRunning = false;
-
-        aimState = ContinuousPerpendicularAlignState.SEARCHING;
     }
 
     @Override
@@ -107,38 +95,49 @@ public class CmdContinuousPerpendicularAlign extends Command {
         switch (aimState) {
             case SEARCHING:                
                 if (limelight.hasValidTarget()) {
-                    tvCount += 1;
+                    targetFoundCount += 1;
                 }
                 else {
-                    tvCount = 0;
+                    targetFoundCount = 0;
                 }
                 
-                if (tvCount > 5) {
-                    drive.tankDrive(mtBPID.kF, mtBPID.kF);
+                if (targetFoundCount > 5) {
+                    Log.info("CmdAutoAim", "Target found.");
+                    Log.info("CmdAutoAim", "Switching to FEEDBACK...");
+
+                    drive.tankDrive(visionPID.kF, visionPID.kF);
 
                     currentHorizontalOffset = limelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
-                    Log.info("CmdDynamicAdjust", String.valueOf(currentHorizontalOffset));
 
                     previousTime = RobotController.getFPGATime();
                     previousError = goalHorizontalOffset - currentHorizontalOffset;
 
                     cmdRunning.isRunning = true;
 
-                    aimState = ContinuousPerpendicularAlignState.MTA_FEEDBACK;
+                    aimState = HorizontalOffsetFeedbackDriveState.FEEDBACK;
                 }
 
                 break;
 
-            case MTB_TURNING:
-                // IDK how to get xyyaw but do that here
+            case FEEDBACK:
+                if (!limelight.hasValidTarget()) {
+                    Log.info("CmdAutoAim", "No valid target.");
 
-                break;
+                    if ( (limelight.cameraAngle > 0 ? 1 : -1) * previousVerticalAngle > blindThreshold) {
+                        Log.info("CmdAutoAim", "Switching to BLIND...");
 
-            case MTA_FEEDBACK:
-                if (limelight.hasValidTarget()) {
-                    if(limelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5) <= DeepSpaceConstants.VISION_TX_ALIGN_THRESHOLD){
-                        goalHorizontalOffset = 0;
+                        gyro.setAngle(0);
+                        aimState = HorizontalOffsetFeedbackDriveState.BLIND;
                     }
+                    else {
+                        Log.info("CmdAutoAim", "Returning to SEARCHING...");
+
+                        aimState = HorizontalOffsetFeedbackDriveState.SEARCHING;
+
+                        cmdRunning.isRunning = false;
+                    }
+                }
+                else {
                     currentHorizontalOffset = limelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
 
                     currentTime = RobotController.getFPGATime();
@@ -149,36 +148,58 @@ public class CmdContinuousPerpendicularAlign extends Command {
                      */
                     feedbackPower = 0;
 
-                    feedbackPower += mtAPID.kP * currentError;
-                    feedbackPower += mtAPID.kD * (currentError - previousError)/(currentTime - previousTime);
+                    feedbackPower += visionPID.kP * currentError;
+                    feedbackPower += visionPID.kD * (currentError - previousError)/(currentTime - previousTime);
                     
-                    leftPower = RobotMath.clamp(mtAPID.kF - feedbackPower, -1, 1);
-                    rightPower = RobotMath.clamp(mtAPID.kF + feedbackPower, -1, 1);
-                    
-                    Log.info("CmdAutoAim", "L: " + leftPower + "; R: " + rightPower);
-                    
+                    leftPower = RobotMath.clamp(visionPID.kF - feedbackPower, -1, 1);
+                    rightPower = RobotMath.clamp(visionPID.kF + feedbackPower, -1, 1);
+                                        
                     previousVerticalAngle = limelight.getValue(LimelightKey.VERTICAL_OFFSET, 2);
                     approximateDistance = limelight.calculateYPrimeFromTY(previousVerticalAngle, targetHeight);
 
-                    Log.info("CmdAutoAim", "distance = " + (approximateDistance / Length.in) + " inches");
-
-                    multiplier = 1.0 - (1.0 - mtAPID.kF) * RobotMath.clamp((decelerationStartDistance - approximateDistance)/(decelerationStartDistance - decelerationEndDistance), 0.0, 1.0);
-                    Log.info("CmdAutoAim", "Power Multipier = " + multiplier);
+                    multiplier = 1.0 - (1.0 - blindPID.kF/visionPID.kF) * RobotMath.clamp((decelerationStartDistance - approximateDistance)/(decelerationStartDistance - decelerationEndDistance), 0.0, 1.0);
 
                     drive.tankDrive(multiplier * leftPower, multiplier * rightPower);
 
                     previousTime = currentTime;
                     previousError = currentError;
-                    Log.info("CmdAutoAim", "Error:" + currentError);
                 }
-            
+                
+
+                break;
+
+            case BLIND:
+                currentAngle = gyro.getAngle();
+
+                currentTime = RobotController.getFPGATime() / 1000000.0;
+                currentError = -currentAngle;
+
+                /**
+                 * PID feedback loop for the left and right powers based on the gyro angle
+                 */
+                feedbackPower = 0;
+
+                feedbackPower += blindPID.kP * currentError;
+                feedbackPower += blindPID.kD * (currentError - previousError)/(currentTime - previousTime);
+                
+                rightPower = RobotMath.clamp(blindPID.kF - feedbackPower, -1, 1);
+                leftPower = RobotMath.clamp(blindPID.kF + feedbackPower, -1, 1);
+                
+                Log.info("CmdAutoAim", "L: " + leftPower + "; R: " + rightPower);
+
+                drive.tankDrive(leftPower, rightPower);
+
+                previousTime = currentTime;
+                previousError = currentError;
+                Log.info("CmdAutoAim", "Error:" + currentError);
+
                 break;
         }
     }
 
     @Override
     protected boolean isFinished() {
-        if (aimState == ContinuousPerpendicularAlignState.MTA_FEEDBACK) {
+        if (aimState == HorizontalOffsetFeedbackDriveState.BLIND) {
             leftVel = Math.abs(drive.getLeftMotors().getSelectedSensorVelocity(0));
             rightVel = Math.abs(drive.getRightMotors().getSelectedSensorVelocity(0));
 
