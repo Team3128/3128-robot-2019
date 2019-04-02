@@ -5,7 +5,7 @@ import org.team3128.common.util.units.Length;
 
 public class Compute2D {
     public static class Compute2DLocalization {
-        public double x, y, yaw;
+        public double x, y, alpha, yaw;
 
         public double xPrime, yPrime;
     
@@ -17,6 +17,7 @@ public class Compute2D {
                 "(x, y) = " + (x/Length.in) + "in, " + (y/Length.in) + "in\n" +
                 "(x', y') = " + (xPrime/Length.in) + "in, " + (yPrime/Length.in) + "in\n" +
                 "\n" +
+                "alpha = " + alpha + "\n" + 
                 "yaw = " + yaw + "\n" +
                 "(theta_left, theta_right) = " + thetaLeft + "," + thetaRight + "\n" +
                 "\n" +
@@ -56,6 +57,8 @@ public class Compute2D {
             /
             (RobotMath.square(tanBover2 * limelight.targetWidth))
         ));
+
+        outputData.alpha = alpha;
 
         outputData.y = outputData.distance * RobotMath.cos(alpha);
         outputData.x = outputData.y * RobotMath.tan(alpha - targetHorizontalArcAngle/2) + limelight.targetWidth/2;
