@@ -48,35 +48,35 @@ public class CmdAutOptimusPrime extends Command {
     
     @Override
     protected void initialize() {
-        visionStating = !intakingHatchPanel && gameElement == GameElement.HATCH_PANEL && (scoreTarget == ScoreTarget.CARGO_SHIP || scoreTarget == ScoreTarget.ROCKET_LOW);
+        // visionStating = !intakingHatchPanel && gameElement == GameElement.HATCH_PANEL && (scoreTarget == ScoreTarget.CARGO_SHIP || scoreTarget == ScoreTarget.ROCKET_LOW);
 
-        if (visionStating) {
-            optimusPrime.setState(RobotState.VISION_STATE);
-        }
-        else {
-            optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
-        }
+        // if (visionStating) {
+            // optimusPrime.setState(RobotState.VISION_STATE);
+        // }
+        // else {
+            optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget, intakingHatchPanel));
+        // }
                 
         inThreshold = false;
     }
     
     @Override
     protected void execute() {
-        if (limelight.hasValidTarget()) {
-            if (!visionStating || lift.getCurrentHeight() - lift.heightState.targetHeight > -2 * Length.in) {
-                approximateDistance = limelight.getYPrime(targetHeight, 2);
+        // if (limelight.hasValidTarget()) {
+        //     if (!visionStating || lift.getCurrentHeight() - lift.heightState.targetHeight > -2 * Length.in) {
+        //         approximateDistance = limelight.getYPrime(targetHeight, 2);
         
-                if (approximateDistance < DeepSpaceConstants.AUTOPTIMUS_DISTANCE) {
-                    Log.info("AutOptimusPrime", "Reached threshold distance.");
-                    if(visionStating){
-                        limelight.setLEDMode(LEDMode.OFF);
-                    }
-                    optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
+        //         if (approximateDistance < DeepSpaceConstants.AUTOPTIMUS_DISTANCE) {
+        //             Log.info("AutOptimusPrime", "Reached threshold distance.");
+        //             if(visionStating){
+        //                 limelight.setLEDMode(LEDMode.OFF);
+        //             }
+        //             optimusPrime.setState(RobotState.getOptimusState(gameElement, scoreTarget));
                     
-                    inThreshold = true;
-                }
-            }   
-        }
+        //             inThreshold = true;
+        //         }
+        //     }   
+        // }
     }
     
     @Override

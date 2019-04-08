@@ -11,16 +11,16 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class CmdPerpendicularDriveToTarget extends CommandGroup {
     public CmdPerpendicularDriveToTarget(
-            Gyro gyro, Limelight limelight, DriveCommandRunning cmdRunning, double targetHeight,
+            Gyro gyro, Limelight bottomLimelight, Limelight topLimelight, DriveCommandRunning cmdRunning, double targetHeight,
             PIDConstants approachPID, double wallIntersectDistance, double xThreshold,
             PIDConstants visionPID, PIDConstants blindPID) {
 
         addSequential(new CmdApproachPerpendicular(
-            limelight, cmdRunning, targetHeight,
+            topLimelight, cmdRunning, targetHeight,
             approachPID, wallIntersectDistance, xThreshold));
 
         addSequential(new CmdHorizontalOffsetFeedbackDrive(
-            gyro, limelight, cmdRunning, targetHeight,
+            gyro, bottomLimelight, topLimelight, cmdRunning, targetHeight,
             visionPID, -1 * Angle.DEGREES, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
             blindPID, 20 * Angle.DEGREES));
     }

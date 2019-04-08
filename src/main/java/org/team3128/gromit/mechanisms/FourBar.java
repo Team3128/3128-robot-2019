@@ -21,24 +21,19 @@ public class FourBar
 	private final double allowableError = 2 * Angle.DEGREES;
 
     public enum FourBarState {
-		VERTICAL(90*Angle.DEGREES), //DEBUG
-		SHIP_AND_LOADING(-55 * Angle.DEGREES),
-		// HATCH_DROP_SHIP_LOADING(-53 * Angle.DEGREES),
+		VERTICAL(90 * Angle.DEGREES),
+
+		CARGO_INTAKE(-22 * Angle.DEGREES),
+
+		CARGO_SHIP(-55 * Angle.DEGREES),
 
 		CARGO_LOW(80 * Angle.DEGREES), 
-		//64
 		CARGO_MID(80 * Angle.DEGREES),
-		CARGO_LOADING_STATION(55 * Angle.DEGREES),
-		// HATCH_DROP_ROCKET_LOW(-65 * Angle.DEGREES),
+		CARGO_HIGH(82 * Angle.DEGREES),
 		
-		CARGO_INTAKE(-22 * Angle.DEGREES),
-		//17
-		//HATCH_LOW(15 * Angle.DEGREES),
 		HATCH_LOW(-60 * Angle.DEGREES),
-		//64
-		HATCH_HIGH(54 * Angle.DEGREES),
-		CARGO_HIGH(82 * Angle.DEGREES);
-		//68
+		HATCH_HIGH(54 * Angle.DEGREES);
+
 		public double targetAngle;
 
         private FourBarState(double angle) {

@@ -22,29 +22,29 @@ import org.team3128.gromit.mechanisms.FourBar.FourBarState;
 */
 
 public class OptimusPrime {
-    public enum RobotState {
-        //STARTING(LiftHeightState.STARTING, FourBarState.ROCKET_LOW),
-        //INIT(LiftHeightState.INIT_BASE, FourBarState.ZERO),
-        
+    public enum RobotState {        
         ZERO(LiftHeightState.BASE, FourBarState.VERTICAL),
-        REST(LiftHeightState.BASE, FourBarState.CARGO_HIGH),
 
         INTAKE_FLOOR_CARGO(LiftHeightState.INTAKE_FLOOR_CARGO, FourBarState.CARGO_INTAKE),
 
         VISION_STATE(LiftHeightState.VISION, FourBarState.HATCH_LOW),
         
+        INTAKE_HATCH(LiftHeightState.HATCH_INTAKE, FourBarState.HATCH_LOW),
+
+        DEPOSIT_SHIP_HATCH(LiftHeightState.LOW_HATCH, FourBarState.HATCH_LOW),
+
         DEPOSIT_LOW_HATCH(LiftHeightState.LOW_HATCH, FourBarState.HATCH_LOW),
         DEPOSIT_MID_HATCH(LiftHeightState.MID_HATCH, FourBarState.HATCH_HIGH),
         DEPOSIT_TOP_HATCH(LiftHeightState.TOP_HATCH, FourBarState.HATCH_HIGH),
         
+        DEPOSIT_SHIP_CARGO(LiftHeightState.SHIP_CARGO, FourBarState.CARGO_SHIP),
+
         DEPOSIT_LOW_CARGO(LiftHeightState.LOW_CARGO, FourBarState.CARGO_LOW),
         DEPOSIT_MID_CARGO(LiftHeightState.MID_CARGO, FourBarState.CARGO_LOW),
-        DEPOSIT_TOP_CARGO(LiftHeightState.TOP_CARGO, FourBarState.CARGO_HIGH),
+        DEPOSIT_TOP_CARGO(LiftHeightState.TOP_CARGO, FourBarState.CARGO_HIGH);
         
-        LOADING_AND_SHIP_CARGO(LiftHeightState.LOADING_SHIP_CARGO, FourBarState.CARGO_MID),
-        //LOADING_AND_SHIP_HATCH(LiftHeightState.LOADING_SHIP_HATCH, FourBarState.SHIP_AND_LOADING);
-        LOADING_AND_SHIP_HATCH(LiftHeightState.LOADING_SHIP_HATCH, FourBarState.HATCH_LOW);  //DEBUG
         
+
         public LiftHeightState targetLiftState;
         public FourBarState targetFourBarState;
         //states for lift intake and ground intakes
@@ -54,11 +54,15 @@ public class OptimusPrime {
             this.targetFourBarState = fourBarState;
         }
 
-        public static RobotState getOptimusState(GameElement gameElement, ScoreTarget scoreLevel) {
+        public static RobotState getOptimusState(GameElement gameElement, ScoreTarget scoreLevel, boolean intakingHatchPanel) {
+            if (intakingHatchPanel) {
+                return INTAKE_HATCH;
+            }
+
             if (gameElement == GameElement.CARGO) {
                 switch (scoreLevel) {
                     case CARGO_SHIP:
-                        return LOADING_AND_SHIP_CARGO;
+                        return DEPOSIT_SHIP_CARGO;
                     case ROCKET_LOW:
                         return DEPOSIT_LOW_CARGO;
                     case ROCKET_MID:
@@ -70,7 +74,7 @@ public class OptimusPrime {
             else {
                 switch (scoreLevel) {
                     case CARGO_SHIP:
-                        return LOADING_AND_SHIP_HATCH;
+                        return DEPOSIT_SHIP_HATCH;
                     case ROCKET_LOW:
                         return DEPOSIT_LOW_HATCH;
                     case ROCKET_MID:
@@ -80,7 +84,7 @@ public class OptimusPrime {
                 }
             }
 
-            return REST;
+            return ZERO;
         }
     }
     

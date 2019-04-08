@@ -18,7 +18,8 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     SRXTankDrive drive;
     Gyro gyro;
 
-    Limelight limelight;
+    Limelight txLimelight;
+    Limelight distanceLimelight;
 
     // private final double FEED_FORWARD_POWER = 0.55;
     // private final double MINIMUM_POWER = 0.1;
@@ -61,12 +62,13 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     private HorizontalOffsetFeedbackDriveState aimState = HorizontalOffsetFeedbackDriveState.SEARCHING;
 
     public CmdHorizontalOffsetFeedbackDrive(
-            Gyro gyro, Limelight limelight, DriveCommandRunning cmdRunning, double targetHeight,
+            Gyro gyro, Limelight txLimelight, Limelight distanceLimelight, DriveCommandRunning cmdRunning, double targetHeight,
             PIDConstants visionPID, double goalHorizontalOffset, double decelerationStartDistance, double decelerationEndDistance,
             PIDConstants blindPID, double blindThreshold) {
 
         this.gyro = gyro;
-        this.limelight = limelight;
+        this.txLimelight = txLimelight;
+        this.distanceLimelight = distanceLimelight;
         this.visionPID = visionPID;
 
         this.cmdRunning = cmdRunning;
@@ -86,7 +88,8 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     protected void initialize() {
         drive = SRXTankDrive.getInstance();
 
-        limelight.setLEDMode(LEDMode.ON);
+        txLimelight.setLEDMode(LEDMode.ON);
+        distanceLimelight.setLEDMode(LEDMode.ON);
         cmdRunning.isRunning = false;
     }
 
@@ -94,7 +97,7 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     protected void execute() {
         switch (aimState) {
             case SEARCHING:                
-                if (limelight.hasValidTarget()) {
+                if (txLimelight.hasValidTarget() && distanceLimelight.hasValidTarget()) {
                     targetFoundCount += 1;
                 }
                 else {
@@ -107,7 +110,7 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
 
                     drive.tankDrive(visionPID.kF, visionPID.kF);
 
-                    currentHorizontalOffset = limelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
+                    currentHorizontalOffset = txLimelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
 
                     previousTime = RobotController.getFPGATime();
                     previousError = goalHorizontalOffset - currentHorizontalOffset;
@@ -120,10 +123,10 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
                 break;
 
             case FEEDBACK:
-                if (!limelight.hasValidTarget()) {
+                if (!txLimelight.hasValidTarget() && !distanceLimelight.hasValidTarget()) {
                     Log.info("CmdAutoAim", "No valid target.");
 
-                    if ( (limelight.cameraAngle > 0 ? 1 : -1) * previousVerticalAngle > blindThreshold) {
+                    if ( (distanceLimelight.cameraAngle > 0 ? 1 : -1) * previousVerticalAngle > blindThreshold) {
                         Log.info("CmdAutoAim", "Switching to BLIND...");
 
                         gyro.setAngle(0);
@@ -138,7 +141,7 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
                     }
                 }
                 else {
-                    currentHorizontalOffset = limelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
+                    currentHorizontalOffset = txLimelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
 
                     currentTime = RobotController.getFPGATime();
                     currentError = goalHorizontalOffset - currentHorizontalOffset;
@@ -154,8 +157,8 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
                     leftPower = RobotMath.clamp(visionPID.kF - feedbackPower, -1, 1);
                     rightPower = RobotMath.clamp(visionPID.kF + feedbackPower, -1, 1);
                                         
-                    previousVerticalAngle = limelight.getValue(LimelightKey.VERTICAL_OFFSET, 2);
-                    approximateDistance = limelight.calculateYPrimeFromTY(previousVerticalAngle, targetHeight);
+                    previousVerticalAngle = distanceLimelight.getValue(LimelightKey.VERTICAL_OFFSET, 2);
+                    approximateDistance = distanceLimelight.calculateYPrimeFromTY(previousVerticalAngle, targetHeight);
 
                     multiplier = 1.0 - (1.0 - blindPID.kF/visionPID.kF) * RobotMath.clamp((decelerationStartDistance - approximateDistance)/(decelerationStartDistance - decelerationEndDistance), 0.0, 1.0);
 
@@ -219,7 +222,8 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     @Override
     protected void end() {
         drive.stopMovement();
-        limelight.setLEDMode(LEDMode.OFF);
+        txLimelight.setLEDMode(LEDMode.OFF);
+        distanceLimelight.setLEDMode(LEDMode.OFF);
 
         cmdRunning.isRunning = false;
 
@@ -229,10 +233,11 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     @Override
     protected void interrupted() {
         drive.stopMovement();
-        limelight.setLEDMode(LEDMode.OFF);
+        txLimelight.setLEDMode(LEDMode.OFF);
+        distanceLimelight.setLEDMode(LEDMode.OFF);
 
         cmdRunning.isRunning = false;
 
-        Log.info("CmdAutoAim", "Command Interrupted.");
+        Log.info("CmdAutoAim", "Command Finished.");
     }
 }

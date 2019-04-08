@@ -8,6 +8,7 @@ import org.team3128.common.drive.calibrationutility.DriveCalibrationUtility;
 import org.team3128.common.hardware.limelight.Compute2D;
 import org.team3128.common.hardware.limelight.LEDMode;
 import org.team3128.common.hardware.limelight.Limelight;
+import org.team3128.common.hardware.limelight.LimelightKey;
 import org.team3128.common.hardware.limelight.Compute2D.Compute2DInput;
 import org.team3128.common.hardware.limelight.Compute2D.Compute2DLocalization;
 import org.team3128.common.hardware.misc.Piston;
@@ -143,6 +144,9 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 	// CV!!!!!!
 	public Limelight topLimelight, bottomLimelight;
 	public double bottomLLHeight, topLLHeight;
+
+	public double bottomLLCurrentLatency, topLLCurrentLatency;
+	public double bottomLLLastLatency, topLLLastLatency;
 
 	public boolean runningCommand = false;
 
@@ -315,11 +319,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 				fourBar.setState(FourBarState.CARGO_HIGH);
 			}
 		});
-		NarwhalDashboard.addButton("fourbar_ship_low", (boolean down) -> {
-			if (down) {
-				fourBar.setState(FourBarState.SHIP_AND_LOADING);
-			}
-		});
 		NarwhalDashboard.addButton("fourbar_rocket_low", (boolean down) -> {
 			if (down) {
 				fourBar.setState(FourBarState.CARGO_LOW);
@@ -338,22 +337,22 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		});
 		NarwhalDashboard.addButton("lift_loadship", (boolean down) -> {
 			if (down) {
-				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreTarget.CARGO_SHIP).targetLiftState);
+				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreTarget.CARGO_SHIP, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).targetLiftState);
 			}
 		});
 		NarwhalDashboard.addButton("lift_low", (boolean down) -> {
 			if (down) {
-				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreTarget.ROCKET_LOW).targetLiftState);
+				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreTarget.ROCKET_LOW, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).targetLiftState);
 			}
 		});
 		NarwhalDashboard.addButton("lift_mid", (boolean down) -> {
 			if (down) {
-				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreTarget.ROCKET_MID).targetLiftState);
+				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreTarget.ROCKET_MID, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).targetLiftState);
 			}
 		});
 		NarwhalDashboard.addButton("lift_top", (boolean down) -> {
 			if (down) {
-				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreTarget.ROCKET_TOP).targetLiftState);
+				lift.setState(RobotState.getOptimusState(currentGameElement, ScoreTarget.ROCKET_TOP, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).targetLiftState);
 			}
 		});
 
@@ -456,7 +455,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		// Optimus Prime Controls
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "AutoPrime");
 		listenerRight.addButtonDownListener("AutoPrime", () -> {
-			triggerCommand = new CmdAutoPrime(gyro, bottomLimelight, driveCmdRunning,
+			triggerCommand = new CmdAutoPrime(gyro, bottomLimelight, topLimelight, driveCmdRunning,
 				visionPID, blindPID, currentGameElement, currentScoreTarget,
 				(liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED));
 			triggerCommand.start();
@@ -500,7 +499,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 		listenerRight.nameControl(new Button(3), "SetHeight");
 		listenerRight.addButtonDownListener("SetHeight", () -> {
-			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreTarget));
+			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreTarget, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)));
 		});
 
 		listenerRight.nameControl(new Button(4), "Zero");
@@ -674,6 +673,24 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		NarwhalDashboard.put("game_element", currentGameElement.getName());
 
 		NarwhalDashboard.put("gear", drive.isInHighGear());
+
+		bottomLLCurrentLatency = bottomLimelight.getValue(LimelightKey.LATENCY, 1);
+		if (Math.abs(bottomLLCurrentLatency - bottomLLLastLatency) < 0.00001) {
+			NarwhalDashboard.put("bot_ll_conn", false);
+		}
+		else {
+			NarwhalDashboard.put("bot_ll_conn", true);
+		}
+		bottomLLLastLatency = bottomLLCurrentLatency;
+
+		topLLCurrentLatency = topLimelight.getValue(LimelightKey.LATENCY, 1);
+		if (Math.abs(topLLCurrentLatency - topLLLastLatency) < 0.00001) {
+			NarwhalDashboard.put("top_ll_conn", false);
+		}
+		else {
+			NarwhalDashboard.put("top_ll_conn", true);
+		}
+		topLLLastLatency = topLLCurrentLatency;
 
 		dcu.tickNarwhalDashboard();
 	}
