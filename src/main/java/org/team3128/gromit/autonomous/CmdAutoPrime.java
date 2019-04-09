@@ -29,14 +29,14 @@ public class CmdAutoPrime extends CommandGroup {
             distLimelight = topLimelight;
         }
 
-        if (scoreTarget == ScoreTarget.ROCKET_MID) {
+        if (scoreTarget == ScoreTarget.ROCKET_MID || scoreTarget == ScoreTarget.ROCKET_TOP || (scoreTarget == ScoreTarget.CARGO_SHIP && gameElement == GameElement.CARGO)) {
             txLimelight = bottomLimelight;
         }
 
         addSequential(new CmdRunInParallel(
             new CmdHorizontalOffsetFeedbackDrive(
                 gyro, txLimelight, distLimelight, cmdRunning, targetHeight,
-                visionPID, -1 * Angle.DEGREES, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
+                visionPID, 0 * Angle.DEGREES, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
                 blindPID, 20 * Angle.DEGREES),
             new CmdAutOptimusPrime(bottomLimelight, gameElement, scoreTarget, intakingHatchPanel)
         ));

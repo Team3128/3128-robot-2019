@@ -144,11 +144,10 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 	// CV!!!!!!
 	public Limelight topLimelight, bottomLimelight;
 	public double bottomLLHeight, topLLHeight;
+	public double bottomLLAngle, topLLAngle;
 
 	public double bottomLLCurrentLatency, topLLCurrentLatency;
 	public double bottomLLLastLatency, topLLLastLatency;
-
-	public boolean runningCommand = false;
 
 	// 4200
 	public double maxLiftSpeed = 0;
@@ -277,9 +276,9 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerRight = new ListenerManager(rightJoystick);
 		addListenerManager(listenerRight);
 
-		topLimelight =    new Limelight("limelight-top",    -15 * Angle.DEGREES,     topLLHeight, 14.5 * Length.in);
-		bottomLimelight = new Limelight("limelight-bottom",  38 * Angle.DEGREES,  bottomLLHeight, 14.5 * Length.in);
-		
+		topLimelight =    new Limelight("limelight-top",    topLLAngle,     topLLHeight,    23 * Length.in, 14.5 * Length.in);
+		bottomLimelight = new Limelight("limelight-bottom", bottomLLAngle,  bottomLLHeight, 11 * Length.in, 14.5 * Length.in);
+	
 		// NarwhalDashboard: Driver Controls
 		NarwhalDashboard.addButton("setTarget_rocket_top", (boolean down) -> {
 			if (down) {
@@ -401,7 +400,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerRight.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");
 		listenerRight.addMultiListener(() ->
 		{
-			if (!runningCommand) {
+			if (!driveCmdRunning.isRunning) {
 				double horiz =    -0.8 * listenerRight.getAxis("MoveTurn");
 				double vert =     -1.0 * listenerRight.getAxis("MoveForwards");
 				double throttle = -1.0 * listenerRight.getAxis("Throttle");

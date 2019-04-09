@@ -25,7 +25,7 @@ public class FourBar
 
 		CARGO_INTAKE(-22 * Angle.DEGREES),
 
-		CARGO_SHIP(-55 * Angle.DEGREES),
+		CARGO_SHIP(80 * Angle.DEGREES),
 
 		CARGO_LOW(80 * Angle.DEGREES), 
 		CARGO_MID(80 * Angle.DEGREES),

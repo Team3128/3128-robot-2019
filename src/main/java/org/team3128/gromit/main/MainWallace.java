@@ -59,8 +59,11 @@ public class MainWallace extends MainDeepSpaceRobot {
 		rightDriveLeader = new TalonSRX(10);
         rightDriveFollower = new VictorSPX(11);
         
-        bottomLLHeight = 5.375 * Length.in;
-        topLLHeight =       43 * Length.in;
+        bottomLLHeight =  5.0 * Length.in;
+        bottomLLAngle =  38.0 * Angle.DEGREES;
+
+        topLLHeight =      44 * Length.in;
+        topLLAngle =    -11.0 * Angle.DEGREES;
         
         super.constructHardware();
 
@@ -82,7 +85,7 @@ public class MainWallace extends MainDeepSpaceRobot {
 
 
         // Lift Intake Invert
-        liftIntakeMotor.setInverted(false);
+        liftIntakeMotor.setInverted(true);
 
         // FourBar Invert
         fourBarMotor.setInverted(false);

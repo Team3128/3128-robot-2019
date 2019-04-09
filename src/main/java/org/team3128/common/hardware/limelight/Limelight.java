@@ -23,19 +23,25 @@ public class Limelight {
     public double cameraHeight;
     public double targetWidth;
 
+    public double frontDistance;
+
     public NetworkTable limelightTable;
     
     /**
      * 
      * @param cameraAngle - The vertical angle of the limelight
      * @param cameraHeight - The height off of the ground of the limelight
+     * @param frontDistance - The distance between the front of the robot and the Limelight
      * @param targetWidth - The width of the target
      */
-    public Limelight(String hostname, double cameraAngle, double cameraHeight, double targetWidth) {
+    public Limelight(String hostname, double cameraAngle, double cameraHeight, double frontDistance, double targetWidth) {
         this.hostname = hostname;
 
         this.cameraAngle = cameraAngle;
         this.cameraHeight = cameraHeight;
+
+        this.frontDistance = frontDistance;
+
         this.targetWidth = targetWidth;
 
         limelightTable = NetworkTableInstance.getDefault().getTable(hostname);
@@ -104,7 +110,7 @@ public class Limelight {
     }
 
     public double calculateYPrimeFromTY(double ty, double targetHeight) {
-        return (targetHeight - cameraHeight) / RobotMath.tan(ty + cameraAngle);
+        return (targetHeight - cameraHeight) / RobotMath.tan(ty + cameraAngle) - frontDistance;
     }
 
     public void setLEDMode(LEDMode mode) {
