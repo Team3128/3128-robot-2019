@@ -5,6 +5,7 @@ import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.hardware.limelight.LEDMode;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.limelight.LimelightKey;
+import org.team3128.common.hardware.limelight.StreamMode;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
@@ -52,6 +53,8 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
 
     private double blindThreshold;
 
+    private boolean isLowHatch;
+
     int targetFoundCount;
     int plateauReachedCount;
 
@@ -64,7 +67,7 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     public CmdHorizontalOffsetFeedbackDrive(
             Gyro gyro, Limelight txLimelight, Limelight distanceLimelight, DriveCommandRunning cmdRunning, double targetHeight,
             PIDConstants visionPID, double goalHorizontalOffset, double decelerationStartDistance, double decelerationEndDistance,
-            PIDConstants blindPID, double blindThreshold) {
+            PIDConstants blindPID, double blindThreshold, boolean isLowHatch) {
 
         this.gyro = gyro;
         this.txLimelight = txLimelight;
@@ -82,6 +85,8 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
 
         this.blindPID = blindPID;
         this.blindThreshold = blindThreshold;
+
+        this.isLowHatch = isLowHatch;
     }
 
     @Override
@@ -90,6 +95,9 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
 
         txLimelight.setLEDMode(LEDMode.ON);
         distanceLimelight.setLEDMode(LEDMode.ON);
+        if(isLowHatch){
+            distanceLimelight.setStreamMode(StreamMode.LIMELIGHT_CAMERA);
+        }
         cmdRunning.isRunning = false;
     }
 
@@ -222,6 +230,9 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     @Override
     protected void end() {
         drive.stopMovement();
+        if(isLowHatch){
+            distanceLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
+        }
         txLimelight.setLEDMode(LEDMode.OFF);
         distanceLimelight.setLEDMode(LEDMode.OFF);
 
@@ -233,6 +244,9 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     @Override
     protected void interrupted() {
         drive.stopMovement();
+        if(isLowHatch){
+            distanceLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
+        }
         txLimelight.setLEDMode(LEDMode.OFF);
         distanceLimelight.setLEDMode(LEDMode.OFF);
 
