@@ -23,7 +23,7 @@ public class FourBar
     public enum FourBarState {
 		VERTICAL(90 * Angle.DEGREES),
 
-		CARGO_INTAKE(-22 * Angle.DEGREES),
+		CARGO_INTAKE(-20 * Angle.DEGREES),
 
 		CARGO_SHIP(80 * Angle.DEGREES),
 

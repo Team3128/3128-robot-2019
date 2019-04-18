@@ -2,10 +2,12 @@ package org.team3128.common.vision;
 
 import org.team3128.common.drive.DriveCommandRunning;
 import org.team3128.common.drive.SRXTankDrive;
+import org.team3128.common.drive.calibrationutility.DriveCalibrationUtility;
 import org.team3128.common.hardware.limelight.LEDMode;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.limelight.LimelightKey;
 import org.team3128.common.hardware.navigation.Gyro;
+import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
@@ -17,6 +19,8 @@ import edu.wpi.first.wpilibj.command.Command;
 public class CmdHorizontalOffsetFeedbackDrive extends Command {
     SRXTankDrive drive;
     Gyro gyro;
+
+    DriveCalibrationUtility dcu;
 
     Limelight txLimelight;
     Limelight distanceLimelight;
@@ -87,6 +91,7 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     @Override
     protected void initialize() {
         drive = SRXTankDrive.getInstance();
+        dcu = DriveCalibrationUtility.getInstance();
 
         txLimelight.setLEDMode(LEDMode.ON);
         distanceLimelight.setLEDMode(LEDMode.ON);
@@ -96,7 +101,8 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     @Override
     protected void execute() {
         switch (aimState) {
-            case SEARCHING:                
+            case SEARCHING:   
+                NarwhalDashboard.put("align_status", "searching");
                 if (txLimelight.hasValidTarget() && distanceLimelight.hasValidTarget()) {
                     targetFoundCount += 1;
                 }
@@ -123,9 +129,9 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
                 break;
 
             case FEEDBACK:
+                NarwhalDashboard.put("align_status", "feedback");
                 if (!txLimelight.hasValidTarget() && !distanceLimelight.hasValidTarget()) {
                     Log.info("CmdAutoAim", "No valid target.");
-
                     if ( (distanceLimelight.cameraAngle > 0 ? 1 : -1) * previousVerticalAngle > blindThreshold) {
                         Log.info("CmdAutoAim", "Switching to BLIND...");
 
@@ -172,6 +178,8 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
                 break;
 
             case BLIND:
+                NarwhalDashboard.put("align_status", "blind");
+
                 currentAngle = gyro.getAngle();
 
                 currentTime = RobotController.getFPGATime() / 1000000.0;
@@ -224,6 +232,8 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
         drive.stopMovement();
         txLimelight.setLEDMode(LEDMode.OFF);
         distanceLimelight.setLEDMode(LEDMode.OFF);
+        
+        NarwhalDashboard.put("align_status", "blind");
 
         cmdRunning.isRunning = false;
 
@@ -235,6 +245,8 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
         drive.stopMovement();
         txLimelight.setLEDMode(LEDMode.OFF);
         distanceLimelight.setLEDMode(LEDMode.OFF);
+
+        NarwhalDashboard.put("align_status", "blind");
 
         cmdRunning.isRunning = false;
 

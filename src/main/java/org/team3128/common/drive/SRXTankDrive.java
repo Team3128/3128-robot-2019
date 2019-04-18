@@ -944,9 +944,12 @@ public class SRXTankDrive implements ITankDrive {
 
 	public class CmdDriveUntilStop extends Command {
 		double power;
+		double timeout;
 
 		public CmdDriveUntilStop(double power, int timeoutMs) {
 			super(timeoutMs / 1000.0);
+
+			timeout = timeoutMs / 1000.0;
 
 			this.power = power;
 		}
@@ -964,6 +967,7 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected boolean isFinished() {
+			if (timeSinceInitialized() < 0.5 * timeout) return false;
 			return Math.abs(leftMotors.getSelectedSensorVelocity()) < 200
 					&& Math.abs(rightMotors.getSelectedSensorVelocity()) < 200 || isTimedOut();
 		}

@@ -3,7 +3,9 @@ package org.team3128.gromit.mechanisms;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
+import org.team3128.common.autonomous.primitives.CmdDelay;
 import org.team3128.common.autonomous.primitives.CmdRunInParallel;
+import org.team3128.common.autonomous.primitives.CmdRunInSeries;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.util.Log;
@@ -41,19 +43,27 @@ public class Climber {
             drive = SRXTankDrive.getInstance();
             drive.shiftToLow();
 
-            addSequential(new CmdDeployClimberPiston());
-            addSequential(drive.new CmdDriveUntilStop(0.6, 1500));
-            addSequential(new CmdRetractClimberPiston());
+            addSequential(
+                new CmdRunInParallel(
+                    new CmdRezeroBackLeg(1000),
+                    new CmdRunInSeries(
+                        new CmdDeployClimberPiston(1400),
+                        drive.new CmdDriveUntilStop(1.0, 1100),
+                        new CmdRetractClimberPiston(500)//300
+                    )
+                )
+            );
             
-            addSequential(new CmdSetBackLegPosition(10000, 3000));
-
-            addSequential(drive.new CmdDriveUntilStop(0.3, 700));
-
-            //addSequential(new CmdSetBackLegPosition(50, 2000));
             addSequential(new CmdRunInParallel(
-                drive.new CmdDriveUntilStop(0.5, 2000),
-                new CmdSetBackLegPosition(50, 2000)
+                new CmdSetBackLegPosition(10000, 3000),
+
+                new CmdRunInSeries(
+                    new CmdDelay(0.75),
+                    drive.new CmdDriveUntilStop(0.8, 1500)
+                )
             ));
+
+            addSequential(new CmdRezeroAndPull(0.6, 2000));
         }
     }
 
@@ -64,21 +74,22 @@ public class Climber {
             drive = SRXTankDrive.getInstance();
             drive.shiftToLow();
 
-            addSequential(new CmdDeployClimberPiston());
-            addSequential(drive.new CmdDriveUntilStop(0.6, 1000));
-            addSequential(new CmdRetractClimberPiston());
+            addSequential(new CmdDeployClimberPiston(1400));
+            addSequential(drive.new CmdDriveUntilStop(1.0, 1200));
+            addSequential(new CmdRetractClimberPiston(1000));
 
-            addSequential(new CmdSetBackLegPosition(18500, 5000));
+            addSequential(new CmdSetBackLegPosition(18000, 3000));
 
-            addSequential(drive.new CmdDriveUntilStop(0.3, 3000));
+            addSequential(drive.new CmdDriveUntilStop(0.5, 2000));
 
-            addSequential(new CmdSetBackLegPosition(0, 2000));
+            addSequential(new CmdRezeroAndPull(0.6, 4000));
+
         }
     }
 
     public class CmdDeployClimberPiston extends Command {
-        public CmdDeployClimberPiston() {
-            super(2.5);
+        public CmdDeployClimberPiston(int timeoutMs) {
+            super(timeoutMs / 1000.0);
         }
 
         @Override
@@ -93,8 +104,8 @@ public class Climber {
     }
 
     public class CmdRetractClimberPiston extends Command {
-        public CmdRetractClimberPiston() {
-            super(1.5);
+        public CmdRetractClimberPiston(int timeoutMs) {
+            super(timeoutMs / 1000.0);
         }
 
         @Override
@@ -107,6 +118,72 @@ public class Climber {
             return isTimedOut();
         }
     }
+
+    public class CmdRezeroBackLeg extends Command {
+        public CmdRezeroBackLeg(int timeoutMs) {
+            super(timeoutMs / 1000.0);
+        }
+
+        @Override
+        protected void initialize() {
+            backLegMotor.set(ControlMode.PercentOutput, -1.0);
+        }
+
+        @Override
+        protected boolean isFinished() {
+            if (timeSinceInitialized() < 0.2) return false;
+            return isTimedOut() || Math.abs(backLegMotor.getSelectedSensorVelocity()) < 50;
+        }
+
+        @Override
+        protected void end() {
+            backLegMotor.set(ControlMode.PercentOutput, 0);
+            backLegMotor.setSelectedSensorPosition(0);
+        }
+
+        @Override
+        protected void interrupted() {
+            end();
+        }
+    }
+
+    
+    public class CmdRezeroAndPull extends Command {
+        double power;
+
+        public CmdRezeroAndPull(double power, int timeoutMs) {
+            super(timeoutMs / 1000.0);
+
+            this.power = power;
+        }
+
+        @Override
+        protected void initialize() {
+            SRXTankDrive.getInstance().tankDrive(power, power);
+
+            backLegMotor.set(ControlMode.PercentOutput, -1.0);
+        }
+
+        @Override
+        protected boolean isFinished() {
+            if (timeSinceInitialized() < 0.2) return false;
+            return isTimedOut() || Math.abs(backLegMotor.getSelectedSensorVelocity()) < 50;
+        }
+
+        @Override
+        protected void end() {
+            backLegMotor.set(ControlMode.PercentOutput, 0);
+            backLegMotor.setSelectedSensorPosition(0);
+
+            SRXTankDrive.getInstance().stopMovement();
+        }
+
+        @Override
+        protected void interrupted() {
+            end();
+        }
+    }
+
 
     public class CmdSetBackLegPosition extends Command {
         boolean extending;

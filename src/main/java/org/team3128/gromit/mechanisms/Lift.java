@@ -31,15 +31,16 @@ public class Lift
 
 		SHIP_CARGO(30 * Length.in),
 
-		LOW_CARGO(12 * Length.in),
-		MID_CARGO(46 * Length.in),
+		LOW_CARGO(16 * Length.in),
+		MID_CARGO(49 * Length.in),
 		TOP_CARGO(80 * Length.in),
 
-		HATCH_INTAKE(24 * Length.in),
+		HATCH_INTAKE(21.5 * Length.in),
+		HATCH_PULL_UP(28.5 * Length.in),
 		
-        LOW_HATCH(25.5 * Length.in),
+        LOW_HATCH(26.5 * Length.in),
         MID_HATCH(33.5 * Length.in),
-		TOP_HATCH(67.5 * Length.in);
+		TOP_HATCH(67.5 * Length.in); // 69.5
 
 		public double targetHeight;
 

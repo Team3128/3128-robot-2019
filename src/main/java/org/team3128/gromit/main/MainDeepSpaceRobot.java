@@ -9,6 +9,7 @@ import org.team3128.common.hardware.limelight.Compute2D;
 import org.team3128.common.hardware.limelight.LEDMode;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.limelight.LimelightKey;
+import org.team3128.common.hardware.limelight.StreamMode;
 import org.team3128.common.hardware.limelight.Compute2D.Compute2DInput;
 import org.team3128.common.hardware.limelight.Compute2D.Compute2DLocalization;
 import org.team3128.common.hardware.misc.Piston;
@@ -39,6 +40,7 @@ import org.team3128.gromit.mechanisms.LiftIntake;
 import org.team3128.gromit.mechanisms.OptimusPrime;
 import org.team3128.gromit.mechanisms.FourBar.FourBarState;
 import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
+import org.team3128.gromit.mechanisms.LiftIntake.CmdRetractHatch;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
 import org.team3128.gromit.util.DeepSpaceConstants;
@@ -278,6 +280,8 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 		topLimelight =    new Limelight("limelight-top",    topLLAngle,     topLLHeight,    23 * Length.in, 14.5 * Length.in);
 		bottomLimelight = new Limelight("limelight-bottom", bottomLLAngle,  bottomLLHeight, 11 * Length.in, 14.5 * Length.in);
+
+		topLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
 	
 		// NarwhalDashboard: Driver Controls
 		NarwhalDashboard.addButton("setTarget_rocket_top", (boolean down) -> {
@@ -418,7 +422,12 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 			liftIntake.setState(LiftIntakeState.DEMOGORGON_RELEASED);
 		});
 		listenerRight.addButtonUpListener("DemogorgonGrab", () -> {
+			if (lift.heightState == LiftHeightState.HATCH_INTAKE) {
+				lift.setState(LiftHeightState.HATCH_PULL_UP);
+			}
 			liftIntake.setState(LiftIntakeState.DEMOGORGON_HOLDING);
+
+			//liftIntake.new CmdRetractHatch(liftState).start();
 		});
 
 		listenerRight.nameControl(new POV(0), "IntakePOV");
@@ -587,6 +596,8 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 		drive.shiftToLow();
 
+		topLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
+
 		fourBar.brake();
 		lift.powerControl(0);
 	}
@@ -597,6 +608,8 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		lift.disabled = false;
 
 		drive.shiftToLow();
+
+		topLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
 
 		driveCmdRunning.isRunning = false;
 	}
@@ -690,6 +703,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 			NarwhalDashboard.put("top_ll_conn", true);
 		}
 		topLLLastLatency = topLLCurrentLatency;
+
 
 		dcu.tickNarwhalDashboard();
 	}
