@@ -968,8 +968,10 @@ public class SRXTankDrive implements ITankDrive {
 		@Override
 		protected boolean isFinished() {
 			if (timeSinceInitialized() < 0.5 * timeout) return false;
-			return Math.abs(leftMotors.getSelectedSensorVelocity()) < 200
-					&& Math.abs(rightMotors.getSelectedSensorVelocity()) < 200 || isTimedOut();
+
+			//return Math.abs(leftMotors.getSelectedSensorVelocity()) < 200
+			//		&& Math.abs(rightMotors.getSelectedSensorVelocity()) < 200 || 
+			return isTimedOut();
 		}
 
 		@Override

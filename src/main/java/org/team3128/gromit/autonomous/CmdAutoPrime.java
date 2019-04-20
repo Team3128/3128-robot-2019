@@ -33,9 +33,9 @@ public class CmdAutoPrime extends CommandGroup {
             distLimelight = topLimelight;
         }
 
-        if (scoreTarget == ScoreTarget.ROCKET_MID || scoreTarget == ScoreTarget.ROCKET_TOP || (scoreTarget == ScoreTarget.CARGO_SHIP && gameElement == GameElement.CARGO)) {
+        if (scoreTarget == ScoreTarget.ROCKET_MID || scoreTarget == ScoreTarget.ROCKET_TOP || (scoreTarget == ScoreTarget.ROCKET_LOW && gameElement == GameElement.CARGO) || (scoreTarget == ScoreTarget.CARGO_SHIP && gameElement == GameElement.CARGO)) {
             txLimelight = bottomLimelight;
-            useBottom = true;
+            //useBottom = true;
         }
 
         addSequential(
