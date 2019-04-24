@@ -43,12 +43,12 @@ public class CmdAutoPrime extends CommandGroup {
             new CmdAutOptimusPrime(gameElement, scoreTarget, intakingHatchPanel, 500)
         );
 
-        // addSequential(//new CmdRunInParallel(
-        //     new CmdHorizontalOffsetFeedbackDrive(
-        //         gyro, txLimelight, distLimelight, cmdRunning, targetHeight,
-        //         visionPID, -2 * Angle.DEGREES, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
-        //         blindPID, 20 * Angle.DEGREES)//,
-        //     //new CmdStreamUpdate(bottomLimelight, topLimelight, useBottom)
-        // );
+        addSequential(//new CmdRunInParallel(
+            new CmdHorizontalOffsetFeedbackDrive(
+                gyro, txLimelight, distLimelight, cmdRunning, targetHeight,
+                visionPID, -2 * Angle.DEGREES, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
+                blindPID, 20 * Angle.DEGREES)//,
+            //new CmdStreamUpdate(bottomLimelight, topLimelight, useBottom)
+        );
     }
 }

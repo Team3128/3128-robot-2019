@@ -71,7 +71,7 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     public CmdHorizontalOffsetFeedbackDrive(
             Gyro gyro, Limelight txLimelight, Limelight distanceLimelight, DriveCommandRunning cmdRunning, double targetHeight,
             PIDConstants visionPID, double goalHorizontalOffset, double decelerationStartDistance, double decelerationEndDistance,
-            PIDConstants blindPID, double blindThreshold, boolean isLowHatch) {
+            PIDConstants blindPID, double blindThreshold) {//, boolean isLowHatch) {
 
         this.gyro = gyro;
         this.txLimelight = txLimelight;
