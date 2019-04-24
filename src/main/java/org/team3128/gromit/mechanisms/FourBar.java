@@ -222,10 +222,7 @@ public class FourBar
 						lastError = this.error;
 						this.error = desiredTarget - fourBarMotor.getSelectedSensorVelocity();
 
-						kP = 0.3;
-						kD = 0;
-
-						currentTarget = 0.7 /** + kP * this.error + kD * (this.error - lastError) * 1000000 / (RobotController.getFPGATime() - this.lastTime) */;
+						currentTarget = 0.8272;
 						this.lastTime = RobotController.getFPGATime();
 					}
 

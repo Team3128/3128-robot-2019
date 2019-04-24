@@ -146,7 +146,7 @@ public class OptimusPrime {
     public void setState(RobotState state) {
         new CmdCascadedOptimus(state, 
             (lift.getCurrentHeight() < 10 * Length.in && state == RobotState.DEPOSIT_LOW_HATCH)
-             ? 250 : 0).start();;
+             ? 250 : 0).start();
 
         this.robotState = state;
     }

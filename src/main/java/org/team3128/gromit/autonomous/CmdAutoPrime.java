@@ -39,7 +39,7 @@ public class CmdAutoPrime extends CommandGroup {
         }
 
         addSequential(
-            new CmdAutOptimusPrime(bottomLimelight, gameElement, scoreTarget, intakingHatchPanel)
+            new CmdAutOptimusPrime(gameElement, scoreTarget, intakingHatchPanel, 500)
         );
 
         addSequential(//new CmdRunInParallel(

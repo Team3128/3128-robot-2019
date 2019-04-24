@@ -24,8 +24,6 @@ public class CmdAutOptimusPrime extends Command {
 
     RobotState desiredState;
 
-    Limelight limelight;
-
     GameElement gameElement;
     ScoreTarget scoreTarget;
     
@@ -33,9 +31,9 @@ public class CmdAutOptimusPrime extends Command {
 
     boolean goingUp;
     
-    public CmdAutOptimusPrime(Limelight limelight, GameElement gameElement, ScoreTarget scoreTarget, boolean intakingHatchPanel) {
-        this.limelight = limelight;
-        
+    public CmdAutOptimusPrime(GameElement gameElement, ScoreTarget scoreTarget, boolean intakingHatchPanel, int timeoutMs) {
+        super(timeoutMs / 1000.0);
+                
         this.gameElement = gameElement;
         this.scoreTarget = scoreTarget;
 
@@ -53,28 +51,40 @@ public class CmdAutOptimusPrime extends Command {
         optimusPrime.setState(desiredState);
                 
         goingUp = desiredState.targetFourBarState.targetAngle > fourBar.getCurrentAngle();
-    }
-    
-    @Override
-    protected void execute() {
 
+        Log.info("CmdAutOptimusPrime", "Four Bar going " + (goingUp ? "up" : "down"));
     }
     
     @Override
     protected boolean isFinished() {
-        if (desiredState != RobotState.DEPOSIT_LOW_HATCH) return true;
-
-        if (goingUp) {
-            return fourBar.getCurrentAngle() > desiredState.targetFourBarState.targetAngle - 10 * Angle.DEGREES;
+        if (isTimedOut()) {
+            return true;
+        }
+        else if (desiredState != RobotState.DEPOSIT_LOW_HATCH) {
+            return true;
         }
         else {
-            return fourBar.getCurrentAngle() < desiredState.targetFourBarState.targetAngle + 10 * Angle.DEGREES;
+            return fourBar.getCurrentAngle() < 0;
         }
+
+
+        // if (goingUp) {
+        //     return fourBar.getCurrentAngle() > desiredState.targetFourBarState.targetAngle - 10 * Angle.DEGREES;
+        // }
+        // else {
+        //     return fourBar.getCurrentAngle() < desiredState.targetFourBarState.targetAngle + 10 * Angle.DEGREES;
+        // }
     }
     
     @Override
     protected void end() {
-        Log.info("CmdAutOptimusPrime", "Command finished normally.");
+        if (isTimedOut()) {
+            Log.unusual("CmdAutOptimusPrime", "Command timed out.");
+
+        }
+        else {
+            Log.info("CmdAutOptimusPrime", "Optimus Prime arrived.");
+        }
     }
     
     @Override
