@@ -22,6 +22,6 @@ public class CmdPerpendicularDriveToTarget extends CommandGroup {
         addSequential(new CmdHorizontalOffsetFeedbackDrive(
             gyro, bottomLimelight, topLimelight, cmdRunning, targetHeight,
             visionPID, -1 * Angle.DEGREES, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
-            blindPID, 20 * Angle.DEGREES));
+            blindPID, 20 * Angle.DEGREES, false));
     }
 }

@@ -31,6 +31,7 @@ public class CmdAutoPrime extends CommandGroup {
 
         if (gameElement == GameElement.HATCH_PANEL && (scoreTarget == ScoreTarget.ROCKET_LOW || scoreTarget == ScoreTarget.CARGO_SHIP)) {
             distLimelight = topLimelight;
+            //isLowHatch = true;
         }
 
         if (scoreTarget == ScoreTarget.ROCKET_MID || scoreTarget == ScoreTarget.ROCKET_TOP || (scoreTarget == ScoreTarget.ROCKET_LOW && gameElement == GameElement.CARGO) || (scoreTarget == ScoreTarget.CARGO_SHIP && gameElement == GameElement.CARGO)) {
@@ -42,12 +43,12 @@ public class CmdAutoPrime extends CommandGroup {
             new CmdAutOptimusPrime(gameElement, scoreTarget, intakingHatchPanel, 500)
         );
 
-        addSequential(//new CmdRunInParallel(
-            new CmdHorizontalOffsetFeedbackDrive(
-                gyro, txLimelight, distLimelight, cmdRunning, targetHeight,
-                visionPID, -2 * Angle.DEGREES, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
-                blindPID, 20 * Angle.DEGREES)//,
-            //new CmdStreamUpdate(bottomLimelight, topLimelight, useBottom)
-        );
+        // addSequential(//new CmdRunInParallel(
+        //     new CmdHorizontalOffsetFeedbackDrive(
+        //         gyro, txLimelight, distLimelight, cmdRunning, targetHeight,
+        //         visionPID, -2 * Angle.DEGREES, DeepSpaceConstants.DECELERATE_START_DISTANCE, DeepSpaceConstants.DECELERATE_END_DISTANCE,
+        //         blindPID, 20 * Angle.DEGREES)//,
+        //     //new CmdStreamUpdate(bottomLimelight, topLimelight, useBottom)
+        // );
     }
 }
