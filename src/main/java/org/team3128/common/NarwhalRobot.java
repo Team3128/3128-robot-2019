@@ -18,6 +18,7 @@ import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.NotifierJNI;
 
 import edu.wpi.first.wpilibj.Watchdog;
+import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -128,7 +129,7 @@ public abstract class NarwhalRobot extends RobotBase {
     /* ----------- Overridable periodic code ----------------- */
 
     protected double m_period;
-    public static final double kDefaultPeriod = 0.02;
+    public static final double kDefaultPeriod = 0.05;
     
     private enum Mode {
         kNone,
@@ -238,17 +239,17 @@ public abstract class NarwhalRobot extends RobotBase {
     protected void loopFunc() {
         m_watchdog.reset();
         
-        // Call the appropriate function depending upon the current robot mode
         if (isDisabled()) {
-            // Call DisabledInit() if we are now just entering disabled mode from either a different mode
-            // or from power-on.
             if (m_lastMode != Mode.kDisabled) {
                 Log.info("NarwhalRobot", "Entering disabled period.");
 
                 LiveWindow.setEnabled(false);
                 Shuffleboard.disableActuatorWidgets();
+
                 disabledInit();
                 m_watchdog.addEpoch("disabledInit()");
+
+                Scheduler.getInstance().removeAll();
 
                 if (m_lastMode == Mode.kAutonomous) {
                     Log.info("NarwhalRobot", "Re-constructing autonomous sequences");
@@ -262,37 +263,45 @@ public abstract class NarwhalRobot extends RobotBase {
             HAL.observeUserProgramDisabled();
             disabledPeriodic();
             m_watchdog.addEpoch("disablePeriodic()");
-        } else if (isAutonomous()) {
-            // Call AutonomousInit() if we are now just entering autonomous mode from either a different
-            // mode or from power-on.
+        }
+        else if (isAutonomous()) {
             if (m_lastMode != Mode.kAutonomous) {
                 Log.info("NarwhalRobot", "Entering autonomous period.");
 
-                setupAutoChooser();
-                zeroOutListeners();
+                Scheduler.getInstance().removeAll();
 
+                setupAutoChooser();
+                
+                zeroOutListeners();
                 autonomousInit();
-                runAutoProgram();
+                recountAllControls();
+
+                //runAutoProgram();
 
                 LiveWindow.setEnabled(false);
                 Shuffleboard.disableActuatorWidgets();
-                autonomousInit();
                 m_watchdog.addEpoch("autonomousInit()");
                 m_lastMode = Mode.kAutonomous;
             }
             
             HAL.observeUserProgramAutonomous();
             Scheduler.getInstance().run();
+
+            // Listener managers should ONLY be ticked in the 2019 game, DESTINATION: DEEP SPACE
+            // because of the driver-controllable sandstorm period
+            tickListenerManagers();
             autonomousPeriodic();
+
             m_watchdog.addEpoch("autonomousPeriodic()");
-        } else if (isOperatorControl()) {
-            // Call TeleopInit() if we are now just entering teleop mode from either a different mode or
-            // from power-on.
+        }
+        else if (isOperatorControl()) {
             if (m_lastMode != Mode.kTeleop) {
                 Log.info("NarwhalRobot", "Entering teleoperated period.");
 
                 LiveWindow.setEnabled(false);
                 Shuffleboard.disableActuatorWidgets();
+
+                Scheduler.getInstance().removeAll();
 
                 zeroOutListeners();
                 teleopInit();
@@ -303,24 +312,30 @@ public abstract class NarwhalRobot extends RobotBase {
             }
             
             HAL.observeUserProgramTeleop();
+            Scheduler.getInstance().run();
+
             tickListenerManagers();
             teleopPeriodic();
+            
             m_watchdog.addEpoch("teleopPeriodic()");
-        } else {
-            // Call TestInit() if we are now just entering test mode from either a different mode or from
-            // power-on.
+        }
+        else {
             if (m_lastMode != Mode.kTest) {
                 Log.info("NarwhalRobot", "Entering test period.");
 
                 LiveWindow.setEnabled(true);
                 Shuffleboard.enableActuatorWidgets();
+
                 testInit();
+
                 m_watchdog.addEpoch("testInit()");
                 m_lastMode = Mode.kTest;
             }
             
             HAL.observeUserProgramTest();
+
             testPeriodic();
+            
             m_watchdog.addEpoch("testPeriodic()");
         }
         
@@ -332,14 +347,14 @@ public abstract class NarwhalRobot extends RobotBase {
         LiveWindow.updateValues();
         Shuffleboard.update();
         
-        // Warn on loop time overruns
-        if (m_watchdog.isExpired()) {
-            m_watchdog.printEpochs();
-        }
+        // // Warn on loop time overruns
+        // if (m_watchdog.isExpired()) {
+        //     m_watchdog.printEpochs();
+        // }
     }
     
     private void printLoopOverrunMessage() {
-        DriverStation.reportWarning("Loop time of " + m_period + "s overrun\n", false);
+        // DriverStation.reportWarning("Loop time of " + m_period + "s overrun\n", false);
     }
     
     @Override
@@ -370,12 +385,14 @@ public abstract class NarwhalRobot extends RobotBase {
 		Scheduler.getInstance().removeAll(); // get rid of any paused commands
 		
 		NarwhalDashboard.clearAutos();
-		constructAutoPrograms();
+        constructAutoPrograms();
+        
+        NarwhalDashboard.pushAutos();
 	}
 	
 	private void runAutoProgram()
 	{
-		CommandGroup autoProgram = null;
+		Command autoProgram = null;
 
 		autoProgram = NarwhalDashboard.getSelectedAuto();
 
