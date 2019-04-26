@@ -5,7 +5,7 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.util.Log;
-import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
+import org.team3128.gromit.mechanisms.Lift.LiftHeightTarget;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.command.Command;
@@ -176,20 +176,20 @@ public class LiftIntake {
 	}
 
 	public class CmdRetractHatch extends Command {
-		LiftHeightState liftState;
+		LiftHeightTarget liftState;
 		boolean isPickUp = false;
 		boolean isDone = false;
 		
-		public CmdRetractHatch(LiftHeightState liftState) {
+		public CmdRetractHatch(LiftHeightTarget liftState) {
 			this.liftState = liftState;
 		}
 		
 		@Override
 		protected void initialize() {
-			isPickUp = liftState == LiftHeightState.HATCH_INTAKE;
+			isPickUp = liftState == LiftHeightTarget.HATCH_INTAKE;
 			LiftIntake.getInstance().setState(LiftIntakeState.DEMOGORGON_HOLDING);
 			if(isPickUp) {
-				Lift.getInstance().setState(LiftHeightState.HATCH_PULL_UP);
+				Lift.getInstance().heightControl(LiftHeightTarget.HATCH_PULL_UP);
 			}
 		}
 

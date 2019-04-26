@@ -50,7 +50,7 @@ public class CmdAutOptimusPrime extends Command {
 
         optimusPrime.setState(desiredState);
                 
-        goingUp = desiredState.targetFourBarState.targetAngle > fourBar.getCurrentAngle();
+        goingUp = desiredState.fourBarAngleTarget.targetAngle > fourBar.getCurrentAngle();
 
         Log.info("CmdAutOptimusPrime", "Four Bar going " + (goingUp ? "up" : "down"));
     }
