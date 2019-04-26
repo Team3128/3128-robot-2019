@@ -1,6 +1,6 @@
 package org.team3128.common.generics;
 
-interface Loggable {
+public interface Loggable {
     public void logInfo(String message);
     public void logDebug(String message);
     public void logFatal(String message);
