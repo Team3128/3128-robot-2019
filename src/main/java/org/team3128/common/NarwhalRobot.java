@@ -4,6 +4,8 @@ import edu.wpi.first.hal.HAL;
 
 import java.util.ArrayList;
 
+import org.team3128.common.generics.Loggable;
+import org.team3128.common.generics.Mechanism;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.util.Assert;
@@ -19,18 +21,19 @@ import edu.wpi.first.hal.NotifierJNI;
 
 import edu.wpi.first.wpilibj.Watchdog;
 import edu.wpi.first.wpilibj.command.Command;
-import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.command.Scheduler;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.TimedRobot;
 
 /**
-* NarwhalRobot, based on the TimedRobot, implements a specific type of robot program framework, extending the RobotBase
-* class.
+* The NarwhalRobot class, based on the {@link TimedRobot} class, implements the iterative model, in which the robot
+* of robot program framework, is managed as a state machine, with different methods periodically being called in each
+* period of the robot's operation.
 */
 @SuppressWarnings("PMD.TooManyMethods")
-public abstract class NarwhalRobot extends RobotBase {
+public abstract class NarwhalRobot extends RobotBase implements Loggable {
     /* ----------- Overridable initialization code ----------------- */
     
     /**
@@ -48,7 +51,7 @@ public abstract class NarwhalRobot extends RobotBase {
     /**
      * Use this to create all of the teleoperated listeners.
      * 
-     * Make sure to add all of your ListenerManagers to this class to be ticked using {@link addListenerManager()}
+     * Make sure to add all of your {@link ListenerManager} objects to this class to be ticked using {@link addListenerManager()}
      */
     protected abstract void setupListeners();
 
@@ -121,7 +124,7 @@ public abstract class NarwhalRobot extends RobotBase {
 
 
     /**
-	 * Use this function to read and write data from NarwhalDashboard.
+	 * Use this function to read/write data to/from NarwhalDashboard and SmartDashboard/Shuffleboard.
 	 * It is called asynchronously, no matter what mode the robot is in.
 	 */
 	protected void updateDashboard() {}
@@ -150,11 +153,15 @@ public abstract class NarwhalRobot extends RobotBase {
     private double m_expirationTime;
 
 
-    final static int dashboardUpdateWavelength = NarwhalDashboard.getUpdateWavelength();
-    Thread dashboardUpdateThread;
+    /**
+     * Amount of time (in milliseconds) between successive updates of the dashboard
+     */
+    final static int DASHBOARD_UPDATE_WAVELENGTH = 100;
+    private Notifier dashboardUpdateNotifier;
 
 
     ArrayList<ListenerManager> listenerManagers = new ArrayList<ListenerManager>();
+    ArrayList<Mechanism> mechanisms = new ArrayList<Mechanism>();
 
     
     /**
@@ -197,6 +204,10 @@ public abstract class NarwhalRobot extends RobotBase {
             fail();
         }
 
+        for (Mechanism mechanism : mechanisms) {
+            mechanism.startControlNotifier();
+        }
+
         // Attempt to setup ListenerManager
         try
         {
@@ -212,9 +223,9 @@ public abstract class NarwhalRobot extends RobotBase {
         // Construct auto programs for the first time
         setupAutoChooser();
 
-        Log.info("NarwhalRobot", "Starting Dashboard Update Thread...");
-        dashboardUpdateThread = new Thread(this::updateDashboardLoop, "Dashboard Update Thread");
-        dashboardUpdateThread.start();
+        Log.info("NarwhalRobot", "Starting Dashboard Update Notifier...");
+        dashboardUpdateNotifier = new Notifier(this::updateDashboard);
+        dashboardUpdateNotifier.startPeriodic(DASHBOARD_UPDATE_WAVELENGTH / 1000.0);
         
         // Tell the DS that the robot is ready to be enabled
         HAL.observeUserProgramStarting();
@@ -257,6 +268,10 @@ public abstract class NarwhalRobot extends RobotBase {
                 }
                 zeroOutListeners();
 
+                for (Mechanism mechanism : mechanisms) {
+                    mechanism.setEnabled(false);
+                }
+
                 m_lastMode = Mode.kDisabled;
             }
             
@@ -276,10 +291,15 @@ public abstract class NarwhalRobot extends RobotBase {
                 autonomousInit();
                 recountAllControls();
 
-                //runAutoProgram();
+                runAutoProgram();
 
                 LiveWindow.setEnabled(false);
                 Shuffleboard.disableActuatorWidgets();
+
+                for (Mechanism mechanism : mechanisms) {
+                    mechanism.setEnabled(true);
+                }
+
                 m_watchdog.addEpoch("autonomousInit()");
                 m_lastMode = Mode.kAutonomous;
             }
@@ -307,6 +327,10 @@ public abstract class NarwhalRobot extends RobotBase {
                 teleopInit();
                 recountAllControls();
 
+                for (Mechanism mechanism : mechanisms) {
+                    mechanism.setEnabled(true);
+                }
+
                 m_watchdog.addEpoch("teleopInit()");
                 m_lastMode = Mode.kTeleop;
             }
@@ -328,6 +352,10 @@ public abstract class NarwhalRobot extends RobotBase {
 
                 testInit();
 
+                for (Mechanism mechanism : mechanisms) {
+                    mechanism.setEnabled(true);
+                }
+
                 m_watchdog.addEpoch("testInit()");
                 m_lastMode = Mode.kTest;
             }
@@ -347,10 +375,10 @@ public abstract class NarwhalRobot extends RobotBase {
         LiveWindow.updateValues();
         Shuffleboard.update();
         
-        // // Warn on loop time overruns
-        // if (m_watchdog.isExpired()) {
-        //     m_watchdog.printEpochs();
-        // }
+        // Warn on loop time overruns
+        if (m_watchdog.isExpired()) {
+            m_watchdog.printEpochs();
+        }
     }
     
     private void printLoopOverrunMessage() {
@@ -421,26 +449,9 @@ public abstract class NarwhalRobot extends RobotBase {
         System.exit(7);
     }
 
-    /**
-     * This function is run in its own thread to call main.updateDashboard()
-     */
-    private void updateDashboardLoop()
-    {
-		Log.info("NarwhalRobot", "Dashboard Update Thread starting");
-    	while(true)
-    	{
-    		updateDashboard();
-    		
-    		try
-			{
-				Thread.sleep(dashboardUpdateWavelength);
-			} 
-    		catch (InterruptedException e)
-			{
-    			Log.info("NarwhalRobot", "Dashboard Update Thread shutting down");
-				return;
-			}
-    	}
+    public void addMechanism(Mechanism mechanism) {
+        Assert.notNull(mechanism);
+        mechanisms.add(mechanism);
     }
 
     /**

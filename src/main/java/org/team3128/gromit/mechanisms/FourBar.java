@@ -1,5 +1,7 @@
 package org.team3128.gromit.mechanisms;
 
+import org.team3128.common.generics.Loggable;
+import org.team3128.common.generics.Mechanism;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
@@ -8,12 +10,15 @@ import org.team3128.common.util.units.Angle;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
 
-public class FourBar
-{
+public class FourBar extends Mechanism {
+	@Override
+	public String getTag() {
+		return "FourBar";
+	}
+
 	/**
 	 * The amount of native units read by the encoder equal to 1 degree.
 	 */
@@ -71,7 +76,7 @@ public class FourBar
 
 	public void setControlMode(FourBarControlMode controlMode) {
 		if (this.controlMode != controlMode) {
-			Log.debug("FourBar", "Setting control mode to " + controlMode.name() + " with Talon SRX onboard PID slot " + controlMode.getPIDSlot());
+			Log.debug(this, "Setting control mode to " + controlMode.name() + " with Talon SRX onboard PID slot " + controlMode.getPIDSlot());
 
 			this.controlMode = controlMode;
 			fourBarMotor.selectProfileSlot(controlMode.getPIDSlot(), 0);
@@ -87,7 +92,6 @@ public class FourBar
 
 	// Control Notifier
 	private FourBarControlMode controlMode = FourBarControlMode.PERCENT;
-	private Notifier controlNotifier;
 
 	public final double PEAK_BRAKE_POWER = 0.15;
 	public final double BRAKE_TRIG_FUDGE = 0.095;
@@ -96,8 +100,6 @@ public class FourBar
 
 	public double maxAngle = +95.0 * Angle.DEGREES;
 	public double minAngle = -90.0 * Angle.DEGREES;
-
-	public boolean disabled = true;
 
 	public boolean canLower, canRaise;
 
@@ -128,7 +130,7 @@ public class FourBar
 			return instance;
 		}
 
-		Log.fatal("FourBar", "Attempted to get instance before initializtion! Call initialize(...) first.");
+		Log.fatal(instance, "Attempted to get instance before initializtion! Call initialize(...) first.");
 		return null;
 	}
 
@@ -145,71 +147,67 @@ public class FourBar
 
 		this.limitSwitchAngle = limitSwitchAngle;
 		this.maxVelocity = maxVelocity;
-
-		controlNotifier = new Notifier(this::controlLoop);
-		controlNotifier.startPeriodic(0.010);
 	}
 
-	private void controlLoop() {
+	@Override
+	protected void controlLoop() {
 		if (getLimitSwitch()) {
 			setCurrentAngle(limitSwitchAngle);
 		}
 
 		currentTarget = 0;
 
-		if (!disabled) {
-			switch (controlMode) {
-				case PERCENT:
-					canRaise = getCurrentAngle() < maxAngle - 2 * Angle.DEGREES;
-					canLower = getCurrentAngle() > minAngle + 1 * Angle.DEGREES;
-					
-					if (override) {
-						currentTarget = desiredTarget;
+		switch (controlMode) {
+			case PERCENT:
+				canRaise = getCurrentAngle() < maxAngle - 2 * Angle.DEGREES;
+				canLower = getCurrentAngle() > minAngle + 1 * Angle.DEGREES;
+				
+				if (override) {
+					currentTarget = desiredTarget;
+				}
+				else {
+					if (desiredTarget > 0 && canRaise) {
+						currentTarget = 0.7 * getAdjustedTarget(desiredTarget);
 					}
-					else {
-						if (desiredTarget > 0 && canRaise) {
-							currentTarget = 0.7 * getAdjustedTarget(desiredTarget);
-						}
-						else if (desiredTarget < 0 && canLower) {
-							currentTarget = 0.4 * getAdjustedTarget(desiredTarget);
-						}
-						
-						if (Math.abs(currentTarget) < 0.0001 && canRaise && canLower) {
-							brake();
-						}
-					}
-
-					break;
-
-				case POSITION:
-					lastError = error;
-					error = desiredTarget - getCurrentAngle();
-					
-					currentTarget = getFeedForwardPower() + (error > 0 ? upKP : downKP) * error + kD * (error - lastError) * 1000000 / (RobotController.getFPGATime() - lastTime);
-					lastTime = RobotController.getFPGATime();
-
-					break;
-
-				case ZEROING:
-					currentTarget = ZEROING_POWER;
-
-					if (Math.abs(fourBarMotor.getSelectedSensorVelocity()) < 2) {
-						zeroVelocityCount += 1;
-					}
-					else {
-						zeroVelocityCount = 0;
+					else if (desiredTarget < 0 && canLower) {
+						currentTarget = 0.4 * getAdjustedTarget(desiredTarget);
 					}
 					
-					if (zeroVelocityCount > 30 || getLimitSwitch()) {
-						Log.info("FourBar", "Zeroing sequence hit " + (zeroVelocityCount > 30 ? "SOFT" : "HARD") + " stop. Braking now...");
-						
-						angleControl(85.0 * Angle.DEGREES);
-						
-						zeroVelocityCount = 0;
+					if (Math.abs(currentTarget) < 0.0001 && canRaise && canLower) {
+						brake();
 					}
+				}
 
-					break;
-			}
+				break;
+
+			case POSITION:
+				lastError = error;
+				error = desiredTarget - getCurrentAngle();
+				
+				currentTarget = getFeedForwardPower() + (error > 0 ? upKP : downKP) * error + kD * (error - lastError) * 1000000 / (RobotController.getFPGATime() - lastTime);
+				lastTime = RobotController.getFPGATime();
+
+				break;
+
+			case ZEROING:
+				currentTarget = ZEROING_POWER;
+
+				if (Math.abs(fourBarMotor.getSelectedSensorVelocity()) < 2) {
+					zeroVelocityCount += 1;
+				}
+				else {
+					zeroVelocityCount = 0;
+				}
+				
+				if (zeroVelocityCount > 30 || getLimitSwitch()) {
+					Log.info(this, "Zeroing sequence hit " + (zeroVelocityCount > 30 ? "SOFT" : "HARD") + " stop. Braking now...");
+					
+					angleControl(85.0 * Angle.DEGREES);
+					
+					zeroVelocityCount = 0;
+				}
+
+				break;
 		}
 			
 		if (Math.abs(currentTarget - previousTarget) > 0.0001) {
@@ -217,6 +215,25 @@ public class FourBar
 			
 			previousTarget = currentTarget;
 		}
+	}
+
+	@Override
+	public void zero() {
+		setControlMode(FourBarControlMode.ZEROING);
+	}
+
+	@Override
+	public void enable() {
+		override = false;
+		powerControl(0);
+	}
+
+	@Override
+	public void disable() {
+		override = true;
+		powerControl(0);
+
+		fourBarMotor.set(ControlMode.PercentOutput, 0);
 	}
 
 	private double getAdjustedTarget(double joystick) {
@@ -240,7 +257,7 @@ public class FourBar
 
     public void setTarget(FourBarAngleTarget angleTarget)
 	{
-		Log.info("FourBar", "Going to " + angleTarget.targetAngle + " degrees.");
+		Log.info(this, "Going to " + angleTarget.targetAngle + " degrees.");
 		angleControl(angleTarget.targetAngle);
 	}
 	
@@ -258,10 +275,6 @@ public class FourBar
 		angleControl(getCurrentAngle());
 	}
 
-	public void zero() {
-		setControlMode(FourBarControlMode.ZEROING);
-	}
-
 	public void angleControl(double angle) {
 		setControlMode(FourBarControlMode.POSITION);
 
@@ -271,7 +284,12 @@ public class FourBar
 		lastError = desiredTarget - getCurrentAngle();
 	}
 
-	public class CmdZero extends Command {
+	public class CmdZero extends Command implements Loggable {
+		@Override
+		public String getTag() {
+			return "CmdZero";
+		}
+
 		public CmdZero() {
 			super(0.25);
 		}
@@ -289,16 +307,21 @@ public class FourBar
 
 		@Override
 		protected void end() {
-			Log.info("CmdZero", "Four Bar zeroing complete.");
+			Log.info(this, "Four Bar zeroing complete.");
 		}
 
 		@Override
 		protected void interrupted() {
-			Log.info("CmdZero", "Four Bar zeroing interrupted.");
+			Log.info(this, "Four Bar zeroing interrupted.");
 		}
 	}
 
-	public class CmdAngleControl extends Command {
+	public class CmdAngleControl extends Command implements Loggable {
+		@Override
+		public String getTag() {
+			return "CmdAngleControl";
+		}
+
 		private FourBarAngleTarget angleTarget;
 		private double error;
 
@@ -310,28 +333,27 @@ public class FourBar
 		@Override
 		protected void initialize() {
 			setTarget(angleTarget);
-			Log.debug("CmdAngleControl", "Setting target to " + angleTarget.name() + " with angle of " + angleTarget.targetAngle + " degrees.");
+			Log.debug(this, "Setting target to " + angleTarget.name() + " with angle of " + angleTarget.targetAngle + " degrees.");
 		}
 
 		@Override
 		protected void end() {
 			powerControl(0);
-			Log.debug("CmdAngleControl", "Command Finished. Final angle = " + getCurrentAngle() + " degrees.");
+			Log.debug(this, "Command Finished. Final angle = " + getCurrentAngle() + " degrees.");
 		}
 
 		@Override
 		protected void interrupted() {
-			Log.debug("CmdAngleControl", "Command Interrupted.");
+			Log.debug(this, "Command Interrupted.");
 			end();
 		}
 
 		@Override
 		protected boolean isFinished() {
 			error = getCurrentAngle() - angleTarget.targetAngle;
-			Log.debug("CmdAngleControl", "Error: " + error + "deg");
+			Log.debug(this, "Error: " + error + "deg");
 
 			return Math.abs(error) < ALLOWABLE_ERROR || isTimedOut();
 		}
 	}
-
 }

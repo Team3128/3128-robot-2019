@@ -59,7 +59,11 @@ import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 
-public class MainDeepSpaceRobot extends NarwhalRobot{
+public class MainDeepSpaceRobot extends NarwhalRobot {
+	@Override
+	public String getTag() {
+		return "MainDeepSpaceRobot";
+	}
 
     public Gyro gyro;
 
@@ -202,6 +206,9 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
     @Override
     protected void constructHardware() {
+		/**
+		 * SRXTankDrive Construction
+		 */
 		leftDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
 		leftDriveFollower.follow(leftDriveLeader);
 
@@ -226,25 +233,23 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		// gyro = new AnalogDevicesGyro();
 		// ((AnalogDevicesGyro) gyro).recalibrate();
 
-		
-        // Vision
-		visionPID = new PIDConstants(0.57, 0.032, 0.0, 0.00003);
-		blindPID = new PIDConstants(0.23, 0, 0, 0);
-		driveCmdRunning = new DriveCommandRunning();
 
-        // DCU
-		DriveCalibrationUtility.initialize(gyro, visionPID);
-		dcu = DriveCalibrationUtility.getInstance();
 
-		compressor = new Compressor();
-
-		// Create Four-Bar
+		/**
+		 * Four Bar Consruction
+		 */
 		fourBarMotor = new TalonSRX(30);
 
 		FourBar.initialize(fourBarMotor, fourBarLimitSwitch, fourBarRatio, fourBarSwitchPosition, fourBarMaxVelocity);
 		fourBar = FourBar.getInstance();
 
-		// Create Lift
+		addMechanism(fourBar);
+
+
+
+		/**
+		 * Lift Construction
+		 */
 		liftMotorLeader = new TalonSRX(20);
 		liftMotorFollower = new VictorSPX(21);
 
@@ -253,23 +258,39 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		Lift.initialize(liftMotorLeader, liftLimitSwitch, liftSwitchPosition, liftMaxVelocity);
 		lift = Lift.getInstance();
 
+		addMechanism(lift);
 
-		// Create Lift Intake
+
+
+		/**
+		 * LiftIntake Construction
+		 */
 		liftIntakeMotor = new VictorSPX(31);
 
 		LiftIntake.initialize(liftIntakeMotor, LiftIntakeState.DEMOGORGON_HOLDING, demogorgonPiston, cargoBumperSwitch);
 		liftIntake = LiftIntake.getInstance();
 
-		// Create Optimus Prime
+		addMechanism(liftIntake);
+
+
+
+		/**
+		 * OptimusPrime Construction
+		 */
 		OptimusPrime.initialize();
 		optimusPrime = OptimusPrime.getInstance();
 
-		// Instantiate PDP
+		/**
+		 * Various Electronics
+		 */
 		powerDistPanel = new PowerDistributionPanel();
+		compressor = new Compressor();
 
 		ds = DriverStation.getInstance();
 
-		// Setup listeners
+		/**
+		 * ListenerManager Construction
+		 */
         leftJoystick = new Joystick(1);
 		listenerLeft = new ListenerManager(leftJoystick);
 		addListenerManager(listenerLeft);
@@ -277,6 +298,15 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		rightJoystick = new Joystick(0);
 		listenerRight = new ListenerManager(rightJoystick);
 		addListenerManager(listenerRight);
+
+		// DCU
+		DriveCalibrationUtility.initialize(gyro, visionPID);
+		dcu = DriveCalibrationUtility.getInstance();
+
+		// Vision
+		visionPID = new PIDConstants(0.57, 0.032, 0.0, 0.00003);
+		blindPID = new PIDConstants(0.23, 0, 0, 0);
+		driveCmdRunning = new DriveCommandRunning();
 
 		topLimelight =    new Limelight("limelight-top",    topLLAngle,     topLLHeight,    23 * Length.in, 14.5 * Length.in);
 		bottomLimelight = new Limelight("limelight-bottom", bottomLLAngle,  bottomLLHeight, 11 * Length.in, 14.5 * Length.in);
@@ -579,8 +609,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 	
 	@Override
 	protected void disabledInit() {
-		fourBar.disabled = true;
-		lift.disabled = true;
 	}
 
 	@Override
@@ -591,9 +619,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 	@Override
 	protected void teleopInit() {
-		fourBar.disabled = false;
-		lift.disabled = false;
-
 		drive.shiftToLow();
 
 		topLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
@@ -604,9 +629,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 	@Override
 	protected void autonomousInit() {
-		fourBar.disabled = false;
-		lift.disabled = false;
-
 		drive.shiftToLow();
 
 		topLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
@@ -616,8 +638,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 	@Override
 	protected void autonomousPeriodic() {
-		listenerRight.tick();
-		listenerLeft.tick();
 	}
 
 	private GameElement lastAutoGameElement = null;

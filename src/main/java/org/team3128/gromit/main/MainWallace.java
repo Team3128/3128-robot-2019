@@ -13,6 +13,11 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotBase;
 
 public class MainWallace extends MainDeepSpaceRobot {
+    @Override
+	public String getTag() {
+		return "MainWallace";
+    }
+    
     Piston placeholder1, placeholder2;    
     
 

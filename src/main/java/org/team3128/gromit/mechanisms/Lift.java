@@ -1,5 +1,6 @@
 package org.team3128.gromit.mechanisms;
 
+import org.team3128.common.generics.Mechanism;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.units.Length;
@@ -19,7 +20,12 @@ import edu.wpi.first.wpilibj.command.Command;
  * 
  */
 
-public class Lift {
+public class Lift extends Mechanism {
+	@Override
+	public String getTag() {
+		return "Lift";
+	}
+
 	public enum LiftHeightTarget {
 		BASE(0 * Length.in),
 		
@@ -102,12 +108,8 @@ public class Lift {
 	// Control Notifier
 	public LiftControlMode controlMode;
 
-	private Notifier controlNotifier;
-
 	public final double BRAKE_POWER = 0.15;
 	public final double CONTROL_BUFFER = 2 * Length.in;
-
-	public boolean disabled = false;
 
 	public boolean canLower = false;
 	public boolean canRaise = true;
@@ -148,12 +150,10 @@ public class Lift {
 		liftMotor.configMotionAcceleration((int) (1.5 * liftMaxVelocity), Constants.CAN_TIMEOUT);
 
 		liftMotor.configOpenloopRamp(0.2, Constants.CAN_TIMEOUT);
-
-		controlNotifier = new Notifier(this::controlLoop);
-		controlNotifier.startPeriodic(0.010);
 	}
 
-	private void controlLoop() {
+	@Override
+	protected void controlLoop() {
 		if (getLimitSwitch() != previousSwitchState) {
 			liftMotor.setSelectedSensorPosition(limitSwitchLocation, 0, Constants.CAN_TIMEOUT);
 
@@ -162,55 +162,53 @@ public class Lift {
 
 		currentTarget = 0;
 
-		if (!disabled) {
-			switch (controlMode) {
-				case ZEROING:
-					currentTarget = -0.2;
+		switch (controlMode) {
+			case ZEROING:
+				currentTarget = -0.2;
 
-					if (Math.abs(liftMotor.getSelectedSensorVelocity()) < 10) {
-						zeroVelocityCount += 1;
-					}
-					else {
-						zeroVelocityCount = 0;
-					}
-		
-					if (zeroVelocityCount > 5 || getLimitSwitch()) {
-						powerControl(0);
-		
-						Log.info("Lift", "Zeroing sequence hit soft/hard stop. Braking now...");
-		
-						zeroVelocityCount = 0;
-					}
+				if (Math.abs(liftMotor.getSelectedSensorVelocity()) < 10) {
+					zeroVelocityCount += 1;
+				}
+				else {
+					zeroVelocityCount = 0;
+				}
+	
+				if (zeroVelocityCount > 5 || getLimitSwitch()) {
+					powerControl(0);
+	
+					Log.info("Lift", "Zeroing sequence hit soft/hard stop. Braking now...");
+	
+					zeroVelocityCount = 0;
+				}
 
-					break;
-				
-				case PERCENT:
-					canRaise = getCurrentHeight() < MAX_HEIGHT - CONTROL_BUFFER;
-					canLower = getCurrentHeight() > 0;
+				break;
+			
+			case PERCENT:
+				canRaise = getCurrentHeight() < MAX_HEIGHT - CONTROL_BUFFER;
+				canLower = getCurrentHeight() > 0;
 
-					if (override) {
+				if (override) {
+					currentTarget = desiredTarget;
+				}
+				else {
+					if (desiredTarget > 0 && canRaise) {
 						currentTarget = desiredTarget;
 					}
-					else {
-						if (desiredTarget > 0 && canRaise) {
-							currentTarget = desiredTarget;
-						}
-						else if (desiredTarget < 0 && canLower) {
-							currentTarget = 0.7 * desiredTarget;
-						}
-
-						if ((Math.abs(currentTarget) < 0.05 && getCurrentHeight() >= 3 * Length.in)) {
-							currentTarget = BRAKE_POWER;
-						}
+					else if (desiredTarget < 0 && canLower) {
+						currentTarget = 0.7 * desiredTarget;
 					}
 
-					break;
+					if ((Math.abs(currentTarget) < 0.05 && getCurrentHeight() >= 3 * Length.in)) {
+						currentTarget = BRAKE_POWER;
+					}
+				}
 
-				case POSITION_UP:
-				case POSITION_DOWN:
-					currentTarget = desiredTarget;
-					break;
-			}
+				break;
+
+			case POSITION_UP:
+			case POSITION_DOWN:
+				currentTarget = desiredTarget;
+				break;
 		}
 
 		if (Math.abs(currentTarget - previousTarget) > 0.0001) {
@@ -218,6 +216,25 @@ public class Lift {
 
 			previousTarget = currentTarget;
 		}
+	}
+
+	@Override
+	public void zero() {
+		setControlMode(LiftControlMode.ZEROING);
+	}
+
+	@Override
+	public void enable() {
+		override = false;
+		powerControl(0);
+	}
+
+	@Override
+	public void disable() {
+		override = true;
+		powerControl(0);
+
+		liftMotor.set(ControlMode.PercentOutput, 0);
 	}
 
 	public double getCurrentHeight() {
@@ -247,10 +264,6 @@ public class Lift {
 		setControlMode(LiftControlMode.PERCENT);
 
 		desiredTarget = joystick;
-	}
-
-	public void zero() {
-		setControlMode(LiftControlMode.ZEROING);
 	}
 
 	public class CmdHeightControl extends Command {

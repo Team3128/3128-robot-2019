@@ -7,13 +7,19 @@ import org.team3128.common.autonomous.primitives.CmdDelay;
 import org.team3128.common.autonomous.primitives.CmdRunInParallel;
 import org.team3128.common.autonomous.primitives.CmdRunInSeries;
 import org.team3128.common.drive.SRXTankDrive;
+import org.team3128.common.generics.Mechanism;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.util.Log;
 
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
-public class Climber {
+public class Climber extends Mechanism {
+    @Override
+    public String getTag() {
+        return "Climber";
+    }
+
     Piston climbPistons;
     TalonSRX backLegMotor;
     
@@ -34,6 +40,19 @@ public class Climber {
     private Climber(Piston climbPistons, TalonSRX backLegMotor) {
         this.climbPistons = climbPistons;
         this.backLegMotor = backLegMotor;
+    }
+
+    @Override
+    public void zero() {
+        new CmdRezeroBackLeg(2500).start();
+    }
+
+    @Override
+    public void enable() {}
+
+    @Override
+    public void disable() {
+        backLegMotor.set(ControlMode.PercentOutput, 0);
     }
 
     public class CmdClimb1to2Turbo extends CommandGroup {

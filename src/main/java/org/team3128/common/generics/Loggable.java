@@ -1,10 +1,14 @@
 package org.team3128.common.generics;
 
+import org.team3128.common.util.Log;
+
 public interface Loggable {
-    public void logInfo(String message);
-    public void logDebug(String message);
-    public void logFatal(String message);
-    public void logFatalException(String message, Exception exception);
-    public void logRecoverable(String message);
-    public void logUnusual(String message);
+    /**
+     * Returns the user-specified category that log messages generated using the
+     * Loggable-specific {@link Log} methods should come from. Usually the name of
+     * the Class.
+     * 
+     * @return the category of the {@link Log} message
+     */
+    public String getTag();
 }

@@ -12,14 +12,10 @@ import org.java_websocket.server.WebSocketServer;
 import org.team3128.common.util.Log;
 
 import edu.wpi.first.wpilibj.command.Command;
-import edu.wpi.first.wpilibj.command.CommandGroup;
 
 public class NarwhalDashboard extends WebSocketServer {
     private static final int PORT = 5805;
-    private final static int UPDATE_WAVELENGTH = 100;
-    public static int getUpdateWavelength() {
-        return UPDATE_WAVELENGTH;
-    }
+    private static final int UPDATE_WAVELENGTH = 100;
 
     private static HashMap<String, String> data = new HashMap<String, String>();
     private static LinkedHashMap<String, Command> autoPrograms = new LinkedHashMap<String, Command>();
