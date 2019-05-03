@@ -12,7 +12,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class MainSRXVelocityPIDCalib extends NarwhalRobot 
 {
-	
+	@Override
+	public String getTag() {
+		return "MainSRXVelocityPIDCalib";
+	}
+
 	//change these to match your robot
 	static int CAN_ID = 0;
 	static double TESTING_MOTOR_POWER = 1;

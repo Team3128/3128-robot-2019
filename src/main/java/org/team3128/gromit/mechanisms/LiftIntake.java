@@ -3,9 +3,10 @@ package org.team3128.gromit.mechanisms;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
+import org.team3128.common.generics.Mechanism;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.util.Log;
-import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
+import org.team3128.gromit.mechanisms.Lift.LiftHeightTarget;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.command.Command;
@@ -17,7 +18,12 @@ import edu.wpi.first.wpilibj.command.Command;
  * 
  */
 
-public class LiftIntake {
+public class LiftIntake extends Mechanism {
+	@Override
+	public String getTag() {
+		return "LiftIntake";
+	}
+
     public enum LiftIntakeState
 	{
 		CARGO_INTAKE(true, "Cargo Intake"),
@@ -53,8 +59,6 @@ public class LiftIntake {
 
 	private Piston demogorgonPiston;
 
-	private Thread cargoThread;
-
 	public boolean bumped = false;
 
 
@@ -64,7 +68,7 @@ public class LiftIntake {
 			return instance;
 		}
 
-		Log.fatal("LiftIntake", "Attempted to get instance before initializtion! Call initialize(...) first.");
+		Log.fatal(instance, "Attempted to get instance before initializtion! Call initialize(...) first.");
 		return null;
 	}
 
@@ -78,59 +82,62 @@ public class LiftIntake {
 		
 		this.cargoBumperSwitch = cargoBumperSwitch;
 
-		setState(state);
-		
-		cargoThread = new Thread(() -> {			
-			while (true) {
-				if (this.newState == null) {
-					if (this.currentState == LiftIntakeState.CARGO_INTAKE) {
-						if (this.getCargoBumper()) {
-							bumped = true;
-							this.setIntakePower(-0.2);
-						}
-						else {
-							this.setIntakePower(-1.0);
-						}
-					}
-					else if (this.currentState == LiftIntakeState.CARGO_HOLDING && bumped) {
-						if (this.getCargoBumper()) {
-							this.setIntakePower(-0.2);
-						}
-						else {
-							this.setIntakePower(-1.0);
-						}
-					}
+		setState(state);	
+	}
+
+	@Override
+	protected void controlLoop() {
+		if (newState == null) {
+			if (currentState == LiftIntakeState.CARGO_INTAKE) {
+				if (getCargoBumper()) {
+					bumped = true;
+					setIntakePower(-0.2);
 				}
 				else {
-					if (this.newState == LiftIntakeState.CARGO_INTAKE) {
-						this.setIntakePower(-1.0);
-
-						bumped = false;
-					}
-					else if (this.newState == LiftIntakeState.CARGO_OUTTAKE) {
-						this.setIntakePower(1.0);
-
-						bumped = false;
-					}
-					else {
-						this.setIntakePower(0.0);
-					}
-
-					this.currentState = this.newState;
-					this.newState = null;
-				}
-				
-
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+					setIntakePower(-1.0);
 				}
 			}
-		});
-		cargoThread.start();
-	
+			else if (currentState == LiftIntakeState.CARGO_HOLDING && bumped) {
+				if (getCargoBumper()) {
+					setIntakePower(-0.2);
+				}
+				else {
+					setIntakePower(-1.0);
+				}
+			}
+		}
+		else {
+			if (this.newState == LiftIntakeState.CARGO_INTAKE) {
+				setIntakePower(-1.0);
+
+				bumped = false;
+			}
+			else if (newState == LiftIntakeState.CARGO_OUTTAKE) {
+				setIntakePower(1.0);
+
+				bumped = false;
+			}
+			else {
+				setIntakePower(0.0);
+			}
+
+			currentState = newState;
+			newState = null;
+		}
 	}
+
+	@Override
+	public void enable() {
+		setState(LiftIntakeState.DEMOGORGON_HOLDING);
+	}
+
+	@Override
+	public void disable() {
+		setState(LiftIntakeState.DEMOGORGON_HOLDING);
+	}
+
+	@Override
+	public void zero() {}
 	
 	public void setState(LiftIntakeState newState) {
 		if (this.currentState != newState) {			
@@ -176,20 +183,20 @@ public class LiftIntake {
 	}
 
 	public class CmdRetractHatch extends Command {
-		LiftHeightState liftState;
+		LiftHeightTarget liftState;
 		boolean isPickUp = false;
 		boolean isDone = false;
 		
-		public CmdRetractHatch(LiftHeightState liftState) {
+		public CmdRetractHatch(LiftHeightTarget liftState) {
 			this.liftState = liftState;
 		}
 		
 		@Override
 		protected void initialize() {
-			isPickUp = liftState == LiftHeightState.HATCH_INTAKE;
+			isPickUp = liftState == LiftHeightTarget.HATCH_INTAKE;
 			LiftIntake.getInstance().setState(LiftIntakeState.DEMOGORGON_HOLDING);
 			if(isPickUp) {
-				Lift.getInstance().setState(LiftHeightState.HATCH_PULL_UP);
+				Lift.getInstance().heightControl(LiftHeightTarget.HATCH_PULL_UP);
 			}
 		}
 

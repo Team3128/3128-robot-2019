@@ -10,7 +10,11 @@ import edu.wpi.first.wpilibj.Joystick;
 
 public class MainPneumaticsTest extends NarwhalRobot
 {
-	
+	@Override
+	public String getTag() {
+		return "MainPneumaticsTest";
+	}
+
 	public ListenerManager lmExtreme;
 	
 	public Piston testPiston;

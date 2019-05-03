@@ -3,24 +3,8 @@ package org.team3128.common.autonomous.primitives;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
-/*        _
- *       / \ 
- *      / _ \
- *     / [ ] \
- *    /  [_]  \
- *   /    _    \
- *  /    (_)    \
- * /_____________\
- * -----------------------------------------------------
- * UNTESTED CODE!
- * This class has never been tried on an actual robot.
- * It may be non or partially functional.
- * Do not make any assumptions as to its behavior!
- * And don't blink.  Not even for a second.
- * -----------------------------------------------------*/
-
 /**
- *	This command is constructed with a group of commands.
+ * This command is constructed with a group of commands.
  * They will be run in parallel when the command is invoked.
  */
 public class CmdRunInParallel extends CommandGroup {

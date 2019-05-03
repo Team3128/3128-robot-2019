@@ -12,6 +12,11 @@ import edu.wpi.first.wpilibj.SerialPort.Port;
 
 public class MainUltrasonicTest extends NarwhalRobot {
 
+	@Override
+	public String getTag() {
+		return "MainUltrasonicTest";
+	}
+
 	public ListenerManager lm;
 
 	public IUltrasonic testUltrasonic;
