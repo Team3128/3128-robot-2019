@@ -19,14 +19,6 @@ public class FourBar extends Mechanism {
 		return "FourBar";
 	}
 
-	/**
-	 * The amount of native units read by the encoder equal to 1 degree.
-	 */
-	public double ANGLE_ENCODER_RATIO;
-	public double error;
-
-	private final double ALLOWABLE_ERROR = 2 * Angle.DEGREES;
-
     public enum FourBarAngleTarget {
 		VERTICAL(90 * Angle.DEGREES),
 
@@ -87,19 +79,24 @@ public class FourBar extends Mechanism {
 	
 	private DigitalInput limitSwitch;
 
-	public double limitSwitchAngle;
-	public int maxVelocity;
+	private double limitSwitchAngle;
+
+	/**
+	 * The amount of native units read by the encoder equal to 1 degree.
+	 */
+	private double angleEncoderRatio;
+
 
 	// Control Notifier
 	private FourBarControlMode controlMode = FourBarControlMode.PERCENT;
 
-	public final double PEAK_BRAKE_POWER = 0.15;
-	public final double BRAKE_TRIG_FUDGE = 0.095;
+	private final double PEAK_BRAKE_POWER = 0.15;
+	private final double BRAKE_TRIG_FUDGE = 0.095;
 
-	public final double ZEROING_POWER = 0.8272;
+	private final double ZEROING_POWER = 0.8272;
 
-	public double maxAngle = +95.0 * Angle.DEGREES;
-	public double minAngle = -90.0 * Angle.DEGREES;
+	private double maxAngle = +95.0 * Angle.DEGREES;
+	private double minAngle = -90.0 * Angle.DEGREES;
 
 	public boolean canLower, canRaise;
 
@@ -113,6 +110,9 @@ public class FourBar extends Mechanism {
 	 */
 	private double currentTarget, previousTarget;
 
+	private final double ALLOWABLE_ERROR = 2 * Angle.DEGREES;
+
+	private double currentError;
 	private double lastTime, lastError;
 
 	private final double JOYSTICK_THRESHOLD = 0.1;
@@ -134,19 +134,18 @@ public class FourBar extends Mechanism {
 		return null;
 	}
 
-	public static void initialize(TalonSRX fourBarMotor, DigitalInput limitSwitch, double ratio, double limitSwitchAngle, int maxVelocity) {
-		instance = new FourBar(fourBarMotor, limitSwitch, ratio, limitSwitchAngle, maxVelocity);
+	public static void initialize(TalonSRX fourBarMotor, DigitalInput limitSwitch, double ratio, double limitSwitchAngle) {
+		instance = new FourBar(fourBarMotor, limitSwitch, ratio, limitSwitchAngle);
 	}
 
-	private FourBar(TalonSRX fourBarMotor, DigitalInput limitSwitch, double ratio, double limitSwitchAngle, int maxVelocity) {
+	private FourBar(TalonSRX fourBarMotor, DigitalInput limitSwitch, double ratio, double limitSwitchAngle) {
 		this.fourBarMotor = fourBarMotor;
 
 		this.limitSwitch = limitSwitch;
 
-		this.ANGLE_ENCODER_RATIO = ratio;
+		this.angleEncoderRatio = ratio;
 
 		this.limitSwitchAngle = limitSwitchAngle;
-		this.maxVelocity = maxVelocity;
 	}
 
 	@Override
@@ -181,10 +180,10 @@ public class FourBar extends Mechanism {
 				break;
 
 			case POSITION:
-				lastError = error;
-				error = desiredTarget - getCurrentAngle();
+				lastError = currentError;
+				currentError = desiredTarget - getCurrentAngle();
 				
-				currentTarget = getFeedForwardPower() + (error > 0 ? upKP : downKP) * error + kD * (error - lastError) * 1000000 / (RobotController.getFPGATime() - lastTime);
+				currentTarget = getFeedForwardPower() + (currentError > 0 ? upKP : downKP) * currentError + kD * (currentError - lastError) * 1000000 / (RobotController.getFPGATime() - lastTime);
 				lastTime = RobotController.getFPGATime();
 
 				break;
@@ -247,12 +246,12 @@ public class FourBar extends Mechanism {
 	}
 
 	public double getCurrentAngle() {
-		return fourBarMotor.getSelectedSensorPosition(0) / ANGLE_ENCODER_RATIO;
+		return fourBarMotor.getSelectedSensorPosition(0) / angleEncoderRatio;
 	}
 
 	public void setCurrentAngle(double angle) {
-		//Log.info("FourBar", "Setting current angle to " + angle + " degrees.");
-		fourBarMotor.setSelectedSensorPosition((int) (angle * ANGLE_ENCODER_RATIO), 0, Constants.CAN_TIMEOUT);
+		//Log.info(this, "Setting current angle to " + angle + " degrees.");
+		fourBarMotor.setSelectedSensorPosition((int) (angle * angleEncoderRatio), 0, Constants.CAN_TIMEOUT);
 	}
 
     public void setTarget(FourBarAngleTarget angleTarget)

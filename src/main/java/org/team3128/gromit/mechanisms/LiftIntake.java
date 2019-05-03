@@ -59,8 +59,6 @@ public class LiftIntake extends Mechanism {
 
 	private Piston demogorgonPiston;
 
-	private Thread cargoThread;
-
 	public boolean bumped = false;
 
 

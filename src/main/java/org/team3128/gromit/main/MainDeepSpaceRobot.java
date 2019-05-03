@@ -10,7 +10,6 @@ import org.team3128.common.hardware.limelight.LEDMode;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.limelight.LimelightKey;
 import org.team3128.common.hardware.limelight.StreamMode;
-import org.team3128.common.hardware.limelight.Compute2D.Compute2DInput;
 import org.team3128.common.hardware.limelight.Compute2D.Compute2DLocalization;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
@@ -32,17 +31,15 @@ import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
 
-import org.team3128.gromit.autonomous.CmdAutoPrime;
-
+import org.team3128.gromit.commands.CmdAutoVisionScore;
 import org.team3128.gromit.mechanisms.FourBar;
 import org.team3128.gromit.mechanisms.Lift;
 import org.team3128.gromit.mechanisms.LiftIntake;
 import org.team3128.gromit.mechanisms.OptimusPrime;
 import org.team3128.gromit.mechanisms.FourBar.FourBarAngleTarget;
 import org.team3128.gromit.mechanisms.Lift.LiftHeightTarget;
-import org.team3128.gromit.mechanisms.LiftIntake.CmdRetractHatch;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
-import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
+import org.team3128.gromit.mechanisms.OptimusPrime.OptimusPrimeTarget;
 import org.team3128.gromit.util.DeepSpaceConstants;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
@@ -101,13 +98,6 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 	public TalonSRX fourBarMotor;
 	public DigitalInput fourBarLimitSwitch;
 	public double fourBarRatio, fourBarSwitchPosition;
-	public int fourBarMaxVelocity;
-
-	// Ground Intake
-	// public GroundIntake groundIntake;
-	// public GroundIntakeState groundIntakeState;
-	public VictorSPX groundIntakeMotor;
-	public Piston groundIntakePistons;
 
 	// Lift
 	public Lift lift;
@@ -155,15 +145,9 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 	public double bottomLLCurrentLatency, topLLCurrentLatency;
 	public double bottomLLLastLatency, topLLLastLatency;
 
-	// 4200
-	public double maxLiftSpeed = 0;
+	// Debug
+	public double maxLiftSpeed, minLiftSpeed;
 
-	// 7510
-	public double minLiftSpeed = 0;
-
-	// starting debug
-	//public int startingSensorPos = 7000; 
-	//public int startingFourBarPos = -110; 
 
 	public enum ManualControlMode {
         LIFT,
@@ -240,7 +224,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		 */
 		fourBarMotor = new TalonSRX(30);
 
-		FourBar.initialize(fourBarMotor, fourBarLimitSwitch, fourBarRatio, fourBarSwitchPosition, fourBarMaxVelocity);
+		FourBar.initialize(fourBarMotor, fourBarLimitSwitch, fourBarRatio, fourBarSwitchPosition);
 		fourBar = FourBar.getInstance();
 
 		addMechanism(fourBar);
@@ -313,6 +297,8 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 
 		topLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
 	
+
+
 		// NarwhalDashboard: Driver Controls
 		NarwhalDashboard.addButton("setTarget_rocket_top", (boolean down) -> {
 			if (down) {
@@ -370,22 +356,22 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		});
 		NarwhalDashboard.addButton("lift_loadship", (boolean down) -> {
 			if (down) {
-				lift.heightControl(RobotState.getOptimusState(currentGameElement, ScoreTarget.CARGO_SHIP, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).liftHeightTarget);
+				lift.heightControl(OptimusPrimeTarget.getOptimusState(currentGameElement, ScoreTarget.CARGO_SHIP, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).liftHeightTarget);
 			}
 		});
 		NarwhalDashboard.addButton("lift_low", (boolean down) -> {
 			if (down) {
-				lift.heightControl(RobotState.getOptimusState(currentGameElement, ScoreTarget.ROCKET_LOW, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).liftHeightTarget);
+				lift.heightControl(OptimusPrimeTarget.getOptimusState(currentGameElement, ScoreTarget.ROCKET_LOW, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).liftHeightTarget);
 			}
 		});
 		NarwhalDashboard.addButton("lift_mid", (boolean down) -> {
 			if (down) {
-				lift.heightControl(RobotState.getOptimusState(currentGameElement, ScoreTarget.ROCKET_MID, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).liftHeightTarget);
+				lift.heightControl(OptimusPrimeTarget.getOptimusState(currentGameElement, ScoreTarget.ROCKET_MID, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).liftHeightTarget);
 			}
 		});
 		NarwhalDashboard.addButton("lift_top", (boolean down) -> {
 			if (down) {
-				lift.heightControl(RobotState.getOptimusState(currentGameElement, ScoreTarget.ROCKET_TOP, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).liftHeightTarget);
+				lift.heightControl(OptimusPrimeTarget.getOptimusState(currentGameElement, ScoreTarget.ROCKET_TOP, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)).liftHeightTarget);
 			}
 		});
 
@@ -474,7 +460,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 				case 4:
 				case 5:
 					// if (optimusPrime.robotState != RobotState.LOADING_AND_SHIP_HATCH) {
-						optimusPrime.setState(RobotState.INTAKE_FLOOR_CARGO);
+						optimusPrime.setTarget(OptimusPrimeTarget.INTAKE_FLOOR_CARGO);
 					// }
 
 					liftIntake.setState(LiftIntakeState.CARGO_INTAKE);
@@ -493,7 +479,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		// Optimus Prime Controls
 		listenerRight.nameControl(ControllerExtreme3D.TRIGGER, "AutoPrime");
 		listenerRight.addButtonDownListener("AutoPrime", () -> {
-			triggerCommand = new CmdAutoPrime(gyro, bottomLimelight, topLimelight, driveCmdRunning,
+			triggerCommand = new CmdAutoVisionScore(gyro, bottomLimelight, topLimelight, driveCmdRunning,
 				visionPID, blindPID, currentGameElement, currentScoreTarget,
 				(liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED));
 			triggerCommand.start();
@@ -537,7 +523,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 
 		listenerRight.nameControl(new Button(3), "SetHeight");
 		listenerRight.addButtonDownListener("SetHeight", () -> {
-			optimusPrime.setState(RobotState.getOptimusState(currentGameElement, currentScoreTarget, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)));
+			optimusPrime.setTarget(OptimusPrimeTarget.getOptimusState(currentGameElement, currentScoreTarget, (liftIntake.currentState == LiftIntakeState.DEMOGORGON_RELEASED)));
 		});
 
 		listenerRight.nameControl(new Button(4), "Zero");
@@ -601,10 +587,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 	}
 
 	@Override
-	protected void constructAutoPrograms()
-	{
-		//NarwhalDashboard.addAuto("90 In Place", drive.new CmdInPlaceTurn(90, Direction.RIGHT, 1.0, 5000));
-		//NarwhalDashboard.addAuto("Test Drive Train", new CmdTestDriveTrain());
+	protected void constructAutoPrograms() {
 	}
 	
 	@Override

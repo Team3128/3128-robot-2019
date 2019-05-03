@@ -1,28 +1,30 @@
-package org.team3128.gromit.cvcommands;
+package org.team3128.gromit.commands;
 
-import org.team3128.common.drive.SRXTankDrive;
-import org.team3128.common.hardware.limelight.LEDMode;
-import org.team3128.common.hardware.limelight.Limelight;
+import org.team3128.common.generics.Loggable;
 import org.team3128.common.util.Log;
-import org.team3128.common.util.units.Angle;
-import org.team3128.common.util.units.Length;
 import org.team3128.gromit.main.MainDeepSpaceRobot.GameElement;
 import org.team3128.gromit.main.MainDeepSpaceRobot.ScoreTarget;
 import org.team3128.gromit.mechanisms.FourBar;
 import org.team3128.gromit.mechanisms.Lift;
 import org.team3128.gromit.mechanisms.OptimusPrime;
-import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
-import org.team3128.gromit.util.DeepSpaceConstants;
+import org.team3128.gromit.mechanisms.OptimusPrime.OptimusPrimeTarget;
 
 import edu.wpi.first.wpilibj.command.Command;
 
-public class CmdAutOptimusPrime extends Command {
+/**
+ * Command to direct {@link OptimusPrime} to go to the {@link OptimusPrimeTarget} that matches the game element and scoring level.
+ */
+public class CmdSetOptimusPrimeTarget extends Command implements Loggable {
+    @Override
+    public String getTag() {
+        return "CmdSetOptimusPrimeTarget";
+    }
     //SRXTankDrive drive;
     OptimusPrime optimusPrime;
     Lift lift;
     FourBar fourBar;
 
-    RobotState desiredState;
+    OptimusPrimeTarget desiredTarget;
 
     GameElement gameElement;
     ScoreTarget scoreTarget;
@@ -31,7 +33,7 @@ public class CmdAutOptimusPrime extends Command {
 
     boolean goingUp;
     
-    public CmdAutOptimusPrime(GameElement gameElement, ScoreTarget scoreTarget, boolean intakingHatchPanel, int timeoutMs) {
+    public CmdSetOptimusPrimeTarget(GameElement gameElement, ScoreTarget scoreTarget, boolean intakingHatchPanel, int timeoutMs) {
         super(timeoutMs / 1000.0);
                 
         this.gameElement = gameElement;
@@ -46,13 +48,13 @@ public class CmdAutOptimusPrime extends Command {
     
     @Override
     protected void initialize() {
-        desiredState = RobotState.getOptimusState(gameElement, scoreTarget, intakingHatchPanel);
+        desiredTarget = OptimusPrimeTarget.getOptimusState(gameElement, scoreTarget, intakingHatchPanel);
 
-        optimusPrime.setState(desiredState);
+        optimusPrime.setTarget(desiredTarget);
                 
-        goingUp = desiredState.fourBarAngleTarget.targetAngle > fourBar.getCurrentAngle();
+        goingUp = desiredTarget.fourBarAngleTarget.targetAngle > fourBar.getCurrentAngle();
 
-        Log.info("CmdAutOptimusPrime", "Four Bar going " + (goingUp ? "up" : "down"));
+        Log.info(this, "Four Bar going " + (goingUp ? "up" : "down"));
     }
     
     @Override
@@ -60,7 +62,7 @@ public class CmdAutOptimusPrime extends Command {
         if (isTimedOut()) {
             return true;
         }
-        else if (desiredState != RobotState.DEPOSIT_LOW_HATCH) {
+        else if (desiredTarget != OptimusPrimeTarget.DEPOSIT_LOW_HATCH) {
             return true;
         }
         else {
@@ -79,16 +81,16 @@ public class CmdAutOptimusPrime extends Command {
     @Override
     protected void end() {
         if (isTimedOut()) {
-            Log.unusual("CmdAutOptimusPrime", "Command timed out.");
+            Log.unusual(this, "Command timed out.");
 
         }
         else {
-            Log.info("CmdAutOptimusPrime", "Optimus Prime arrived.");
+            Log.info(this, "Optimus Prime arrived.");
         }
     }
     
     @Override
     protected void interrupted() {
-        Log.info("CmdAutOptimusPrime", "Command interrupted.");
+        Log.info(this, "Command interrupted.");
     }
 }

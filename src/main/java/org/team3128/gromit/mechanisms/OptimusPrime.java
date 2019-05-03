@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 import org.team3128.common.autonomous.primitives.CmdRunInParallel;
+import org.team3128.common.generics.Loggable;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.units.Length;
 import org.team3128.gromit.main.MainDeepSpaceRobot.GameElement;
@@ -23,8 +24,13 @@ import org.team3128.gromit.mechanisms.FourBar.FourBarAngleTarget;
  * 
  */
 
-public class OptimusPrime {
-    public enum RobotState {
+public class OptimusPrime implements Loggable {
+    @Override
+    public String getTag() {
+        return "OptimusPrime";
+    }
+    
+    public enum OptimusPrimeTarget {
         REST(LiftHeightTarget.BASE, FourBarAngleTarget.VERTICAL),
 
         INTAKE_FLOOR_CARGO(LiftHeightTarget.INTAKE_FLOOR_CARGO, FourBarAngleTarget.CARGO_INTAKE),
@@ -48,12 +54,12 @@ public class OptimusPrime {
         public LiftHeightTarget liftHeightTarget;
         public FourBarAngleTarget fourBarAngleTarget;
 
-        private RobotState(LiftHeightTarget liftHeightTarget, FourBarAngleTarget fourBarAngleTarget) {
+        private OptimusPrimeTarget(LiftHeightTarget liftHeightTarget, FourBarAngleTarget fourBarAngleTarget) {
             this.liftHeightTarget = liftHeightTarget;
             this.fourBarAngleTarget = fourBarAngleTarget;
         }
 
-        public static RobotState getOptimusState(GameElement gameElement, ScoreTarget scoreLevel, boolean intakingHatchPanel) {
+        public static OptimusPrimeTarget getOptimusState(GameElement gameElement, ScoreTarget scoreLevel, boolean intakingHatchPanel) {
             if (intakingHatchPanel) {
                 return INTAKE_HATCH;
             }
@@ -90,8 +96,7 @@ public class OptimusPrime {
     LiftIntake liftIntake;
     FourBar fourBar;
 
-    public RobotState robotState;
-    // GroundIntake groundIntake;
+    public OptimusPrimeTarget optimusPrimeTarget;
 
     private static OptimusPrime instance = null;
 
@@ -100,7 +105,7 @@ public class OptimusPrime {
             return instance;
         }
 
-        Log.fatal("OptimusPrime", "Attempted to get instance before initializtion! Call initialize(...) first.");
+        Log.fatal(instance, "Attempted to get instance before initializtion! Call initialize(...) first.");
         return null;
     }
 
@@ -112,14 +117,21 @@ public class OptimusPrime {
         lift = Lift.getInstance();
         liftIntake = LiftIntake.getInstance();
         fourBar = FourBar.getInstance();
-        // groundIntake = GroundIntake.getInstance();
+    }
+
+    public void setTarget(OptimusPrimeTarget target) {
+        new CmdCascadedOptimus(target, 
+            (lift.getCurrentHeight() < 10 * Length.in && target == OptimusPrimeTarget.DEPOSIT_LOW_HATCH)
+             ? 250 : 0).start();
+
+        this.optimusPrimeTarget = target;
     }
 
     public class CmdCascadedOptimus extends Command {
-        private RobotState state;
+        private OptimusPrimeTarget state;
         private int delayMS;
 
-        public CmdCascadedOptimus(RobotState state, int delayMS) {
+        public CmdCascadedOptimus(OptimusPrimeTarget state, int delayMS) {
             this.state = state;
             this.delayMS = delayMS;
         }
@@ -139,14 +151,6 @@ public class OptimusPrime {
                 return true;
             }
         }
-    }
-
-    public void setState(RobotState state) {
-        new CmdCascadedOptimus(state, 
-            (lift.getCurrentHeight() < 10 * Length.in && state == RobotState.DEPOSIT_LOW_HATCH)
-             ? 250 : 0).start();
-
-        this.robotState = state;
     }
     
     public class CmdEnterIntakeMode extends CommandGroup {

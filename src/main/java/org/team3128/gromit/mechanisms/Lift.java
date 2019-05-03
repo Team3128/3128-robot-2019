@@ -9,7 +9,6 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.command.Command;
 
 /**
@@ -84,7 +83,7 @@ public class Lift extends Mechanism {
 		if (this.controlMode != controlMode) {
 			this.controlMode = controlMode;
 
-			Log.debug("Lift", "Setting control mode to " + controlMode.getName() + ", with PID slot " + controlMode.getPIDSlot());
+			Log.debug(this, "Setting control mode to " + controlMode.getName() + ", with PID slot " + controlMode.getPIDSlot());
 			liftMotor.selectProfileSlot(controlMode.getPIDSlot(), 0);
 		}
 	}
@@ -97,7 +96,6 @@ public class Lift extends Mechanism {
 	 */
 	public final double MAX_HEIGHT = 78 * Length.in;
 	public final double ratio = 51745 / (78.8 * Length.in);
-	public double error;
 
 	// Physical Components
 	private TalonSRX liftMotor;
@@ -116,6 +114,7 @@ public class Lift extends Mechanism {
 
 	private double desiredTarget = 0;
 	private double currentTarget, previousTarget;
+	public double error;
 
 	public boolean override = false;
 
@@ -128,7 +127,7 @@ public class Lift extends Mechanism {
 			return instance;
 		}
 
-		Log.fatal("Lift", "Attempted to get instance before initializtion! Call initialize(...) first.");
+		Log.fatal(instance, "Attempted to get instance before initializtion! Call initialize(...) first.");
 		return null;
 	}
 
@@ -176,7 +175,7 @@ public class Lift extends Mechanism {
 				if (zeroVelocityCount > 5 || getLimitSwitch()) {
 					powerControl(0);
 	
-					Log.info("Lift", "Zeroing sequence hit soft/hard stop. Braking now...");
+					Log.info(this, "Zeroing sequence hit soft/hard stop. Braking now...");
 	
 					zeroVelocityCount = 0;
 				}
@@ -254,7 +253,7 @@ public class Lift extends Mechanism {
 				setControlMode(LiftControlMode.POSITION_DOWN);
 			}
 	
-			Log.info("Lift", "Setting height to " + heightTarget.targetHeight + " cm.");
+			Log.info(this, "Setting height to " + heightTarget.targetHeight + " cm.");
 
 			desiredTarget = heightTarget.targetHeight;
 		}

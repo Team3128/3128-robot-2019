@@ -54,7 +54,6 @@ public class MainWallace extends MainDeepSpaceRobot {
         fourBarLimitSwitch = new DigitalInput(1);
         fourBarRatio = 4600 / (180 * Angle.DEGREES);
         fourBarSwitchPosition = +99 * Angle.DEGREES;
-        fourBarMaxVelocity = 100;
         
         cargoBumperSwitch = new DigitalInput(2);
 

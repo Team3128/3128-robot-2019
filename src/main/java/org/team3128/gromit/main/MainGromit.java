@@ -64,7 +64,6 @@ public class MainGromit extends MainDeepSpaceRobot {
         fourBarLimitSwitch = new DigitalInput(0);
         fourBarRatio = 4600 / (180 * Angle.DEGREES); //4550
         fourBarSwitchPosition = +96 * Angle.DEGREES;
-        fourBarMaxVelocity = 100;
         
         cargoBumperSwitch = new DigitalInput(1);
 
