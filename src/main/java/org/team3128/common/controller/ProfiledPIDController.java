@@ -2,7 +2,7 @@ package org.team3128.common.controller;
 
 import edu.wpi.first.wpilibj.SendableBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
-import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile;
+import org.team3128.common.util.trajectory.TrapezoidProfile;;
 
 /**
  * Implements a PID control loop whose setpoint is constrained by a trapezoid

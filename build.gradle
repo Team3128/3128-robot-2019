@@ -62,8 +62,15 @@ dependencies {
     compile files('lib/minlog-info-1.2.jar')
     compile files('lib/objenesis-2.4.jar')
     compile files('lib/reflectasm-1.09-all.jar')
-    compile files('lib/ejml-simple-0.38.jar')
-    compile group: 'org.ejml', name: 'ejml-all', version: '0.38'
+    // ejml dependencies:
+    compile files('lib/ejml-v0.38-libs/ejml-cdense-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-core-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-ddense-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-dsparse-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-experimental-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-fdense-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-simple-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-zdense-0.38.jar')
 
 }
 
