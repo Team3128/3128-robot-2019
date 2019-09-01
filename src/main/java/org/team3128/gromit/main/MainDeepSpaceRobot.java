@@ -432,8 +432,8 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 			}
 		}, "MoveForwards", "MoveTurn", "Throttle");
 
-		//listenerRight.nameControl(new Button(2), "Gearshift");
-		//listenerRight.addButtonDownListener("Gearshift", drive::shift);
+		listenerRight.nameControl(new Button(2), "Gearshift");
+		listenerRight.addButtonDownListener("Gearshift", drive::shift);
 
 		// Intake/Outtake Controls
 		listenerRight.nameControl(new Button(5), "DemogorgonGrab");
@@ -617,6 +617,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		drive.shiftToLow();
 
 		topLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
+		bottomLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
 
 		fourBar.brake();
 		lift.powerControl(0);
