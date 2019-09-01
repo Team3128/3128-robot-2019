@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj.command.Command;
 public class Lift
 {
 	public enum LiftHeightState {
-		ZEROING(-3 * Length.in),
+		ZEROING(0 * Length.in), //-3
 		BASE(0 * Length.in),
 		
 		INTAKE_FLOOR_CARGO(8 * Length.in),
@@ -149,10 +149,10 @@ public class Lift
 
 		setControlMode(LiftControlMode.PERCENT);
 
-		liftMotor.configMotionCruiseVelocity((int) (0.9 * liftMaxVelocity), Constants.CAN_TIMEOUT);
-		liftMotor.configMotionAcceleration((int) (1.5 * liftMaxVelocity), Constants.CAN_TIMEOUT);
+		liftMotor.configMotionCruiseVelocity((int) (0.8 * liftMaxVelocity), Constants.CAN_TIMEOUT);
+		liftMotor.configMotionAcceleration((int) (1.3 * liftMaxVelocity), Constants.CAN_TIMEOUT);
 
-		liftMotor.configOpenloopRamp(0.2, Constants.CAN_TIMEOUT);
+		liftMotor.configOpenloopRamp(0.1, Constants.CAN_TIMEOUT);
 
 		liftThread = new Thread(() ->
 		{
@@ -165,6 +165,7 @@ public class Lift
 			{
 				if (this.heightState == LiftHeightState.ZEROING) {
 					if (Math.abs(liftMotor.getSelectedSensorVelocity()) < 10) {
+						Log.info("Lift", "Zeroing plateau incremented");
 						zeroVelocityCount += 1;
 					}
 					else {
@@ -194,7 +195,7 @@ public class Lift
 				}
 				else {
 					target = 0;
-
+	
 					this.canRaise = this.getCurrentHeight() < this.maxHeight - this.controlBuffer;
 					this.canLower = this.getCurrentHeight() > 0;
 
@@ -267,6 +268,7 @@ public class Lift
 	
 			Log.info("Lift", "Setting height to " + heightState.targetHeight + " cm.");
 			liftMotor.set(ControlMode.MotionMagic, heightState.targetHeight * ratio);
+			Log.info("Lift", "***SET HEIGHT***");
 		}
 	}
 

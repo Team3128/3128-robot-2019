@@ -75,13 +75,13 @@ public class MainPrebot extends NarwhalRobot {
 	{
 		limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 
-        rightDriveFront = new TalonSRX(0);
-        rightDriveMiddle = new TalonSRX(1);
+        rightDriveFront = new TalonSRX(5);
+        rightDriveMiddle = new TalonSRX(3);
         rightDriveBack = new TalonSRX(2);
 
-        leftDriveFront = new TalonSRX(3);
+        leftDriveFront = new TalonSRX(0);
         leftDriveMiddle = new TalonSRX(4);
-        leftDriveBack = new TalonSRX(5);
+        leftDriveBack = new TalonSRX(1);
 
         rightDriveFront.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
         rightDriveMiddle.set(ControlMode.Follower, rightDriveFront.getDeviceID());
@@ -97,22 +97,22 @@ public class MainPrebot extends NarwhalRobot {
         double wheelBase = 32.3 * Length.in;
         int robotFreeSpeed = 3700;
 
-        SRXTankDrive.initialize(rightDriveFront, leftDriveFront, wheelCirc, wheelBase, robotFreeSpeed);
+        SRXTankDrive.initialize(leftDriveFront, rightDriveFront, wheelCirc, wheelBase, robotFreeSpeed);
 
-        leftDriveFront.setInverted(true);
-        leftDriveMiddle.setInverted(true);
-        leftDriveBack.setInverted(true);
-        
-        rightDriveFront.setInverted(false);
-        rightDriveMiddle.setInverted(false);
-        rightDriveBack.setInverted(false);
+        leftDriveFront.setInverted(false);
+        leftDriveMiddle.setInverted(false);
+        leftDriveBack.setInverted(false);
+
+        rightDriveFront.setInverted(true);
+        rightDriveMiddle.setInverted(true);
+        rightDriveBack.setInverted(true);
 
         leftDriveFront.setSensorPhase(true);
         rightDriveFront.setSensorPhase(true);
 
         tankDrive = SRXTankDrive.getInstance();
         tankDrive.setLeftSpeedScalar(1.0);
-        tankDrive.setRightSpeedScalar(0.9178);
+        tankDrive.setRightSpeedScalar(1.0);
         
         // Instatiator if we're using the NavX
 		gyro = new NavX();
