@@ -276,6 +276,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 
 		rightJoystick = new Joystick(0);
 		listenerRight = new ListenerManager(rightJoystick);
+		//listenerLeft = new ListenerManager(leftJoystick);
 		addListenerManager(listenerRight);
 
 		topLimelight =    new Limelight("limelight-top",    topLLAngle,     topLLHeight,    23 * Length.in, 14.5 * Length.in);
@@ -383,6 +384,24 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 			ledOn = !ledOn;
 		});
 
+		NarwhalDashboard.addButton("lift_up", (boolean down) -> {
+			if (down) {
+				lift.powerControl(0.8);
+			}
+			else {
+				lift.powerControl(0);
+			}
+		});
+
+		NarwhalDashboard.addButton("lift_down", (boolean down) -> {
+			if (down) {
+				lift.powerControl(-0.2);
+			}
+			else {
+				lift.powerControl(0);
+			}
+		});
+
 		NarwhalDashboard.addButton("compute2D", (boolean down) -> {
 			if (down) {
 				Compute2DLocalization locale = Compute2D.compute2D(bottomLimelight, Compute2D.getInput(bottomLimelight, 3), DeepSpaceConstants.LOW_VISION_TARGET_HEIGHT);
@@ -413,8 +432,8 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 			}
 		}, "MoveForwards", "MoveTurn", "Throttle");
 
-		listenerRight.nameControl(new Button(2), "Gearshift");
-		listenerRight.addButtonDownListener("Gearshift", drive::shift);
+		//listenerRight.nameControl(new Button(2), "Gearshift");
+		//listenerRight.addButtonDownListener("Gearshift", drive::shift);
 
 		// Intake/Outtake Controls
 		listenerRight.nameControl(new Button(5), "DemogorgonGrab");
@@ -523,6 +542,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		listenerLeft.nameControl(ControllerExtreme3D.JOYY, "ManualControl");
 
 		listenerLeft.addMultiListener(() -> {
+			
 			if (listenerLeft.getButton("ManualMode")) {
 				lift.override = false;
 				lift.powerControl(0);
@@ -647,7 +667,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		//Log.info("roll, pitch", String.valueOf(gyro.getRoll()) + ", " + String.valueOf(gyro.getPitch()));
 
 		maxLeftSpeed = Math.max(leftDriveLeader.getSelectedSensorVelocity(), maxLeftSpeed);
-        maxRightSpeed = Math.max(rightDriveLeader.getSelectedSensorVelocity(), maxRightSpeed);
+		maxRightSpeed = Math.max(rightDriveLeader.getSelectedSensorVelocity(), maxRightSpeed);
 
         SmartDashboard.putNumber("Max Left Speed", maxLeftSpeed);
         SmartDashboard.putNumber("Max Right Speed", maxRightSpeed);
@@ -655,6 +675,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 		SmartDashboard.putNumber("pitch", gyro.getPitch());
 		SmartDashboard.putBoolean("Lift: Can Raise", lift.canRaise);
 		SmartDashboard.putBoolean("Lift: Can Lower", lift.canLower);
+		SmartDashboard.putBoolean("Lift Switch Triggered", lift.getLimitSwitch());
 
 		SmartDashboard.putNumber("Lift Height (inches)", lift.getCurrentHeight() / Length.in);
 		SmartDashboard.putNumber("Lift Position (nu)", liftMotorLeader.getSelectedSensorPosition());
