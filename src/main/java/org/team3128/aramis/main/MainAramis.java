@@ -1,11 +1,14 @@
-package org.team3128.prebot.main;
+//formerly wallace ;)
+
+package org.team3128.aramis.main;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
-import org.team3128.prebot.autonomous.*;
-import org.team3128.prebot.util.PrebotDeepSpaceConstants;
+import org.team3128.aramis.autonomous.*;
+import org.team3128.aramis.util.PrebotDeepSpaceConstants;
 
 import org.team3128.common.NarwhalRobot;
 import org.team3128.common.drive.DriveCommandRunning;
@@ -37,9 +40,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
-public class MainPrebot extends NarwhalRobot {
-    public TalonSRX rightDriveFront, rightDriveMiddle, rightDriveBack;
-    public TalonSRX leftDriveFront, leftDriveMiddle, leftDriveBack;
+public class MainAramis extends NarwhalRobot {
+    public TalonSRX rightDriveLeader;
+    public VictorSPX rightDriveFollower;
+    public TalonSRX leftDriveLeader;
+    public VictorSPX leftDriveFollower;
 
     public SRXTankDrive tankDrive;
 
@@ -75,21 +80,17 @@ public class MainPrebot extends NarwhalRobot {
 	{
 		limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 
-        rightDriveFront = new TalonSRX(5);
-        rightDriveMiddle = new TalonSRX(3);
-        rightDriveBack = new TalonSRX(2);
+        rightDriveLeader = new TalonSRX(10);
+        rightDriveFollower = new VictorSPX(11);
 
-        leftDriveFront = new TalonSRX(0);
-        leftDriveMiddle = new TalonSRX(4);
-        leftDriveBack = new TalonSRX(1);
+        leftDriveLeader = new TalonSRX(15);
+        leftDriveFollower = new VictorSPX(16);
 
-        rightDriveFront.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
-        rightDriveMiddle.set(ControlMode.Follower, rightDriveFront.getDeviceID());
-        rightDriveBack.set(ControlMode.Follower, rightDriveFront.getDeviceID());
+        rightDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
+        rightDriveFollower.set(ControlMode.Follower, rightDriveLeader.getDeviceID());
 
-        leftDriveFront.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
-        leftDriveMiddle.set(ControlMode.Follower, leftDriveFront.getDeviceID());
-        leftDriveBack.set(ControlMode.Follower, leftDriveFront.getDeviceID());
+        leftDriveLeader.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.CAN_TIMEOUT);
+        leftDriveFollower.set(ControlMode.Follower, leftDriveLeader.getDeviceID());
 
         double wheelCirc = 13.21 * Length.in;
         //double wheelBase = 31.5 * Length.in; 5 feet
@@ -97,22 +98,20 @@ public class MainPrebot extends NarwhalRobot {
         double wheelBase = 32.3 * Length.in;
         int robotFreeSpeed = 3700;
 
-        SRXTankDrive.initialize(leftDriveFront, rightDriveFront, wheelCirc, wheelBase, robotFreeSpeed);
+        SRXTankDrive.initialize(leftDriveLeader, rightDriveLeader, wheelCirc, wheelBase, robotFreeSpeed);
 
-        leftDriveFront.setInverted(false);
-        leftDriveMiddle.setInverted(false);
-        leftDriveBack.setInverted(false);
+        leftDriveLeader.setInverted(false);
+        leftDriveFollower.setInverted(false);
 
-        rightDriveFront.setInverted(true);
-        rightDriveMiddle.setInverted(true);
-        rightDriveBack.setInverted(true);
+        rightDriveLeader.setInverted(true);
+        rightDriveFollower.setInverted(true);
 
-        leftDriveFront.setSensorPhase(true);
-        rightDriveFront.setSensorPhase(true);
+        leftDriveLeader.setSensorPhase(true);
+        rightDriveLeader.setSensorPhase(true);
 
         tankDrive = SRXTankDrive.getInstance();
         tankDrive.setLeftSpeedScalar(1.0);
-        tankDrive.setRightSpeedScalar(1.0);
+        tankDrive.setRightSpeedScalar(.983);
         
         // Instatiator if we're using the NavX
 		gyro = new NavX();
@@ -224,17 +223,17 @@ public class MainPrebot extends NarwhalRobot {
         SmartDashboard.putNumber("getRate", gyro.getRate());
 
 
-        maxLeftSpeed = Math.max(leftDriveFront.getSelectedSensorVelocity(), maxLeftSpeed);
-        maxRightSpeed = Math.max(rightDriveFront.getSelectedSensorVelocity(), maxRightSpeed);
+        maxLeftSpeed = Math.max(leftDriveLeader.getSelectedSensorVelocity(), maxLeftSpeed);
+        maxRightSpeed = Math.max(rightDriveLeader.getSelectedSensorVelocity(), maxRightSpeed);
 
         SmartDashboard.putNumber("Max Left Speed", maxLeftSpeed);
         SmartDashboard.putNumber("Max Right Speed", maxRightSpeed);
 
-        SmartDashboard.putNumber("Left Speed", leftDriveFront.getSelectedSensorVelocity());
-        SmartDashboard.putNumber("Right Speed", rightDriveFront.getSelectedSensorVelocity());
+        SmartDashboard.putNumber("Left Speed", leftDriveLeader.getSelectedSensorVelocity());
+        SmartDashboard.putNumber("Right Speed", rightDriveLeader.getSelectedSensorVelocity());
 
-        SmartDashboard.putNumber("Left Position", leftDriveFront.getSelectedSensorPosition());
-        SmartDashboard.putNumber("Right Position", rightDriveFront.getSelectedSensorPosition());
+        SmartDashboard.putNumber("Left Position", leftDriveLeader.getSelectedSensorPosition());
+        SmartDashboard.putNumber("Right Position", rightDriveLeader.getSelectedSensorPosition());
 
         NarwhalDashboard.put("time", DriverStation.getInstance().getMatchTime());
 		NarwhalDashboard.put("voltage", RobotController.getBatteryVoltage());
@@ -243,6 +242,6 @@ public class MainPrebot extends NarwhalRobot {
     }
 
     public static void main(String... args) {
-        RobotBase.startRobot(MainPrebot::new);
+        RobotBase.startRobot(MainAramis::new);
     }
 }

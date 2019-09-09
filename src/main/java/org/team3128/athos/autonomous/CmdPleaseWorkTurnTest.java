@@ -1,4 +1,4 @@
-package org.team3128.prebot.autonomous;
+package org.team3128.athos.autonomous;
 
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.hardware.navigation.Gyro;
