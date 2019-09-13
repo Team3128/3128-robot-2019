@@ -75,6 +75,7 @@ public class MainAramis extends NarwhalRobot {
     private DriveCommandRunning driveCmdRunning;
 
     public Limelight limelight = new Limelight("limelight", 26 * Angle.DEGREES, 6.15 * Length.in, 0 * Length.in, 14.5 * Length.in);
+
 	@Override
 	protected void constructHardware()
 	{
@@ -211,6 +212,11 @@ public class MainAramis extends NarwhalRobot {
             alignCommand.cancel();
             alignCommand = null;
         });
+
+        lm.nameControl(new Button(3), "GetValues");
+        lm.addButtonDownListener("GetValues", () -> {
+            //thing.write(limelight.getValues(30).toString());
+        });
     }
 
     @Override
@@ -239,6 +245,9 @@ public class MainAramis extends NarwhalRobot {
 		NarwhalDashboard.put("voltage", RobotController.getBatteryVoltage());
                 
         dcu.tickNarwhalDashboard();
+
+        // USB.write(limelight.getValues(30).toString());
+
     }
 
     public static void main(String... args) {

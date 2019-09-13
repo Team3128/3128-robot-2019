@@ -1,9 +1,11 @@
 package org.team3128.common.hardware.limelight;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class LimelightData {
     private HashMap<String, Double> values;
+    private String csvString;
 
     public LimelightData() {
         values = new HashMap<String, Double>();
@@ -78,5 +80,18 @@ public class LimelightData {
     // Setter
     public void set(String valueKey, double value) {
         values.put(valueKey, value);
+    }
+
+    public String toString() {
+        
+        csvString = "";
+
+        for (Map.Entry<String, Double> entry : values.entrySet()) {
+            csvString += (Double.toString(entry.getValue()) + ", ");
+        }
+
+        csvString += "\n";
+
+        return csvString;
     }
 }
