@@ -1,8 +1,9 @@
 package org.team3128.common.hardware.limelight;
 
 import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
+//import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+//import edu.wpi.first.networktables.TableEntryListener;
 
 import org.team3128.common.util.RobotMath;
 
@@ -26,7 +27,7 @@ public class Limelight {
     public double frontDistance;
 
     public NetworkTable limelightTable;
-    
+
     /**
      * 
      * @param cameraAngle - The vertical angle of the limelight
@@ -78,12 +79,15 @@ public class Limelight {
         double runningTotal;
         double[] camtranArray;
         int index = 0;
-        for (String valueKey : LimelightConstants.valueKeys) {
-            runningTotal = 0;
-            for(int a = 0; a < numSamples; a++){
-                runningTotal += limelightTable.getEntry(valueKey).getDouble(0.0);
-            }
+        runningTotal = 0;
+        for(int a = 0; a < numSamples; a++) {
 
+            for (String valueKey : LimelightConstants.valueKeys) {
+                runningTotal += limelightTable.getEntry(valueKey).getDouble(0.0);
+
+            }
+        }
+        for (String valueKey : LimelightConstants.valueKeys) {
             data.set(valueKey, runningTotal / numSamples);
         }
 
