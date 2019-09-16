@@ -2,6 +2,13 @@
 
 package org.team3128.aramis.main;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
@@ -39,6 +46,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 
 public class MainAramis extends NarwhalRobot {
     public TalonSRX rightDriveLeader;
@@ -76,9 +90,43 @@ public class MainAramis extends NarwhalRobot {
 
     public Limelight limelight = new Limelight("limelight", 26 * Angle.DEGREES, 6.15 * Length.in, 0 * Length.in, 14.5 * Length.in);
 
+    BufferedWriter bw = null;
+    FileWriter fw = null;
+    InputStream is = null;
+    OutputStream os = null;
+    File file;
+    File usbFile;
+
 	@Override
 	protected void constructHardware()
 	{
+        try {
+            file = new File("C:/log.txt");
+            usbFile = new File("C:/place/log.txt");
+
+            if(file.exists()) {
+                file.delete();
+                file.createNewFile();
+            } else {
+                file.createNewFile();
+            }
+
+            if(usbFile.exists()) {
+                usbFile.delete();
+                usbFile.createNewFile();
+            } else {
+                usbFile.createNewFile();
+            }
+
+            fw = new FileWriter(file);
+            bw = new BufferedWriter(fw);
+            bw.write("thing, thing, thing, etc.");
+            bw.close();
+
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+
 		limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 
         rightDriveLeader = new TalonSRX(10);
@@ -215,7 +263,20 @@ public class MainAramis extends NarwhalRobot {
 
         lm.nameControl(new Button(3), "GetValues");
         lm.addButtonDownListener("GetValues", () -> {
-            //thing.write(limelight.getValues(30).toString());
+            try {
+
+                bw = new BufferedWriter(fw);
+                bw.write(limelight.getValues(30).toString());
+                bw.close();
+    
+                is = new FileInputStream(file);
+                os = new FileOutputStream(usbFile);
+                
+    
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+    
         });
     }
 
@@ -247,6 +308,19 @@ public class MainAramis extends NarwhalRobot {
         dcu.tickNarwhalDashboard();
 
         // USB.write(limelight.getValues(30).toString());
+        try {
+
+            bw = new BufferedWriter(fw);
+            bw.write(limelight.getValues(30).toString());
+            bw.close();
+
+            is = new FileInputStream(file);
+            os = new FileOutputStream(usbFile);
+            
+
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
 
     }
 
