@@ -52,6 +52,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 
 
 public class MainAramis extends NarwhalRobot {
@@ -101,8 +102,8 @@ public class MainAramis extends NarwhalRobot {
 	protected void constructHardware()
 	{
         try {
-            file = new File("C:/log.txt");
-            usbFile = new File("C:/place/log.txt");
+            file = new File("C:/log.txt"); //ooohhh
+            usbFile = new File("C:/usb/log.txt"); //i wuz in a hurry so no comments sorry y'all'ses
 
             if(file.exists()) {
                 file.delete();
@@ -120,7 +121,7 @@ public class MainAramis extends NarwhalRobot {
 
             fw = new FileWriter(file);
             bw = new BufferedWriter(fw);
-            bw.write("thing, thing, thing, etc.");
+            bw.write("tx, thing, thing, etc.");
             bw.close();
 
         } catch (IOException ioe) {
@@ -268,15 +269,23 @@ public class MainAramis extends NarwhalRobot {
                 bw = new BufferedWriter(fw);
                 bw.write(limelight.getValues(30).toString());
                 bw.close();
-    
-                is = new FileInputStream(file);
-                os = new FileOutputStream(usbFile);
-                
-    
+
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
     
+        });
+        lm.nameControl(new Button(4), "GetValues");
+        lm.addButtonDownListener("GetValues", () -> {
+            try {
+                
+                is = new FileInputStream(file);
+                os = new FileOutputStream(usbFile);
+
+                is.transferTo(os);
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            } 
         });
     }
 
@@ -308,7 +317,7 @@ public class MainAramis extends NarwhalRobot {
         dcu.tickNarwhalDashboard();
 
         // USB.write(limelight.getValues(30).toString());
-        try {
+        /*try {
 
             bw = new BufferedWriter(fw);
             bw.write(limelight.getValues(30).toString());
@@ -316,11 +325,12 @@ public class MainAramis extends NarwhalRobot {
 
             is = new FileInputStream(file);
             os = new FileOutputStream(usbFile);
-            
+
+            is.transferTo(os);
 
         } catch (IOException ioe) {
             ioe.printStackTrace();
-        }
+        }*/
 
     }
 

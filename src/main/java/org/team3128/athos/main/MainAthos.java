@@ -37,6 +37,15 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public class MainAthos extends NarwhalRobot {
     public TalonSRX rightDriveFront, rightDriveMiddle, rightDriveBack;
     public TalonSRX leftDriveFront, leftDriveMiddle, leftDriveBack;
@@ -69,10 +78,45 @@ public class MainAthos extends NarwhalRobot {
     public CmdHorizontalOffsetFeedbackDrive alignCommand;
     private DriveCommandRunning driveCmdRunning;
 
-    public Limelight limelight = new Limelight("limelight", 26 * Angle.DEGREES, 6.15 * Length.in, 0 * Length.in, 14.5 * Length.in);
+    public Limelight limelight = new Limelight("limelight-c", 26 * Angle.DEGREES, 6.15 * Length.in, 0 * Length.in, 14.5 * Length.in);
+
+    BufferedWriter bw = null;
+    FileWriter fw = null;
+    InputStream is = null;
+    OutputStream os = null;
+    File file;
+    File usbFile;
+
 	@Override
 	protected void constructHardware()
 	{
+        try {
+            file = new File("C:/log.txt"); //ooohhh
+            usbFile = new File("D:/limelight-loggerification-test-1.txt"); //i wuz in a hurry so no comments sorry y'all'ses
+
+            if(file.exists()) {
+                file.delete();
+                file.createNewFile();
+            } else {
+                file.createNewFile();
+            }
+
+            if(usbFile.exists()) {
+                usbFile.delete();
+                usbFile.createNewFile();
+            } else {
+                usbFile.createNewFile();
+            }
+
+            fw = new FileWriter(file);
+            bw = new BufferedWriter(fw);
+            bw.write("tx, thing, thing, etc.");
+            //bw.close();
+
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+
 		limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 
         rightDriveFront = new TalonSRX(5);
@@ -211,6 +255,33 @@ public class MainAthos extends NarwhalRobot {
         lm.addButtonUpListener("AlignToTarget", () -> {
             alignCommand.cancel();
             alignCommand = null;
+        });
+
+        lm.nameControl(new Button(3), "GetValues");
+        lm.addButtonDownListener("GetValues", () -> {
+            try {
+
+                //fw = new FileWriter(file);
+                //bw = new BufferedWriter(fw);
+                bw.write(limelight.getValues(30).toString());
+                //bw.close();
+
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+    
+        });
+        lm.nameControl(new Button(4), "GetValues");
+        lm.addButtonDownListener("GetValues", () -> {
+            try {
+                
+                is = new FileInputStream(file);
+                os = new FileOutputStream(usbFile);
+
+                is.transferTo(os);
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            } 
         });
     }
 
