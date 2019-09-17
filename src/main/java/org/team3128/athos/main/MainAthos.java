@@ -86,20 +86,21 @@ public class MainAthos extends NarwhalRobot {
     OutputStream os = null;
     File file;
     File usbFile;
+    String csvString = "";
 
 	@Override
 	protected void constructHardware()
 	{
         try {
-            file = new File("C:/log.txt"); //ooohhh
-            usbFile = new File("D:/limelight-loggerification-test-1.txt"); //i wuz in a hurry so no comments sorry y'all'ses
+            //file = new File("C:/log.txt"); //ooohhh
+            usbFile = new File("/media/sda1/limelight-loggerification-test-1.txt"); //i wuz in a hurry so no comments sorry y'all'ses
 
-            if(file.exists()) {
-                file.delete();
-                file.createNewFile();
-            } else {
-                file.createNewFile();
-            }
+            // if(file.exists()) {
+            //     file.delete();
+            //     file.createNewFile();
+            // } else {
+            //     file.createNewFile();
+            // }
 
             if(usbFile.exists()) {
                 usbFile.delete();
@@ -108,7 +109,7 @@ public class MainAthos extends NarwhalRobot {
                 usbFile.createNewFile();
             }
 
-            fw = new FileWriter(file);
+            fw = new FileWriter(usbFile);
             bw = new BufferedWriter(fw);
             bw.write("tx, thing, thing, etc.");
             //bw.close();
@@ -117,6 +118,7 @@ public class MainAthos extends NarwhalRobot {
             ioe.printStackTrace();
         }
 
+        // table = NetworkTableInstance.getDefault().getTable("limelight-data");
 		limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 
         rightDriveFront = new TalonSRX(5);
@@ -257,31 +259,40 @@ public class MainAthos extends NarwhalRobot {
             alignCommand = null;
         });
 
-        lm.nameControl(new Button(3), "GetValues");
-        lm.addButtonDownListener("GetValues", () -> {
-            try {
+        lm.nameControl(new Button(3), "startGetValues");
+        lm.addButtonDownListener("startGetValues", () -> {
+            //try {
 
                 //fw = new FileWriter(file);
                 //bw = new BufferedWriter(fw);
-                bw.write(limelight.getValues(30).toString());
+                //bw.write(limelight.getValues(30).toString());
                 //bw.close();
 
+            // } catch (IOException ioe) {
+            //     ioe.printStackTrace();
+            // }
+            SmartDashboard.putBoolean("gettingData", true);
+            // csvString += (Long.toString(RobotController.GetFPGATime())
+            //             + limelight.getValues(30).toString() + "\n");
+        });
+
+        lm.nameControl(new Button(4), "stopGetValues");
+        lm.addButtonDownListener("stopGetValues", () -> {
+            SmartDashboard.putBoolean("gettingData", false);
+        });
+
+        lm.nameControl(new Button(5), "WriteValues");
+        lm.addButtonDownListener("WriteValues", () -> {
+            try {
+                bw.write(csvString);
+                //is = new FileInputStream(file);
+                //os = new FileOutputStream(usbFile);
+
+                //is.transferTo(os);
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
-    
-        });
-        lm.nameControl(new Button(4), "GetValues");
-        lm.addButtonDownListener("GetValues", () -> {
-            try {
-                
-                is = new FileInputStream(file);
-                os = new FileOutputStream(usbFile);
-
-                is.transferTo(os);
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
-            } 
+            csvString = "";
         });
     }
 
@@ -311,6 +322,11 @@ public class MainAthos extends NarwhalRobot {
 		NarwhalDashboard.put("voltage", RobotController.getBatteryVoltage());
                 
         dcu.tickNarwhalDashboard();
+
+        if (SmartDashboard.getBoolean("gettingData")) {
+            csvString += (Long.toString(RobotController.GetFPGATime())
+                        + limelight.getValues(30).toString() + "\n");
+        }
     }
 
     public static void main(String... args) {
