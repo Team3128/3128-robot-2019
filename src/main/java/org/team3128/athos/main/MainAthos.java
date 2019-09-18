@@ -284,19 +284,30 @@ public class MainAthos extends NarwhalRobot {
             SmartDashboard.putBoolean("gettingData", false);
         });
 
-        lm.nameControl(new Button(5), "WriteValues");
-        lm.addButtonDownListener("WriteValues", () -> {
+        lm.nameControl(new Button(5), "writeValues");
+        lm.addButtonDownListener("writeValues", () -> {
             try {
+                Log.info("MainAthos", "writing values");
                 bw.write(csvString);
                 //is = new FileInputStream(file);
                 //os = new FileOutputStream(usbFile);
 
                 //is.transferTo(os);
-                bw.close();
+                bw.flush();
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
             csvString = "";
+        });
+
+        lm.nameControl(new Button(6), "closeWriter");
+        lm.addButtonDownListener("closeWriter", () -> {
+            Log.info("MainAramis", "closing buffered writer");
+            try {
+                bw.close();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
         });
     }
 
