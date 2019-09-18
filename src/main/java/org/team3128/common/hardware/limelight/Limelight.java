@@ -1,5 +1,6 @@
 package org.team3128.common.hardware.limelight;
 
+import java.util.Arrays;
 import edu.wpi.first.networktables.NetworkTable;
 //import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -76,19 +77,31 @@ public class Limelight {
 
     public LimelightData getValues(int numSamples) {
         LimelightData data = new LimelightData();
-        double runningTotal;
+        //double runningTotal;
+        double[] runningTotal;
         double[] camtranArray;
+        int idx;
         int index = 0;
-        runningTotal = 0;
+        //runningTotal = 0;
+        runningTotal = new double[9];
+
         for(int a = 0; a < numSamples; a++) {
 
-            for (String valueKey : LimelightConstants.valueKeys) {
-                runningTotal += limelightTable.getEntry(valueKey).getDouble(0.0);
+            Arrays.fill(runningTotal, 0.0);
+            idx = 0;
+            //for (String valueKey : LimelightConstants.valueKeys) {
+                
+            //}
 
+            for (String valueKey : LimelightConstants.valueKeys) {
+                runningTotal[idx] += limelightTable.getEntry(valueKey).getDouble(0.0);
+                idx++;
             }
         }
+        idx = 0;
         for (String valueKey : LimelightConstants.valueKeys) {
-            data.set(valueKey, runningTotal / numSamples);
+            data.set(valueKey, runningTotal[idx] / numSamples);
+            idx++;
         }
 
         //load the camtranArray
