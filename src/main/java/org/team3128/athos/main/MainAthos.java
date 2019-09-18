@@ -111,7 +111,7 @@ public class MainAthos extends NarwhalRobot {
 
             fw = new FileWriter(usbFile);
             bw = new BufferedWriter(fw);
-            bw.write("FPGA Time, tx, ty, tv, ts, ta, thor, tvert, tshort, tlong, x, y, z, pitch, yaw, roll");
+            bw.write("FPGA Time, tx, ty, ts, ta, thor, tvert, tshort, tlong, tv, x, y, z, pitch, yaw, roll");
             Log.info("im here", "im here");
             //bw.close();
 
@@ -340,7 +340,7 @@ public class MainAthos extends NarwhalRobot {
 
         if (SmartDashboard.getBoolean("gettingData", false)) {
             csvString += (Long.toString(RobotController.getFPGATime())
-                        + limelight.getValues(30).toString() + "\n");
+                        + limelight.getValues(5).toString() + "\n");
         }
     }
 
