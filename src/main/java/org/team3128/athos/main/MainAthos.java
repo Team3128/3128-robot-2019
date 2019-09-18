@@ -111,7 +111,8 @@ public class MainAthos extends NarwhalRobot {
 
             fw = new FileWriter(usbFile);
             bw = new BufferedWriter(fw);
-            bw.write("tx, thing, thing, etc.");
+            bw.write("FPGA Time, tx, ty, tv, ts, ta, thor, tvert, tshort, tlong, x, y, z, pitch, yaw, roll");
+            Log.info("im here", "im here");
             //bw.close();
 
         } catch (IOException ioe) {
@@ -271,6 +272,7 @@ public class MainAthos extends NarwhalRobot {
             // } catch (IOException ioe) {
             //     ioe.printStackTrace();
             // }
+            Log.info("MainAthos", "starting getting data");
             SmartDashboard.putBoolean("gettingData", true);
             // csvString += (Long.toString(RobotController.GetFPGATime())
             //             + limelight.getValues(30).toString() + "\n");
@@ -278,6 +280,7 @@ public class MainAthos extends NarwhalRobot {
 
         lm.nameControl(new Button(4), "stopGetValues");
         lm.addButtonDownListener("stopGetValues", () -> {
+            Log.info("MainAthos", "stopping getting data");
             SmartDashboard.putBoolean("gettingData", false);
         });
 
@@ -289,6 +292,7 @@ public class MainAthos extends NarwhalRobot {
                 //os = new FileOutputStream(usbFile);
 
                 //is.transferTo(os);
+                bw.close();
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
@@ -323,8 +327,8 @@ public class MainAthos extends NarwhalRobot {
                 
         dcu.tickNarwhalDashboard();
 
-        if (SmartDashboard.getBoolean("gettingData")) {
-            csvString += (Long.toString(RobotController.GetFPGATime())
+        if (SmartDashboard.getBoolean("gettingData", false)) {
+            csvString += (Long.toString(RobotController.getFPGATime())
                         + limelight.getValues(30).toString() + "\n");
         }
     }
