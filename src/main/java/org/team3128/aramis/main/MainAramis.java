@@ -97,20 +97,21 @@ public class MainAramis extends NarwhalRobot {
     OutputStream os = null;
     File file;
     File usbFile;
+    String csvString = "";
 
 	@Override
 	protected void constructHardware()
 	{
         try {
-            file = new File("C:/log.txt"); //ooohhh
-            usbFile = new File("C:/usb/log.txt"); //i wuz in a hurry so no comments sorry y'all'ses
+            //file = new File("C:/log.txt"); //ooohhh
+            usbFile = new File("/media/sda1/limelight-loggerification-test-1.txt"); //i wuz in a hurry so no comments sorry y'all'ses
 
-            if(file.exists()) {
-                file.delete();
-                file.createNewFile();
-            } else {
-                file.createNewFile();
-            }
+            // if(file.exists()) {
+            //     file.delete();
+            //     file.createNewFile();
+            // } else {
+            //     file.createNewFile();
+            // }
 
             if(usbFile.exists()) {
                 usbFile.delete();
@@ -119,10 +120,11 @@ public class MainAramis extends NarwhalRobot {
                 usbFile.createNewFile();
             }
 
-            fw = new FileWriter(file);
+            fw = new FileWriter(usbFile);
             bw = new BufferedWriter(fw);
-            bw.write("tx, thing, thing, etc.");
-            bw.close();
+            bw.write("FPGA Time, tx, ty, ts, ta, thor, tvert, tshort, tlong, tv, x, y, z, pitch, yaw, roll");
+            Log.info("im here", "im here");
+            //bw.close();
 
         } catch (IOException ioe) {
             ioe.printStackTrace();
@@ -262,30 +264,54 @@ public class MainAramis extends NarwhalRobot {
             alignCommand = null;
         });
 
-        lm.nameControl(new Button(3), "GetValues");
-        lm.addButtonDownListener("GetValues", () -> {
+        lm.nameControl(new Button(3), "startGetValues");
+        lm.addButtonDownListener("startGetValues", () -> {
+            //try {
+
+                //fw = new FileWriter(file);
+                //bw = new BufferedWriter(fw);
+                //bw.write(limelight.getValues(30).toString());
+                //bw.close();
+
+            // } catch (IOException ioe) {
+            //     ioe.printStackTrace();
+            // }
+            Log.info("MainAthos", "starting getting data");
+            SmartDashboard.putBoolean("gettingData", true);
+            // csvString += (Long.toString(RobotController.GetFPGATime())
+            //             + limelight.getValues(30).toString() + "\n");
+        });
+
+        lm.nameControl(new Button(4), "stopGetValues");
+        lm.addButtonDownListener("stopGetValues", () -> {
+            Log.info("MainAthos", "stopping getting data");
+            SmartDashboard.putBoolean("gettingData", false);
+        });
+
+        lm.nameControl(new Button(5), "writeValues");
+        lm.addButtonDownListener("writeValues", () -> {
             try {
+                Log.info("MainAthos", "writing values");
+                bw.write(csvString);
+                //is = new FileInputStream(file);
+                //os = new FileOutputStream(usbFile);
 
-                bw = new BufferedWriter(fw);
-                bw.write(limelight.getValues(30).toString());
-                bw.close();
-
+                //is.transferTo(os);
+                bw.flush();
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
-    
+            csvString = "";
         });
-        lm.nameControl(new Button(4), "GetValues");
-        lm.addButtonDownListener("GetValues", () -> {
-            try {
-                
-                is = new FileInputStream(file);
-                os = new FileOutputStream(usbFile);
 
-                is.transferTo(os);
+        lm.nameControl(new Button(6), "closeWriter");
+        lm.addButtonDownListener("closeWriter", () -> {
+            Log.info("MainAramis", "closing buffered writer");
+            try {
+                bw.close();
             } catch (IOException ioe) {
                 ioe.printStackTrace();
-            } 
+            }
         });
     }
 
@@ -315,6 +341,11 @@ public class MainAramis extends NarwhalRobot {
 		NarwhalDashboard.put("voltage", RobotController.getBatteryVoltage());
                 
         dcu.tickNarwhalDashboard();
+
+        if (SmartDashboard.getBoolean("gettingData", false)) {
+            csvString += (Long.toString(RobotController.getFPGATime())
+                        + limelight.getValues(5).toString() + "\n");
+        }
 
         // USB.write(limelight.getValues(30).toString());
         /*try {
