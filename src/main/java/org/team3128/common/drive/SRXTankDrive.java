@@ -6,7 +6,7 @@ package org.team3128.common.drive;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.limelight.LimelightData;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
-import org.team3128.common.hardware.navigation.Gyro;
+import org.team3128.common.hardware.gyroscope.Gyro;
 import org.team3128.common.utility.Assert;
 import org.team3128.common.utility.Constants;
 import org.team3128.common.utility.Log;

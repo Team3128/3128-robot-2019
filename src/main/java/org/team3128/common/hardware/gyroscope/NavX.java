@@ -1,18 +1,18 @@
-package org.team3128.common.hardware.navigation;
+package org.team3128.common.hardware.gyroscope;
 
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
 
-
 /**
- * Class that implements Team 3128's {@link Gyro} interface in order
- * to allow for fetching and setting of commonly needed values for the
- * Kauai Labs NavX IMU.
+ * Class that implements Team 3128's {@link Gyro} interface in order to allow
+ * for fetching and setting of commonly needed values for the Kauai Labs NavX
+ * IMU.
  */
 public class NavX implements Gyro {
     /**
-    * The actual, Kauai Labs-supplied, fully-functional Java object version of the NavX IMU.
-    */
+     * The actual, Kauai Labs-supplied, fully-functional Java object version of the
+     * NavX IMU.
+     */
     private AHRS ahrs;
 
     public NavX() {
@@ -30,12 +30,12 @@ public class NavX implements Gyro {
     }
 
     @Override
-    public double getPitch(){
+    public double getPitch() {
         return ahrs.getPitch();
     }
 
     @Override
-    public double getRoll(){
+    public double getRoll() {
         return ahrs.getRoll();
     }
 

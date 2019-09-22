@@ -7,7 +7,7 @@ import org.team3128.common.hardware.limelight.LEDMode;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.limelight.LimelightKey;
 import org.team3128.common.hardware.limelight.StreamMode;
-import org.team3128.common.hardware.navigation.Gyro;
+import org.team3128.common.hardware.gyroscope.Gyro;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
 import org.team3128.common.utility.Log;
 import org.team3128.common.utility.RobotMath;

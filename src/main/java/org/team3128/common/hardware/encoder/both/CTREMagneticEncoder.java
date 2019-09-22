@@ -112,3 +112,6 @@ public class CTREMagneticEncoder extends QuadratureEncoder {
 	}
 
 }
+
+
+	

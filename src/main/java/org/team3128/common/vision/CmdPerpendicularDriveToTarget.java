@@ -2,7 +2,7 @@ package org.team3128.common.vision;
 
 import org.team3128.common.drive.DriveCommandRunning;
 import org.team3128.common.hardware.limelight.Limelight;
-import org.team3128.common.hardware.navigation.Gyro;
+import org.team3128.common.hardware.gyroscope.Gyro;
 import org.team3128.common.utility.datatypes.PIDConstants;
 import org.team3128.common.utility.units.Angle;
 import org.team3128.gromit.constants.GameConstants;

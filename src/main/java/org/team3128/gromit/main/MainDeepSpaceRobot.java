@@ -13,8 +13,8 @@ import org.team3128.common.hardware.limelight.StreamMode;
 import org.team3128.common.hardware.limelight.Compute2D.Compute2DLocalization;
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
-import org.team3128.common.hardware.navigation.Gyro;
-import org.team3128.common.hardware.navigation.NavX;
+import org.team3128.common.hardware.gyroscope.Gyro;
+import org.team3128.common.hardware.gyroscope.NavX;
 
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.POVValue;

@@ -11,7 +11,7 @@ import org.team3128.gromit.main.MainDeepSpaceRobot.ScoreTarget;
 import org.team3128.gromit.constants.GameConstants;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
-import org.team3128.common.hardware.navigation.Gyro;
+import org.team3128.common.hardware.gyroscope.Gyro;
 
 public class CmdAutoPrime extends CommandGroup {
 
