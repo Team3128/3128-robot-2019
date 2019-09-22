@@ -44,8 +44,10 @@ import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
 import org.team3128.gromit.constants.GameConstants;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+// import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+// import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+import org.team3128.common.hardware.motor.LazyTalonSRX;
+import org.team3128.common.hardware.motor.LazyVictorSPX;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -77,10 +79,10 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 	public DriveCalibrationUtility dcu;
 
 	// Drive Motors
-	public TalonSRX leftDriveLeader;
-	public VictorSPX leftDriveFollower;
-	public TalonSRX rightDriveLeader;
-	public VictorSPX rightDriveFollower;
+	public LazyTalonSRX leftDriveLeader;
+	public LazyVictorSPX leftDriveFollower;
+	public LazyTalonSRX rightDriveLeader;
+	public LazyVictorSPX rightDriveFollower;
 
 	// drive temp
 	public double maxLeftSpeed, maxRightSpeed;
@@ -91,7 +93,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 	// Four-Bar
 	public FourBar fourBar;
 	public FourBarState fourBarState;
-	public TalonSRX fourBarMotor;
+	public LazyTalonSRX fourBarMotor;
 	public DigitalInput fourBarLimitSwitch;
 	public double fourBarRatio, fourBarSwitchPosition;
 	public int fourBarMaxVelocity;
@@ -99,21 +101,21 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 	// Ground Intake
 	// public GroundIntake groundIntake;
 	// public GroundIntakeState groundIntakeState;
-	public VictorSPX groundIntakeMotor;
+	public LazyVictorSPX groundIntakeMotor;
 	public Piston groundIntakePistons;
 
 	// Lift
 	public Lift lift;
 	public LiftHeightState liftState;
-	public TalonSRX liftMotorLeader;
-	public VictorSPX liftMotorFollower;
+	public LazyTalonSRX liftMotorLeader;
+	public LazyVictorSPX liftMotorFollower;
 	public DigitalInput liftLimitSwitch;
 	public int liftSwitchPosition, liftMaxVelocity;
 
 	// Lift Intake
 	public LiftIntake liftIntake;
 	public LiftIntakeState liftIntakeState;
-	public VictorSPX liftIntakeMotor;
+	public LazyVictorSPX liftIntakeMotor;
 	public Piston hatchIntake_Piston;
 	public DigitalInput cargoBumperSwitch;
 
@@ -234,15 +236,15 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		compressor = new Compressor();
 
 		// Create Four-Bar
-		fourBarMotor = new TalonSRX(30);
+		fourBarMotor = new LazyTalonSRX(30);
 
 		FourBar.initialize(fourBarMotor, fourBarState, fourBarLimitSwitch, fourBarRatio, fourBarSwitchPosition,
 				fourBarMaxVelocity);
 		fourBar = FourBar.getInstance();
 
 		// Create Lift
-		liftMotorLeader = new TalonSRX(20);
-		liftMotorFollower = new VictorSPX(21);
+		liftMotorLeader = new LazyTalonSRX(20);
+		liftMotorFollower = new LazyVictorSPX(21);
 
 		liftMotorFollower.follow(liftMotorLeader);
 
@@ -250,7 +252,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		lift = Lift.getInstance();
 
 		// Create Lift Intake
-		liftIntakeMotor = new VictorSPX(31);
+		liftIntakeMotor = new LazyVictorSPX(31);
 
 		LiftIntake.initialize(liftIntakeMotor, LiftIntakeState.DEMOGORGON_HOLDING, hatchIntake_Piston,
 				cargoBumperSwitch);

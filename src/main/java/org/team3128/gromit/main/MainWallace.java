@@ -1,8 +1,10 @@
 package org.team3128.gromit.main;
 
 import com.ctre.phoenix.motorcontrol.InvertType;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+// import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+// import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+import org.team3128.common.hardware.motor.LazyTalonSRX;
+import org.team3128.common.hardware.motor.LazyVictorSPX;
 
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.utility.units.Angle;
@@ -52,10 +54,10 @@ public class MainWallace extends MainDeepSpaceRobot {
         cargoBumperSwitch = new DigitalInput(2);
 
         // Construct and Configure Drivetrain
-        leftDriveLeader = new TalonSRX(15);
-        leftDriveFollower = new VictorSPX(16);
-        rightDriveLeader = new TalonSRX(10);
-        rightDriveFollower = new VictorSPX(11);
+        leftDriveLeader = new LazyTalonSRX(15);
+        leftDriveFollower = new LazyVictorSPX(16);
+        rightDriveLeader = new LazyTalonSRX(10);
+        rightDriveFollower = new LazyVictorSPX(11);
 
         bottomLLHeight = 5.0 * Length.in;
         bottomLLAngle = 38.0 * Angle.DEGREES;

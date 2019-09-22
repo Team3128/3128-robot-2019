@@ -2,8 +2,10 @@ package org.team3128.gromit.main;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.InvertType;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+// import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+// import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+import org.team3128.common.hardware.motor.LazyTalonSRX;
+import org.team3128.common.hardware.motor.LazyVictorSPX;
 
 import org.team3128.common.hardware.limelight.StreamMode;
 import org.team3128.common.hardware.misc.Piston;
@@ -26,7 +28,7 @@ public class MainGromit extends MainDeepSpaceRobot {
     // Climber
     public Climber climber;
     public Piston climb_Piston;
-    public TalonSRX climbMotor;
+    public LazyTalonSRX climbMotor;
 
     private CommandGroup climbCommand;
 
@@ -70,10 +72,10 @@ public class MainGromit extends MainDeepSpaceRobot {
         topLLAngle = -12.0 * Angle.DEGREES;
 
         // Construct and Configure Drivetrain
-        leftDriveLeader = new TalonSRX(10);
-        leftDriveFollower = new VictorSPX(11);
-        rightDriveLeader = new TalonSRX(15);
-        rightDriveFollower = new VictorSPX(16);
+        leftDriveLeader = new LazyTalonSRX(10);
+        leftDriveFollower = new LazyVictorSPX(11);
+        rightDriveLeader = new LazyTalonSRX(15);
+        rightDriveFollower = new LazyVictorSPX(16);
 
         super.constructHardware();
 
@@ -89,7 +91,7 @@ public class MainGromit extends MainDeepSpaceRobot {
         rightDriveLeader.setSensorPhase(true);
 
         // Create the Climber
-        climbMotor = new TalonSRX(40);
+        climbMotor = new LazyTalonSRX(40);
         Climber.initialize(climb_Piston, climbMotor);
         climber = Climber.getInstance();
 
