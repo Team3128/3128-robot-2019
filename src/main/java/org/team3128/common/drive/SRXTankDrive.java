@@ -16,6 +16,7 @@ import org.team3128.common.utility.enums.Direction;
 import org.team3128.common.utility.units.Angle;
 import org.team3128.common.utility.units.AngularSpeed;
 import org.team3128.common.drive.base.ITankDrive;
+import org.team3128.common.hardware.motor.LazyTalonSRX;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,6 @@ import com.ctre.phoenix.motion.TrajectoryPoint;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.SlotConfiguration;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
@@ -51,13 +51,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  *
  */
 public class SRXTankDrive implements ITankDrive {
-	private TalonSRX leftMotors, rightMotors;
+	private LazyTalonSRX leftMotors, rightMotors;
 
-	public TalonSRX getLeftMotors() {
+	public LazyTalonSRX getLeftMotors() {
 		return leftMotors;
 	}
 
-	public TalonSRX getRightMotors() {
+	public LazyTalonSRX getRightMotors() {
 		return rightMotors;
 	}
 
@@ -166,12 +166,12 @@ public class SRXTankDrive implements ITankDrive {
 	 *                          drive sides, in native units per 100ms, of the robot
 	 *                          driving on the ground at 100% throttle
 	 */
-	public static void initialize(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase,
-			int robotMaxSpeed) {
+	public static void initialize(LazyTalonSRX leftMotors, LazyTalonSRX rightMotors, double wheelCircumfrence,
+			double wheelBase, int robotMaxSpeed) {
 		instance = new SRXTankDrive(leftMotors, rightMotors, wheelCircumfrence, wheelBase, robotMaxSpeed);
 	}
 
-	private SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double wheelBase,
+	private SRXTankDrive(LazyTalonSRX leftMotors, LazyTalonSRX rightMotors, double wheelCircumfrence, double wheelBase,
 			int robotMaxSpeed) {
 		this.leftMotors = leftMotors;
 		this.rightMotors = rightMotors;
@@ -970,7 +970,7 @@ public class SRXTankDrive implements ITankDrive {
 
 		PIDConstants innerPID, outerPID;
 
-		private TalonSRX outerMotors, innerMotors;
+		private LazyTalonSRX outerMotors, innerMotors;
 
 		private double vOuterCruise;
 		private double wCruise;
