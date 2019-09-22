@@ -1,10 +1,10 @@
 package org.team3128.common.hardware.limelight;
 
-import org.team3128.common.util.units.Angle;
+import org.team3128.common.utility.units.Angle;
 
 public class LimelightConstants {
-    public static final String[] valueKeys = {"tx", "ty", "ts", "ta", "thor", "tvert", "tshort", "tlong", "tv"};
-    public static final String[] valueKeysPnP = {"x", "y", "z", "pitch", "yaw", "roll"};
+    public static final String[] valueKeys = { "tx", "ty", "ts", "ta", "thor", "tvert", "tshort", "tlong", "tv" };
+    public static final String[] valueKeysPnP = { "x", "y", "z", "pitch", "yaw", "roll" };
 
     public static final double SCREEN_WIDTH = 320;
     public static final double SCREEN_HEIGHT = 240;

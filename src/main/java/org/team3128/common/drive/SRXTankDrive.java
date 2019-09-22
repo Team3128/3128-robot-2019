@@ -1,23 +1,21 @@
 package org.team3128.common.drive;
 
-import edu.wpi.first.wpilibj.DriverStation;
-import org.team3128.common.drive.routemaker.Routemaker;
-import org.team3128.common.drive.routemaker.ProfilePoint;
-import org.team3128.common.drive.routemaker.Waypoint;
+// import org.team3128.common.drive.routemaker.Routemaker;
+// import org.team3128.common.drive.routemaker.ProfilePoint;
+// import org.team3128.common.drive.routemaker.Waypoint;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.limelight.LimelightData;
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
 import org.team3128.common.hardware.navigation.Gyro;
-import org.team3128.common.narwhaldashboard.NarwhalDashboard;
-import org.team3128.common.util.Assert;
-import org.team3128.common.util.Constants;
-import org.team3128.common.util.Log;
-import org.team3128.common.util.RobotMath;
-import org.team3128.common.util.datatypes.PIDConstants;
-import org.team3128.common.util.enums.Direction;
-import org.team3128.common.util.units.Angle;
-import org.team3128.common.util.units.AngularSpeed;
-import org.team3128.common.util.units.Length;
+import org.team3128.common.utility.Assert;
+import org.team3128.common.utility.Constants;
+import org.team3128.common.utility.Log;
+import org.team3128.common.utility.RobotMath;
+import org.team3128.common.utility.datatypes.PIDConstants;
+import org.team3128.common.utility.enums.Direction;
+import org.team3128.common.utility.units.Angle;
+import org.team3128.common.utility.units.AngularSpeed;
+import org.team3128.common.drive.base.ITankDrive;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +29,6 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -554,20 +551,23 @@ public class SRXTankDrive implements ITankDrive {
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
 			double rightSpeed = (robotMaxSpeed * power * ((useScalars) ? rightSpeedScalar : 1.0));
 
-			// double angularVelocity = Math.toDegrees((rightSpeed - leftSpeed) / wheelBase);
+			// double angularVelocity = Math.toDegrees((rightSpeed - leftSpeed) /
+			// wheelBase);
 
-			// double ffLeft = 12.0 / RobotController.getBatteryVoltage() * leftA / (angularVelocity + leftB) + leftC;
+			// double ffLeft = 12.0 / RobotController.getBatteryVoltage() * leftA /
+			// (angularVelocity + leftB) + leftC;
 			// if (angularVelocity > ccwLeftCutoff) {
-			// 	ffLeft = leftFFCCW;
+			// ffLeft = leftFFCCW;
 			// } else if (angularVelocity < -cwLeftCutoff) {
-			// 	ffLeft = leftFFCW;
+			// ffLeft = leftFFCW;
 			// }
 
-			// double ffRight = 12.0 / RobotController.getBatteryVoltage() * rightA / (angularVelocity + rightB) + rightC;
+			// double ffRight = 12.0 / RobotController.getBatteryVoltage() * rightA /
+			// (angularVelocity + rightB) + rightC;
 			// if (angularVelocity < -cwRightCutoff) {
-			// 	ffRight = rightFFCW;
+			// ffRight = rightFFCW;
 			// } else if (angularVelocity > ccwRightCutoff) {
-			// 	ffRight = rightFFCCW;
+			// ffRight = rightFFCCW;
 			// }
 
 			// leftMotors.config_kF(0, ffLeft);
@@ -820,128 +820,98 @@ public class SRXTankDrive implements ITankDrive {
 		}
 	}
 
-	public class CmdStaticRouteDrive extends CmdMotionProfileMove {
-		private MotionProfileStatus leftStatus, rightStatus;
-		private Waypoint[] waypoints;
-		private double power;
-
-		private Notifier processNotifier;
-
-		public CmdStaticRouteDrive(double power, double timeoutMs, Waypoint... waypoints) {
-			super(timeoutMs);
-
-			this.power = power;
-			this.waypoints = waypoints;
-
-			leftStatus = new MotionProfileStatus();
-			leftStatus.isLast = false;
-			rightStatus = new MotionProfileStatus();
-			rightStatus.isLast = false;
-
-			processNotifier = new Notifier(() -> {
-				leftMotors.processMotionProfileBuffer();
-				rightMotors.processMotionProfileBuffer();
-			});
-		}
-
-		@Override
-		protected void initialize() {
-			super.initialize();
-
-			leftMotors.selectProfileSlot(0, 0);
-			rightMotors.selectProfileSlot(0, 0);
-
-			leftMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
-			rightMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs / 2.3));
-
-			Routemaker rm = new Routemaker(power, waypoints);
-
-			double speed;
-
-			TrajectoryPoint trajPoint = new TrajectoryPoint();
-			trajPoint.profileSlotSelect0 = 0;
-			trajPoint.zeroPos = true;
-			trajPoint.isLastPoint = false;
-
-			ProfilePoint profilePoint;
-
-			boolean first = true;
-
-			do {
-				speed = 1.0;
-				if (rm.s < 0.2) {
-					speed = (0.1 + rm.s) / 0.3;
-				} else if (rm.s > 0.8) {
-					speed = (1.1 - rm.s) / 0.7;
-				}
-
-				profilePoint = rm.getNextPoint(speed);
-				// System.out.println(profilePoint.x + "," + profilePoint.y + " (" +
-				// profilePoint.durationMs + ")");
-				System.out.println(profilePoint.leftDistance + "," + profilePoint.rightDistance);
-
-				SmartDashboard.putNumber("Desired Left", profilePoint.leftDistance);
-				SmartDashboard.putNumber("Desired Right", profilePoint.rightDistance);
-
-				if (profilePoint.last)
-					trajPoint.isLastPoint = true;
-
-				trajPoint.timeDur = profilePoint.durationMs;
-
-				trajPoint.position = profilePoint.leftDistance;
-				trajPoint.velocity = profilePoint.leftSpeed;
-				leftMotors.pushMotionProfileTrajectory(trajPoint);
-
-				// System.out.println("left: " + trajPoint.position);
-
-				trajPoint.position = profilePoint.rightDistance;
-				trajPoint.velocity = profilePoint.rightSpeed;
-				rightMotors.pushMotionProfileTrajectory(trajPoint);
-
-				// System.out.println("right: " + trajPoint.position);
-				// System.out.println("");
-
-				if (first) {
-					processNotifier.startPeriodic(Routemaker.durationSec / 2);
-
-					leftMotors.set(ControlMode.MotionProfile, 1);
-					rightMotors.set(ControlMode.MotionProfile, 1);
-
-					first = false;
-				}
-
-			} while (!profilePoint.last);
-		}
-
-		@Override
-		protected synchronized boolean isFinished() {
-			leftMotors.getMotionProfileStatus(leftStatus);
-			rightMotors.getMotionProfileStatus(rightStatus);
-
-			if (super.isFinished()) {
-				Log.info("CmdStaticRouteDrive", "Timed out.");
-			}
-
-			return super.isFinished() /* || leftStatus.isLast && rightStatus.isLast */;
-		}
-
-		@Override
-		public void interrupted() {
-			end();
-
-			Log.info("CmdStaticRouteDrive", "Interrupted.");
-
-		}
-
-		@Override
-		protected synchronized void end() {
-			super.end();
-
-			processNotifier.close();
-			Log.info("CmdStaticRouteDrive", "Finished.");
-		}
-	}
-
+	/*
+	 * public class CmdStaticRouteDrive extends CmdMotionProfileMove { private
+	 * MotionProfileStatus leftStatus, rightStatus; private Waypoint[] waypoints;
+	 * private double power;
+	 * 
+	 * private Notifier processNotifier;
+	 * 
+	 * public CmdStaticRouteDrive(double power, double timeoutMs, Waypoint...
+	 * waypoints) { super(timeoutMs);
+	 * 
+	 * this.power = power; this.waypoints = waypoints;
+	 * 
+	 * leftStatus = new MotionProfileStatus(); leftStatus.isLast = false;
+	 * rightStatus = new MotionProfileStatus(); rightStatus.isLast = false;
+	 * 
+	 * processNotifier = new Notifier(() -> {
+	 * leftMotors.processMotionProfileBuffer();
+	 * rightMotors.processMotionProfileBuffer(); }); }
+	 * 
+	 * @Override protected void initialize() { super.initialize();
+	 * 
+	 * leftMotors.selectProfileSlot(0, 0); rightMotors.selectProfileSlot(0, 0);
+	 * 
+	 * leftMotors.changeMotionControlFramePeriod((int) (Routemaker.durationMs /
+	 * 2.3)); rightMotors.changeMotionControlFramePeriod((int)
+	 * (Routemaker.durationMs / 2.3));
+	 * 
+	 * Routemaker rm = new Routemaker(power, waypoints);
+	 * 
+	 * double speed;
+	 * 
+	 * TrajectoryPoint trajPoint = new TrajectoryPoint();
+	 * trajPoint.profileSlotSelect0 = 0; trajPoint.zeroPos = true;
+	 * trajPoint.isLastPoint = false;
+	 * 
+	 * ProfilePoint profilePoint;
+	 * 
+	 * boolean first = true;
+	 * 
+	 * do { speed = 1.0; if (rm.s < 0.2) { speed = (0.1 + rm.s) / 0.3; } else if
+	 * (rm.s > 0.8) { speed = (1.1 - rm.s) / 0.7; }
+	 * 
+	 * profilePoint = rm.getNextPoint(speed); // System.out.println(profilePoint.x +
+	 * "," + profilePoint.y + " (" + // profilePoint.durationMs + ")");
+	 * System.out.println(profilePoint.leftDistance + "," +
+	 * profilePoint.rightDistance);
+	 * 
+	 * SmartDashboard.putNumber("Desired Left", profilePoint.leftDistance);
+	 * SmartDashboard.putNumber("Desired Right", profilePoint.rightDistance);
+	 * 
+	 * if (profilePoint.last) trajPoint.isLastPoint = true;
+	 * 
+	 * trajPoint.timeDur = profilePoint.durationMs;
+	 * 
+	 * trajPoint.position = profilePoint.leftDistance; trajPoint.velocity =
+	 * profilePoint.leftSpeed; leftMotors.pushMotionProfileTrajectory(trajPoint);
+	 * 
+	 * // System.out.println("left: " + trajPoint.position);
+	 * 
+	 * trajPoint.position = profilePoint.rightDistance; trajPoint.velocity =
+	 * profilePoint.rightSpeed; rightMotors.pushMotionProfileTrajectory(trajPoint);
+	 * 
+	 * // System.out.println("right: " + trajPoint.position); //
+	 * System.out.println("");
+	 * 
+	 * if (first) { processNotifier.startPeriodic(Routemaker.durationSec / 2);
+	 * 
+	 * leftMotors.set(ControlMode.MotionProfile, 1);
+	 * rightMotors.set(ControlMode.MotionProfile, 1);
+	 * 
+	 * first = false; }
+	 * 
+	 * } while (!profilePoint.last); }
+	 * 
+	 * @Override protected synchronized boolean isFinished() {
+	 * leftMotors.getMotionProfileStatus(leftStatus);
+	 * rightMotors.getMotionProfileStatus(rightStatus);
+	 * 
+	 * if (super.isFinished()) { Log.info("CmdStaticRouteDrive", "Timed out."); }
+	 * 
+	 * return super.isFinished(); // || leftStatus.isLast && rightStatus.isLast }
+	 * 
+	 * @Override public void interrupted() { end();
+	 * 
+	 * Log.info("CmdStaticRouteDrive", "Interrupted.");
+	 * 
+	 * }
+	 * 
+	 * @Override protected synchronized void end() { super.end();
+	 * 
+	 * processNotifier.close(); Log.info("CmdStaticRouteDrive", "Finished."); } }
+	 */
 	public class CmdDriveUntilStop extends Command {
 		double power;
 		double timeout;
@@ -957,7 +927,7 @@ public class SRXTankDrive implements ITankDrive {
 		@Override
 		protected void initialize() {
 			tankDrive(power, power, true);
-			
+
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
@@ -967,10 +937,11 @@ public class SRXTankDrive implements ITankDrive {
 
 		@Override
 		protected boolean isFinished() {
-			if (timeSinceInitialized() < 0.5 * timeout) return false;
+			if (timeSinceInitialized() < 0.5 * timeout)
+				return false;
 
-			//return Math.abs(leftMotors.getSelectedSensorVelocity()) < 200
-			//		&& Math.abs(rightMotors.getSelectedSensorVelocity()) < 200 || 
+			// return Math.abs(leftMotors.getSelectedSensorVelocity()) < 200
+			// && Math.abs(rightMotors.getSelectedSensorVelocity()) < 200 ||
 			return isTimedOut();
 		}
 
@@ -1091,7 +1062,8 @@ public class SRXTankDrive implements ITankDrive {
 		 * @param offsetPID
 		 * @param timeoutMs
 		 */
-		public CmdTargetAlignSimple(Gyro gyro, Limelight limelight, double feedForwardPower, PIDConstants offsetPID, int timeoutMs) {
+		public CmdTargetAlignSimple(Gyro gyro, Limelight limelight, double feedForwardPower, PIDConstants offsetPID,
+				int timeoutMs) {
 			super(timeoutMs / 1000.0);
 
 			this.feedForwardPower = feedForwardPower;
@@ -1140,35 +1112,36 @@ public class SRXTankDrive implements ITankDrive {
 				}
 				rightMotors.set(ControlMode.PercentOutput, 0);
 				leftMotors.set(ControlMode.PercentOutput, 0);
-			} 
+			}
 			if (data.tv() == 1) {
 				currentHorizontalOffset = data.tx();
 
 				currentTime = RobotController.getFPGATime() / 1000000.0;
 				currentError = TARGET_HORIZONTAL_OFFSET - currentHorizontalOffset;
-				
+
 				/**
-				 * PID feedback loop for the left and right powers based on the horizontal offset errors.
+				 * PID feedback loop for the left and right powers based on the horizontal
+				 * offset errors.
 				 */
 				feedbackPower = 0;
 
 				feedbackPower += offsetPID.kP * currentError;
-				feedbackPower += offsetPID.kD * (currentError - previousError)/(currentTime - previousTime);
-				
+				feedbackPower += offsetPID.kD * (currentError - previousError) / (currentTime - previousTime);
+
 				rightPower = feedForwardPower - feedbackPower;
-				leftPower =  feedForwardPower + feedbackPower;
+				leftPower = feedForwardPower + feedbackPower;
 				if (leftPower > rightPower) {
-					speedScalar = 0.5/leftPower;
+					speedScalar = 0.5 / leftPower;
 					leftPower = leftPower * speedScalar;
 					rightPower = rightPower * speedScalar;
 				} else {
-					speedScalar = 0.5/rightPower;
+					speedScalar = 0.5 / rightPower;
 					leftPower = leftPower * speedScalar;
 					rightPower = rightPower * speedScalar;
 				}
-				//debug
+				// debug
 				Log.info("CmdDynamicAdjust", "L: " + leftPower + "; R: " + rightPower);
-				
+
 				rightMotors.set(ControlMode.PercentOutput, rightPower);
 				leftMotors.set(ControlMode.PercentOutput, leftPower);
 
@@ -1176,14 +1149,13 @@ public class SRXTankDrive implements ITankDrive {
 				previousError = currentError;
 			}
 
-			//debug
-			if(isTimedOut()) {
+			// debug
+			if (isTimedOut()) {
 				Log.info("CmdTargetAlignSimple", "Timed out.");
 			}
-			if(data.tx() == 0) {
+			if (data.tx() == 0) {
 				Log.info("CmdTargetAlignSimple", "tx = 0");
 			}
-			
 
 			return isTimedOut();
 		}
@@ -1192,20 +1164,22 @@ public class SRXTankDrive implements ITankDrive {
 		protected void interrupted() {
 			end();
 		}
-		
+
 		@Override
 		protected void end() {
 			stopMovement();
 		}
-		
+
 	}
+
 	/**
-	* Wrapper object to hold all needed values to fit wheelbase to radius.
-	*/
+	 * Wrapper object to hold all needed values to fit wheelbase to radius.
+	 */
 	public static class Wheelbase {
 		public double wheelbase, radius, angularVelocity, linearVelocity, vL, vR;
-		
-		public Wheelbase(double wheelbase, double radius, double angularVelocity, double linearVelocity, double vL, double vR) {
+
+		public Wheelbase(double wheelbase, double radius, double angularVelocity, double linearVelocity, double vL,
+				double vR) {
 			this.wheelbase = wheelbase;
 			this.radius = radius;
 			this.angularVelocity = angularVelocity;
@@ -1214,47 +1188,53 @@ public class SRXTankDrive implements ITankDrive {
 			this.vR = vR;
 		}
 	}
-	
+
 	/**
-	* Wrapper for holding wheelbase set values and the average for each time the command is run.
-	* Mainly used for ease of printing data is csv format.
-	*/
+	 * Wrapper for holding wheelbase set values and the average for each time the
+	 * command is run. Mainly used for ease of printing data is csv format.
+	 */
 	public static class WheelbaseSet {
 		private List<Wheelbase> wbSet = new ArrayList<Wheelbase>();
 		public Wheelbase wbAvg;
-		
+
 		/**
-		* Add wheelbase to ongoing set of wheelbase/radius/angularVel/linearVel/vL/vR values.
-		* @param wheelbase
-		* @param radius
-		* @param angularVelocity
-		* @param linearVelocity
-		* @param vL
-		* @param vR
-		*/
-		public void addWheelbase(double wheelbase, double radius, double angularVelocity, double linearVelocity, double vL, double vR) {
-			wbSet.add(new Wheelbase(wheelbase, radius, angularVelocity,linearVelocity, vL, vR));
+		 * Add wheelbase to ongoing set of wheelbase/radius/angularVel/linearVel/vL/vR
+		 * values.
+		 * 
+		 * @param wheelbase
+		 * @param radius
+		 * @param angularVelocity
+		 * @param linearVelocity
+		 * @param vL
+		 * @param vR
+		 */
+		public void addWheelbase(double wheelbase, double radius, double angularVelocity, double linearVelocity,
+				double vL, double vR) {
+			wbSet.add(new Wheelbase(wheelbase, radius, angularVelocity, linearVelocity, vL, vR));
 		}
-		
+
 		/**
-		* Populate a wheelbase object with the set of averaged values.
-		* @param wheelbase
-		* @param radius
-		* @param angularVelocity
-		* @param linearVelocity
-		* @param vL
-		* @param vR
-		*/
-		public void setAverage(double wheelbase, double radius, double angularVelocity, double linearVelocity, double vL, double vR) {
-			wbAvg = new Wheelbase(wheelbase, radius, angularVelocity,linearVelocity, vL, vR);
+		 * Populate a wheelbase object with the set of averaged values.
+		 * 
+		 * @param wheelbase
+		 * @param radius
+		 * @param angularVelocity
+		 * @param linearVelocity
+		 * @param vL
+		 * @param vR
+		 */
+		public void setAverage(double wheelbase, double radius, double angularVelocity, double linearVelocity,
+				double vL, double vR) {
+			wbAvg = new Wheelbase(wheelbase, radius, angularVelocity, linearVelocity, vL, vR);
 		}
-		
+
 		/**
-		* @return String in csv format populated with the entire dataset of wheelbase/radius/angularVel/linearVel/vL/vR values.
-		*/
+		 * @return String in csv format populated with the entire dataset of
+		 *         wheelbase/radius/angularVel/linearVel/vL/vR values.
+		 */
 		public String getAllCSV() {
 			String csv = "";
-			
+
 			for (Wheelbase wb : wbSet) {
 				csv += wb.wheelbase + ",";
 				csv += wb.radius + ",";
@@ -1263,100 +1243,103 @@ public class SRXTankDrive implements ITankDrive {
 				csv += wb.vL + ",";
 				csv += wb.vR + "\n";
 			}
-			
+
 			return csv;
 		}
-		
+
 		/**
-		* @return String in csv format populated with the wheelbase object of averaged(& within range) wheelbase/radius/angularVel/linearVel/vL/vR values.
-		*/
+		 * @return String in csv format populated with the wheelbase object of
+		 *         averaged(& within range) wheelbase/radius/angularVel/linearVel/vL/vR
+		 *         values.
+		 */
 		public String getAvgCSV() {
 			String csv = "";
-			
+
 			csv += wbAvg.wheelbase + ",";
 			csv += wbAvg.radius + ",";
 			csv += wbAvg.angularVelocity + ",";
 			csv += wbAvg.linearVelocity + ",";
 			csv += wbAvg.vL + ",";
 			csv += wbAvg.vR + "\n";
-			
+
 			return csv;
 		}
 	}
-	
-	
+
 	/**
-	* Calibration command to determine effective wheelbase of the robot. This is
-	* to account for the field material scrubbing against the wheels, resisting a
-	* turning motion.
-	*
-	* The effective wheelbase should always be larger than the measured wheelbase,
-	* but it will differ by a different factor for each robot. For instance, a
-	* 6-wheel tank drive with corner omnis will have a relatively small factor of
-	* difference, while a tank drive with pneumatic wheels will have a very large
-	* difference.
-	*/
+	 * Calibration command to determine effective wheelbase of the robot. This is to
+	 * account for the field material scrubbing against the wheels, resisting a
+	 * turning motion.
+	 *
+	 * The effective wheelbase should always be larger than the measured wheelbase,
+	 * but it will differ by a different factor for each robot. For instance, a
+	 * 6-wheel tank drive with corner omnis will have a relatively small factor of
+	 * difference, while a tank drive with pneumatic wheels will have a very large
+	 * difference.
+	 */
 	public class CmdCalculateWheelbase extends Command {
-		private final double VELOCITY_PLATEAU_RANGE = 25;//2;
+		private final double VELOCITY_PLATEAU_RANGE = 25;// 2;
 		double leftPower, rightPower;
-		
+
 		double wheelbase, radius, linearVelocity, angularVelocity, vL, vR;
 		double wheelbaseSum, radiusSum, linearVelocitySum, angularVelocitySum, vLSum, vRSum;
-		
+
 		WheelbaseSet wheelbaseSet;
 		Gyro gyro;
-		
+
 		int executeCount;
 		int inRangeCount;
-		
+
 		double targetRadius;
+
 		/**
-		* @param wheelbaseSet
-		* @param leftPower
-		* @param rightPower
-		* @param gyro
-		* @param durationMs
-		*/
-		public CmdCalculateWheelbase(WheelbaseSet wheelbaseSet, double leftPower, double rightPower, Gyro gyro, double durationMs) {
+		 * @param wheelbaseSet
+		 * @param leftPower
+		 * @param rightPower
+		 * @param gyro
+		 * @param durationMs
+		 */
+		public CmdCalculateWheelbase(WheelbaseSet wheelbaseSet, double leftPower, double rightPower, Gyro gyro,
+				double durationMs) {
 			super(durationMs / 1000.0);
-			
+
 			this.wheelbaseSet = wheelbaseSet;
-			
+
 			this.leftPower = leftPower;
 			this.rightPower = rightPower;
-			
+
 			this.gyro = gyro;
 		}
-		
+
 		@Override
 		protected void initialize() {
-			//might need to account for voltage:
-			//voltage = RobotController.getBatteryVoltage(); 
+			// might need to account for voltage:
+			// voltage = RobotController.getBatteryVoltage();
 			tankDrive(leftPower, rightPower);
-			
+
 			double currentRadius = 0;
 			double previousRadius = 0;
 			int plateauCount = 0;
-			
+
 			while (true) {
-				vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
-				vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
-				linearVelocity = (vL + vR)/2;
+				vL = getLeftMotors().getSelectedSensorVelocity() * 10 / 4096 * wheelCircumfrence;
+				vR = getRightMotors().getSelectedSensorVelocity() * 10 / 4096 * wheelCircumfrence;
+				linearVelocity = (vL + vR) / 2;
 				angularVelocity = Math.abs(Math.toRadians(gyro.getRate()));
-				currentRadius = linearVelocity/angularVelocity;
-				
+				currentRadius = linearVelocity / angularVelocity;
+
 				Log.info("CmdCalculateWheelbase", "Plateau Radius: " + currentRadius);
-				
+
 				if (Math.abs(currentRadius - previousRadius) < VELOCITY_PLATEAU_RANGE) {
 					plateauCount += 1;
-				}
-				else {
+				} else {
 					plateauCount = 0;
 				}
-				
-				if (plateauCount > 10) break;
+
+				if (plateauCount > 10)
+					break;
 				previousRadius = currentRadius;
-				
+
 				try {
 					Thread.sleep(10);
 				} catch (InterruptedException e) {
@@ -1365,67 +1348,67 @@ public class SRXTankDrive implements ITankDrive {
 			}
 			radiusSum = 0;
 			int radiusCount = 0;
-			
+
 			for (int i = 0; i < 25; i++) {
-				vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
-				vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
-				
-				linearVelocity = (vL + vR)/2;
+				vL = getLeftMotors().getSelectedSensorVelocity() * 10 / 4096 * wheelCircumfrence;
+				vR = getRightMotors().getSelectedSensorVelocity() * 10 / 4096 * wheelCircumfrence;
+
+				linearVelocity = (vL + vR) / 2;
 				angularVelocity = Math.abs(Math.toRadians(gyro.getRate()));
-				
-				currentRadius = linearVelocity/angularVelocity;
-				
+
+				currentRadius = linearVelocity / angularVelocity;
+
 				radiusSum += currentRadius;
 				radiusCount += 1;
 			}
-			
+
 			targetRadius = radiusSum / radiusCount;
 			radiusSum = 0;
-			
+
 		}
-		
+
 		@Override
 		protected void execute() {
-			//radiusSum = 0;
+			// radiusSum = 0;
 			try {
 				Thread.sleep(20);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			executeCount++; 
-			
-			vL = getLeftMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
-			vR = getRightMotors().getSelectedSensorVelocity() * 10/4096 * wheelCircumfrence;
-			
-			linearVelocity = (vL + vR)/2;
+			executeCount++;
+
+			vL = getLeftMotors().getSelectedSensorVelocity() * 10 / 4096 * wheelCircumfrence;
+			vR = getRightMotors().getSelectedSensorVelocity() * 10 / 4096 * wheelCircumfrence;
+
+			linearVelocity = (vL + vR) / 2;
 			angularVelocity = Math.abs(Math.toRadians(gyro.getRate()));
-			
-			radius = linearVelocity/angularVelocity;
-			wheelbase = Math.abs(vR - vL)/angularVelocity;
-			
+
+			radius = linearVelocity / angularVelocity;
+			wheelbase = Math.abs(vR - vL) / angularVelocity;
+
 			Log.info("CmdCalculateWheelbase", "Loop radius = " + radius);
-			
-			if(RobotMath.isWithin(radius, targetRadius, 25.0)) {
+
+			if (RobotMath.isWithin(radius, targetRadius, 25.0)) {
 				wheelbaseSet.addWheelbase(wheelbase, radius, angularVelocity, linearVelocity, vL, vR);
 			}
-			
-			if(RobotMath.isWithin(radius, targetRadius, 10.0)) {
+
+			if (RobotMath.isWithin(radius, targetRadius, 10.0)) {
 				wheelbaseSum += wheelbase;
 				radiusSum += radius;
 				angularVelocitySum += angularVelocity;
 				linearVelocitySum += linearVelocity;
 				vLSum += vL;
 				vRSum += vR;
-				
+
 				inRangeCount++;
-			}	
+			}
 		}
-		
+
 		@Override
 		protected boolean isFinished() {
 			return isTimedOut();
 		}
-		
+
 		@Override
 		protected void end() {
 			stopMovement();
@@ -1435,151 +1418,145 @@ public class SRXTankDrive implements ITankDrive {
 			double avgLinearVelocity = linearVelocity / inRangeCount;
 			double avgVL = vLSum / inRangeCount;
 			double avgVR = vRSum / inRangeCount;
-			
-			
+
 			Log.info("CmdCalculateWheelbase",
-			"Completed...\n" +
-			"\tTarget Radius: " + targetRadius + "\n" +
-			"\tRuntime Information:\n" +
-			"\t\tTotal Loops: " + executeCount + "\n" +
-			"\t\tIn-Range Loops: " + inRangeCount + "\n" +
-			"\tFinal Average Values\n" +
-			"\t\tRadius: " + avgRadius + "\n" +
-			"\t\tWheelbase: " + avgWheelbase + "\n" +
-			"\t\tAngular Velocity: " + avgAngularVelocity + "\n" +
-			"\t\tLinear Velocity: " + avgLinearVelocity + "\n" +
-			"\t\tLeft Velocity: " + avgVL + "\n" +
-			"\t\tRight Velocity: " + avgVR
-			);
+					"Completed...\n" + "\tTarget Radius: " + targetRadius + "\n" + "\tRuntime Information:\n"
+							+ "\t\tTotal Loops: " + executeCount + "\n" + "\t\tIn-Range Loops: " + inRangeCount + "\n"
+							+ "\tFinal Average Values\n" + "\t\tRadius: " + avgRadius + "\n" + "\t\tWheelbase: "
+							+ avgWheelbase + "\n" + "\t\tAngular Velocity: " + avgAngularVelocity + "\n"
+							+ "\t\tLinear Velocity: " + avgLinearVelocity + "\n" + "\t\tLeft Velocity: " + avgVL + "\n"
+							+ "\t\tRight Velocity: " + avgVR);
 			wheelbaseSet.setAverage(avgWheelbase, avgRadius, avgAngularVelocity, avgLinearVelocity, avgVL, avgVR);
 		}
 	}
-	
+
 	public static class FeedForwardPowerMultiplier {
 		public double angularVelocity, ffpL, ffpR;
-		
+
 		public FeedForwardPowerMultiplier(double angularVelocity, double ffpL, double ffpR) {
 			this.angularVelocity = angularVelocity;
-			
+
 			this.ffpL = ffpL;
 			this.ffpR = ffpR;
 		}
 	}
-	
+
 	public static class FeedForwardPowerMultiplierSet {
 		private List<FeedForwardPowerMultiplier> ffpms = new ArrayList<FeedForwardPowerMultiplier>();
 		public FeedForwardPowerMultiplier ffpmAvg;
-		
+
 		public void addFeedForwardPowerMultiplier(double angularVelocity, double ffpL, double ffpR) {
 			ffpms.add(new FeedForwardPowerMultiplier(angularVelocity, ffpL, ffpR));
 		}
-		
+
 		public void setAverage(double angularVelocity, double ffpL, double ffpR) {
 			ffpmAvg = new FeedForwardPowerMultiplier(angularVelocity, ffpL, ffpR);
 		}
-		
+
 		public String getAllCSV() {
 			String csv = "";
-			
+
 			for (FeedForwardPowerMultiplier ffpm : ffpms) {
 				csv += ffpm.angularVelocity + ",";
 				csv += ffpm.ffpL + ",";
 				csv += ffpm.ffpR + "\n";
 			}
-			
+
 			return csv;
 		}
+
 		public String getAvgCSV() {
 			String csv = "";
-			
+
 			csv += ffpmAvg.angularVelocity + ",";
 			csv += ffpmAvg.ffpL + ",";
 			csv += ffpmAvg.ffpR + "\n";
-			
+
 			return csv;
 		}
 	}
-	
+
 	public class CmdGetFeedForwardPowerMultiplier extends Command {
 		private final double VELOCITY_PLATEAU_RANGE = 2;
-		
+
 		double leftPower, rightPower;
-		
+
 		double voltage;
-		
+
 		double angularVelocity, angularVelocitySum;
 		double targetAngularVelocity;
-		
+
 		double vL, vR;
 		double ffpmLSum, ffpmRSum;
-		
+
 		double ffpmL, ffpmR;
-		
+
 		Gyro gyro;
-		
+
 		int inRangeCount;
 		int executeCount;
-		
+
 		FeedForwardPowerMultiplierSet feedForwardPowerMultiplierSet;
-		
-		public CmdGetFeedForwardPowerMultiplier(FeedForwardPowerMultiplierSet feedForwardPowerMultiplierSet, Gyro gyro, double leftPower, double rightPower, int durationMs) {
+
+		public CmdGetFeedForwardPowerMultiplier(FeedForwardPowerMultiplierSet feedForwardPowerMultiplierSet, Gyro gyro,
+				double leftPower, double rightPower, int durationMs) {
 			super(durationMs / 1000.0);
-			
+
 			this.feedForwardPowerMultiplierSet = feedForwardPowerMultiplierSet;
-			
+
 			this.leftPower = leftPower;
 			this.rightPower = rightPower;
-			
+
 			this.gyro = gyro;
 		}
-		
+
 		@Override
 		protected void initialize() {
 			voltage = RobotController.getBatteryVoltage();
 			tankDrive(leftPower, rightPower);
-			
+
 			double currentAngularVelocity = 0;
 			double previousAngularVelocity = 0;
 			int plateauCount = 0;
-			
+
 			while (true) {
 				currentAngularVelocity = gyro.getRate();
 				Log.info("CmdGetFeedForwardPowerMultiplier", "Plateau Velocity: " + currentAngularVelocity);
-				
+
 				if (Math.abs(gyro.getRate() - previousAngularVelocity) < VELOCITY_PLATEAU_RANGE) {
 					plateauCount += 1;
-				}
-				else {
+				} else {
 					plateauCount = 0;
 				}
-				
-				if (plateauCount > 10) break;
+
+				if (plateauCount > 10)
+					break;
 				previousAngularVelocity = currentAngularVelocity;
-				
+
 				try {
 					Thread.sleep(10);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
-			
+
 			double angularVelocitySum = 0;
 			int angularVelocityCount = 0;
-			
+
 			double rate;
-			
+
 			for (int i = 0; i < 25; i++) {
 				rate = gyro.getRate();
-				
+
 				angularVelocitySum += rate;
 				angularVelocityCount += 1;
-				
+
 				// Log.info("CmdGetFeedForwardPowerMultiplier", "" + rate);
 			}
-			
+
 			targetAngularVelocity = angularVelocitySum / angularVelocityCount;
 		}
-		
+
 		@Override
 		protected void execute() {
 			try {
@@ -1587,58 +1564,54 @@ public class SRXTankDrive implements ITankDrive {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			
+
 			executeCount += 1;
-			
+
 			vL = getLeftMotors().getSelectedSensorVelocity();
 			vR = getRightMotors().getSelectedSensorVelocity();
-			
+
 			angularVelocity = gyro.getRate();
 			Log.info("CmdGetFeedForwardPowerMultiplier", "Loop omega = " + angularVelocity);
-			
-			ffpmL = leftPower/(vL * voltage/12.0);
-			ffpmR = rightPower/(vR * voltage/12.0);
-			
+
+			ffpmL = leftPower / (vL * voltage / 12.0);
+			ffpmR = rightPower / (vR * voltage / 12.0);
+
 			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 35.0)) {
 				feedForwardPowerMultiplierSet.addFeedForwardPowerMultiplier(angularVelocity, ffpmL, ffpmR);
 			}
-			
+
 			if (RobotMath.isWithin(angularVelocity, targetAngularVelocity, 10.0)) {
 				angularVelocitySum += angularVelocity;
-				
+
 				ffpmLSum += ffpmL;
 				ffpmRSum += ffpmR;
-				
+
 				inRangeCount += 1;
 			}
 		}
-		
+
 		@Override
 		protected boolean isFinished() {
 			return isTimedOut();
 		}
-		
+
 		@Override
 		protected void end() {
 			stopMovement();
-			
+
 			double avgAngularVelocity = angularVelocitySum / inRangeCount;
 			double ffpmLAvg = ffpmLSum / inRangeCount;
 			double ffpmRAvg = ffpmRSum / inRangeCount;
-			
+
 			Log.info("CmdGetFeedForwardPowerMultiplier",
-			"Completed...\n" +
-			"\tTarget Angular Velocity: " + targetAngularVelocity + "\n" +
-			"\tRuntime Information:\n" +
-			"\t\tTotal Loops: " + executeCount + "\n" +
-			"\t\tIn-Range Loops: " + inRangeCount + "\n" +
-			"\tFinal Average Values\n" +
-			"\t\tAngular Velocity: " + avgAngularVelocity + "\n" +
-			"\t\tLeft FFPM: " + ffpmLAvg + "\n" +
-			"\t\tRight FFPM: " + ffpmRAvg
-			);
-			
-			feedForwardPowerMultiplierSet.setAverage(angularVelocitySum/inRangeCount, ffpmLSum/inRangeCount, ffpmRSum/inRangeCount);
+					"Completed...\n" + "\tTarget Angular Velocity: " + targetAngularVelocity + "\n"
+							+ "\tRuntime Information:\n" + "\t\tTotal Loops: " + executeCount + "\n"
+							+ "\t\tIn-Range Loops: " + inRangeCount + "\n" + "\tFinal Average Values\n"
+							+ "\t\tAngular Velocity: " + avgAngularVelocity + "\n" + "\t\tLeft FFPM: " + ffpmLAvg + "\n"
+							+ "\t\tRight FFPM: " + ffpmRAvg);
+
+			feedForwardPowerMultiplierSet.setAverage(angularVelocitySum / inRangeCount, ffpmLSum / inRangeCount,
+					ffpmRSum / inRangeCount);
 		}
 	}
 }

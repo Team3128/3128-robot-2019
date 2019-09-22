@@ -9,10 +9,10 @@ import org.team3128.common.hardware.limelight.LimelightKey;
 import org.team3128.common.hardware.limelight.StreamMode;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
-import org.team3128.common.util.Log;
-import org.team3128.common.util.RobotMath;
-import org.team3128.common.util.datatypes.PIDConstants;
-import org.team3128.common.util.units.Angle;
+import org.team3128.common.utility.Log;
+import org.team3128.common.utility.RobotMath;
+import org.team3128.common.utility.datatypes.PIDConstants;
+import org.team3128.common.utility.units.Angle;
 
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.command.Command;
@@ -68,10 +68,10 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
 
     private HorizontalOffsetFeedbackDriveState aimState = HorizontalOffsetFeedbackDriveState.SEARCHING;
 
-    public CmdHorizontalOffsetFeedbackDrive(
-            Gyro gyro, Limelight txLimelight, Limelight distanceLimelight, DriveCommandRunning cmdRunning, double targetHeight,
-            PIDConstants visionPID, double goalHorizontalOffset, double decelerationStartDistance, double decelerationEndDistance,
-            PIDConstants blindPID, double blindThreshold) {//, boolean isLowHatch) {
+    public CmdHorizontalOffsetFeedbackDrive(Gyro gyro, Limelight txLimelight, Limelight distanceLimelight,
+            DriveCommandRunning cmdRunning, double targetHeight, PIDConstants visionPID, double goalHorizontalOffset,
+            double decelerationStartDistance, double decelerationEndDistance, PIDConstants blindPID,
+            double blindThreshold) {// , boolean isLowHatch) {
 
         this.gyro = gyro;
         this.txLimelight = txLimelight;
@@ -100,7 +100,7 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
 
         txLimelight.setLEDMode(LEDMode.ON);
         distanceLimelight.setLEDMode(LEDMode.ON);
-        if(isLowHatch){
+        if (isLowHatch) {
             distanceLimelight.setStreamMode(StreamMode.LIMELIGHT_CAMERA);
         }
         cmdRunning.isRunning = false;
@@ -109,110 +109,109 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     @Override
     protected void execute() {
         switch (aimState) {
-            case SEARCHING:   
-                NarwhalDashboard.put("align_status", "searching");
-                if (txLimelight.hasValidTarget() && distanceLimelight.hasValidTarget()) {
-                    targetFoundCount += 1;
+        case SEARCHING:
+            NarwhalDashboard.put("align_status", "searching");
+            if (txLimelight.hasValidTarget() && distanceLimelight.hasValidTarget()) {
+                targetFoundCount += 1;
+            } else {
+                targetFoundCount = 0;
+            }
+
+            if (targetFoundCount > 5) {
+                Log.info("CmdAutoAim", "Target found.");
+                Log.info("CmdAutoAim", "Switching to FEEDBACK...");
+
+                drive.tankDrive(visionPID.kF, visionPID.kF);
+
+                currentHorizontalOffset = txLimelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
+
+                previousTime = RobotController.getFPGATime();
+                previousError = goalHorizontalOffset - currentHorizontalOffset;
+
+                cmdRunning.isRunning = true;
+
+                aimState = HorizontalOffsetFeedbackDriveState.FEEDBACK;
+            }
+
+            break;
+
+        case FEEDBACK:
+            NarwhalDashboard.put("align_status", "feedback");
+            if (!txLimelight.hasValidTarget() && !distanceLimelight.hasValidTarget()) {
+                Log.info("CmdAutoAim", "No valid target.");
+                if ((distanceLimelight.cameraAngle > 0 ? 1 : -1) * previousVerticalAngle > blindThreshold) {
+                    Log.info("CmdAutoAim", "Switching to BLIND...");
+
+                    gyro.setAngle(0);
+                    aimState = HorizontalOffsetFeedbackDriveState.BLIND;
+                } else {
+                    Log.info("CmdAutoAim", "Returning to SEARCHING...");
+
+                    aimState = HorizontalOffsetFeedbackDriveState.SEARCHING;
+
+                    cmdRunning.isRunning = false;
                 }
-                else {
-                    targetFoundCount = 0;
-                }
-                
-                if (targetFoundCount > 5) {
-                    Log.info("CmdAutoAim", "Target found.");
-                    Log.info("CmdAutoAim", "Switching to FEEDBACK...");
+            } else {
+                currentHorizontalOffset = txLimelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
 
-                    drive.tankDrive(visionPID.kF, visionPID.kF);
-
-                    currentHorizontalOffset = txLimelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
-
-                    previousTime = RobotController.getFPGATime();
-                    previousError = goalHorizontalOffset - currentHorizontalOffset;
-
-                    cmdRunning.isRunning = true;
-
-                    aimState = HorizontalOffsetFeedbackDriveState.FEEDBACK;
-                }
-
-                break;
-
-            case FEEDBACK:
-                NarwhalDashboard.put("align_status", "feedback");
-                if (!txLimelight.hasValidTarget() && !distanceLimelight.hasValidTarget()) {
-                    Log.info("CmdAutoAim", "No valid target.");
-                    if ( (distanceLimelight.cameraAngle > 0 ? 1 : -1) * previousVerticalAngle > blindThreshold) {
-                        Log.info("CmdAutoAim", "Switching to BLIND...");
-
-                        gyro.setAngle(0);
-                        aimState = HorizontalOffsetFeedbackDriveState.BLIND;
-                    }
-                    else {
-                        Log.info("CmdAutoAim", "Returning to SEARCHING...");
-
-                        aimState = HorizontalOffsetFeedbackDriveState.SEARCHING;
-
-                        cmdRunning.isRunning = false;
-                    }
-                }
-                else {
-                    currentHorizontalOffset = txLimelight.getValue(LimelightKey.HORIZONTAL_OFFSET, 5);
-
-                    currentTime = RobotController.getFPGATime();
-                    currentError = goalHorizontalOffset - currentHorizontalOffset;
-
-                    /**
-                     * PID feedback loop for the left and right powers based on the horizontal offset errors.
-                     */
-                    feedbackPower = 0;
-
-                    feedbackPower += visionPID.kP * currentError;
-                    feedbackPower += visionPID.kD * (currentError - previousError)/(currentTime - previousTime);
-                    
-                    leftPower = RobotMath.clamp(visionPID.kF - feedbackPower, -1, 1);
-                    rightPower = RobotMath.clamp(visionPID.kF + feedbackPower, -1, 1);
-                                        
-                    previousVerticalAngle = distanceLimelight.getValue(LimelightKey.VERTICAL_OFFSET, 2);
-                    approximateDistance = distanceLimelight.calculateYPrimeFromTY(previousVerticalAngle, targetHeight);
-
-                    multiplier = 1.0 - (1.0 - blindPID.kF/visionPID.kF) * RobotMath.clamp((decelerationStartDistance - approximateDistance)/(decelerationStartDistance - decelerationEndDistance), 0.0, 1.0);
-
-                    drive.tankDrive(multiplier * leftPower, multiplier * rightPower);
-
-                    previousTime = currentTime;
-                    previousError = currentError;
-                }
-                
-
-                break;
-
-            case BLIND:
-                NarwhalDashboard.put("align_status", "blind");
-
-                currentAngle = gyro.getAngle();
-
-                currentTime = RobotController.getFPGATime() / 1000000.0;
-                currentError = -currentAngle;
+                currentTime = RobotController.getFPGATime();
+                currentError = goalHorizontalOffset - currentHorizontalOffset;
 
                 /**
-                 * PID feedback loop for the left and right powers based on the gyro angle
+                 * PID feedback loop for the left and right powers based on the horizontal
+                 * offset errors.
                  */
                 feedbackPower = 0;
 
-                feedbackPower += blindPID.kP * currentError;
-                feedbackPower += blindPID.kD * (currentError - previousError)/(currentTime - previousTime);
-                
-                rightPower = RobotMath.clamp(blindPID.kF - feedbackPower, -1, 1);
-                leftPower = RobotMath.clamp(blindPID.kF + feedbackPower, -1, 1);
-                
-                Log.info("CmdAutoAim", "L: " + leftPower + "; R: " + rightPower);
+                feedbackPower += visionPID.kP * currentError;
+                feedbackPower += visionPID.kD * (currentError - previousError) / (currentTime - previousTime);
 
-                drive.tankDrive(leftPower, rightPower);
+                leftPower = RobotMath.clamp(visionPID.kF - feedbackPower, -1, 1);
+                rightPower = RobotMath.clamp(visionPID.kF + feedbackPower, -1, 1);
+
+                previousVerticalAngle = distanceLimelight.getValue(LimelightKey.VERTICAL_OFFSET, 2);
+                approximateDistance = distanceLimelight.calculateYPrimeFromTY(previousVerticalAngle, targetHeight);
+
+                multiplier = 1.0 - (1.0 - blindPID.kF / visionPID.kF)
+                        * RobotMath.clamp((decelerationStartDistance - approximateDistance)
+                                / (decelerationStartDistance - decelerationEndDistance), 0.0, 1.0);
+
+                drive.tankDrive(multiplier * leftPower, multiplier * rightPower);
 
                 previousTime = currentTime;
                 previousError = currentError;
-                Log.info("CmdAutoAim", "Error:" + currentError);
+            }
 
-                break;
+            break;
+
+        case BLIND:
+            NarwhalDashboard.put("align_status", "blind");
+
+            currentAngle = gyro.getAngle();
+
+            currentTime = RobotController.getFPGATime() / 1000000.0;
+            currentError = -currentAngle;
+
+            /**
+             * PID feedback loop for the left and right powers based on the gyro angle
+             */
+            feedbackPower = 0;
+
+            feedbackPower += blindPID.kP * currentError;
+            feedbackPower += blindPID.kD * (currentError - previousError) / (currentTime - previousTime);
+
+            rightPower = RobotMath.clamp(blindPID.kF - feedbackPower, -1, 1);
+            leftPower = RobotMath.clamp(blindPID.kF + feedbackPower, -1, 1);
+
+            Log.info("CmdAutoAim", "L: " + leftPower + "; R: " + rightPower);
+
+            drive.tankDrive(leftPower, rightPower);
+
+            previousTime = currentTime;
+            previousError = currentError;
+            Log.info("CmdAutoAim", "Error:" + currentError);
+
+            break;
         }
     }
 
@@ -238,12 +237,12 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     @Override
     protected void end() {
         drive.stopMovement();
-        if(isLowHatch){
+        if (isLowHatch) {
             distanceLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
         }
         txLimelight.setLEDMode(LEDMode.OFF);
         distanceLimelight.setLEDMode(LEDMode.OFF);
-        
+
         NarwhalDashboard.put("align_status", "blind");
 
         cmdRunning.isRunning = false;
@@ -254,7 +253,7 @@ public class CmdHorizontalOffsetFeedbackDrive extends Command {
     @Override
     protected void interrupted() {
         drive.stopMovement();
-        if(isLowHatch){
+        if (isLowHatch) {
             distanceLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
         }
         txLimelight.setLEDMode(LEDMode.OFF);

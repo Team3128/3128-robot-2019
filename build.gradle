@@ -1,15 +1,9 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2019.3.2"
+    id "edu.wpi.first.GradleRIO" version "2019.4.1"
 }
 
-//def ROBOT_MAIN_CLASS = "org.team3128.testbench.main.MainTestBench"
-//def ROBOT_MAIN_CLASS = "org.team3128.prebot.main.MainPrebot"
-//def ROBOT_MAIN_CLASS = "org.team3128.gromit.main.MainGromit"
-//def ROBOT_MAIN_CLASS = "org.team3128.gromit.main.MainWallace"
-def ROBOT_MAIN_CLASS = "org.team3128.athos.main.MainAthos"
-//def ROBOT_MAIN_CLASS = "org.team3128.aramis.main.MainAramis"
-//def ROBOT_MAIN_CLASS = "org.team3128.porthos.main.MainPorthos"
+def ROBOT_MAIN_CLASS = "org.team3128.gromit.main.MainGromit"
 
 
 // Define my targets (RoboRIO) and artifacts (deployable files)

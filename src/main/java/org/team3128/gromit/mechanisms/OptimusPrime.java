@@ -7,8 +7,8 @@ import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
 import org.team3128.common.autonomous.primitives.CmdRunInParallel;
-import org.team3128.common.util.Log;
-import org.team3128.common.util.units.Length;
+import org.team3128.common.utility.Log;
+import org.team3128.common.utility.units.Length;
 import org.team3128.gromit.main.MainDeepSpaceRobot.GameElement;
 import org.team3128.gromit.main.MainDeepSpaceRobot.ScoreTarget;
 import org.team3128.gromit.mechanisms.LiftIntake;
@@ -135,8 +135,7 @@ public class OptimusPrime {
         protected boolean isFinished() {
             if (timeSinceInitialized() < delayMS / 1000.0) {
                 return false;
-            }
-            else {
+            } else {
                 fourBar.setState(state.targetFourBarState);
                 return true;
             }
@@ -144,77 +143,58 @@ public class OptimusPrime {
     }
 
     public void setState(RobotState state) {
-        new CmdCascadedOptimus(state, 
-            (lift.getCurrentHeight() < 10 * Length.in && state == RobotState.DEPOSIT_LOW_HATCH)
-             ? 250 : 0).start();
+        new CmdCascadedOptimus(state,
+                (lift.getCurrentHeight() < 10 * Length.in && state == RobotState.DEPOSIT_LOW_HATCH) ? 250 : 0).start();
 
         this.robotState = state;
     }
-    
+
     public class CmdEnterIntakeMode extends CommandGroup {
-        public CmdEnterIntakeMode() {      
-            addSequential(new CmdRunInParallel(
-                lift.new CmdHeightControl(LiftHeightState.INTAKE_FLOOR_CARGO),
-                liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.CARGO_INTAKE))
-            );
-            // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
+        public CmdEnterIntakeMode() {
+            addSequential(new CmdRunInParallel(lift.new CmdHeightControl(LiftHeightState.INTAKE_FLOOR_CARGO),
+                    liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.CARGO_INTAKE)));
+            // addSequential(groundIntake.new
+            // CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
             addSequential(fourBar.new CmdAngleControl(FourBarState.CARGO_INTAKE));
-            // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.INTAKING));
+            // addSequential(groundIntake.new
+            // CmdSetGroundIntakeState(GroundIntakeState.INTAKING));
         }
     }
-    
+
     public class CmdExitIntakeMode extends CommandGroup {
         public CmdExitIntakeMode() {
-            // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
-            addSequential(new CmdRunInParallel(
-                lift.new CmdHeightControl(LiftHeightState.BASE),
-                liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.DEMOGORGON_HOLDING))
-            );
-            // addSequential(groundIntake.new CmdSetGroundIntakeState(GroundIntakeState.RETRACTED));
+            // addSequential(groundIntake.new
+            // CmdSetGroundIntakeState(GroundIntakeState.DEPLOYED));
+            addSequential(new CmdRunInParallel(lift.new CmdHeightControl(LiftHeightState.BASE),
+                    liftIntake.new CmdSetLiftIntakeState(LiftIntakeState.DEMOGORGON_HOLDING)));
+            // addSequential(groundIntake.new
+            // CmdSetGroundIntakeState(GroundIntakeState.RETRACTED));
         }
     }
-    
+
     public class CmdDepositGameElement extends CommandGroup {
         public CmdDepositGameElement() {
-            //TODO
+            // TODO
         }
     }
 
     /*
-    public class CmdSetState extends Command{
-        RobotState state;
-        public CmdSetState(RobotState robotState) {
-            this.state = robotState;
-		}
-		
-		@Override
-		protected void initialize() {
-				
-		}
-		
-		@Override
-		protected void execute() {
-        }
-		
-		@Override
-		protected boolean isFinished() {
-            if(state == RobotState.STARTING){
-                Lift.getInstance().setState(LiftHeightState.STARTING);
-                try{
-                    Thread.sleep(800);
-                } catch(InterruptedException io){
-                    io.printStackTrace();
-                }
-            } else {
-                OptimusPrime.getInstance().setState(state);
-            }
-            return true;
-		}
-		
-		@Override
-		protected void end() {
-		}
-	
-    }
-    */
+     * public class CmdSetState extends Command{ RobotState state; public
+     * CmdSetState(RobotState robotState) { this.state = robotState; }
+     * 
+     * @Override protected void initialize() {
+     * 
+     * }
+     * 
+     * @Override protected void execute() { }
+     * 
+     * @Override protected boolean isFinished() { if(state == RobotState.STARTING){
+     * Lift.getInstance().setState(LiftHeightState.STARTING); try{
+     * Thread.sleep(800); } catch(InterruptedException io){ io.printStackTrace(); }
+     * } else { OptimusPrime.getInstance().setState(state); } return true; }
+     * 
+     * @Override protected void end() { }
+     * 
+     * }
+     */
 }

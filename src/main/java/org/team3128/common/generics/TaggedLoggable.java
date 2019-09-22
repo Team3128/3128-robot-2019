@@ -1,6 +1,6 @@
 package org.team3128.common.generics;
 
-import org.team3128.common.util.Log;
+import org.team3128.common.utility.Log;
 
 public abstract class TaggedLoggable implements Loggable {
     protected abstract String getTag();

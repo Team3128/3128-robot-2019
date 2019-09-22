@@ -1,11 +1,6 @@
 package org.team3128.common.hardware.lights;
 
-import java.util.List;
-
-import org.team3128.common.util.Log;
-
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.PWM;
 
 /**
@@ -32,13 +27,11 @@ public class NeoPixelArduinoController {
 	 * or stop sending that data value once the Uno has confirmed receiving the
 	 * value.
 	 * 
-	 * @param confirmationPort
-	 *            - The digital input port at which the Arduino will set to true
-	 *            upon receiving the data if the data sent is defined as
-	 *            non-sustaining.
-	 * @param dataPort
-	 *            - The PWM output to send the PWM signal representing the Arduino
-	 *            command from
+	 * @param confirmationPort - The digital input port at which the Arduino will
+	 *                         set to true upon receiving the data if the data sent
+	 *                         is defined as non-sustaining.
+	 * @param dataPort         - The PWM output to send the PWM signal representing
+	 *                         the Arduino command from
 	 */
 	public NeoPixelArduinoController(DigitalInput confirmationPort, PWM dataPort) {
 		this.dataPort = dataPort;
@@ -52,15 +45,13 @@ public class NeoPixelArduinoController {
 	 * will await the confirmation port, signifying the Arduino has received the
 	 * data, and then clear the ports.
 	 * 
-	 * @param data
-	 *            - The PWM value to be sent to the Arduino.
-	 * @param sustained
-	 *            - Whether or not the data should maintain or be erased after being
-	 *            received.
+	 * @param data      - The PWM value to be sent to the Arduino.
+	 * @param sustained - Whether or not the data should maintain or be erased after
+	 *                  being received.
 	 */
 	public void sendData(int data, boolean sustained) {
 		sendCommand(data);
-		
+
 		if (!sustained) {
 			Thread waitForConfirmation = new Thread(() -> {
 				while (!confirmationPort.get()) {

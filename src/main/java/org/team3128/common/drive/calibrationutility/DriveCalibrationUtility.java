@@ -3,27 +3,29 @@ package org.team3128.common.drive.calibrationutility;
 import org.team3128.common.drive.SRXTankDrive;
 import org.team3128.common.hardware.navigation.Gyro;
 import org.team3128.common.narwhaldashboard.NarwhalDashboard;
-import org.team3128.common.util.Log;
-import org.team3128.common.util.datatypes.PIDConstants;
+import org.team3128.common.utility.Log;
+import org.team3128.common.utility.datatypes.PIDConstants;
 
 public class DriveCalibrationUtility {
     private static DriveCalibrationUtility instance = null;
-	public static DriveCalibrationUtility getInstance() {
-		if (instance != null) {
-			return instance;
-		}
 
-		Log.fatal("DriveCalibrationUtility", "Attempted to get instance before initializtion! Call initialize(...) first.");
-		return null;
+    public static DriveCalibrationUtility getInstance() {
+        if (instance != null) {
+            return instance;
+        }
+
+        Log.fatal("DriveCalibrationUtility",
+                "Attempted to get instance before initializtion! Call initialize(...) first.");
+        return null;
     }
-    
+
     public static void initialize(Gyro gyro, PIDConstants visionPID) {
         instance = new DriveCalibrationUtility(gyro, visionPID);
     }
 
     public double maxLeftSpeed = 0;
     public double maxRightSpeed = 0;
-	    
+
     public SRXTankDrive drive;
     public Gyro gyro;
 
@@ -57,36 +59,36 @@ public class DriveCalibrationUtility {
             }
         });
 
-        //NarwhalDashboard.put("vision_p", visionPID.kP);
-		//NarwhalDashboard.put("vision_i", visionPID.kI);
-        //NarwhalDashboard.put("vision_d", visionPID.kD);
-        
-        NarwhalDashboard.addNumDataListener("visionPID", (double constants[]) ->{
+        // NarwhalDashboard.put("vision_p", visionPID.kP);
+        // NarwhalDashboard.put("vision_i", visionPID.kI);
+        // NarwhalDashboard.put("vision_d", visionPID.kD);
+
+        NarwhalDashboard.addNumDataListener("visionPID", (double constants[]) -> {
             visionPID.kP = constants[0];
             visionPID.kI = constants[1];
             visionPID.kD = constants[2];
         });
 
         NarwhalDashboard.addNumDataListener("drivePID", (double constants[]) -> {
-			//this.leftMotionProfilePID.kF = constants[0];
-			drive.leftMotionProfilePID.kP = constants[0];
-			drive.leftMotionProfilePID.kI = constants[1];
-			drive.leftMotionProfilePID.kD = constants[2];
+            // this.leftMotionProfilePID.kF = constants[0];
+            drive.leftMotionProfilePID.kP = constants[0];
+            drive.leftMotionProfilePID.kI = constants[1];
+            drive.leftMotionProfilePID.kD = constants[2];
 
-			//this.rightMotionProfilePID.kF = constants[0];
-			drive.rightMotionProfilePID.kP = constants[3];
-			drive.rightMotionProfilePID.kI = constants[4];
-			drive.rightMotionProfilePID.kD = constants[5];
+            // this.rightMotionProfilePID.kF = constants[0];
+            drive.rightMotionProfilePID.kP = constants[3];
+            drive.rightMotionProfilePID.kI = constants[4];
+            drive.rightMotionProfilePID.kD = constants[5];
 
-			// this.leftVelocityPID.kF = constants[0];
-			// this.leftVelocityPID.kP = constants[4];
-			// this.leftVelocityPID.kI = constants[5];
-			// this.leftVelocityPID.kD = constants[6];
+            // this.leftVelocityPID.kF = constants[0];
+            // this.leftVelocityPID.kP = constants[4];
+            // this.leftVelocityPID.kI = constants[5];
+            // this.leftVelocityPID.kD = constants[6];
 
-			// this.rightVelocityPID.kF = constants[0];
-			// this.rightVelocityPID.kP = constants[4];
-			// this.rightVelocityPID.kI = constants[5];
-			// this.rightVelocityPID.kD = constants[6];
+            // this.rightVelocityPID.kF = constants[0];
+            // this.rightVelocityPID.kP = constants[4];
+            // this.rightVelocityPID.kI = constants[5];
+            // this.rightVelocityPID.kD = constants[6];
 
             drive.setPID();
             sendDrivePIDConstants();
@@ -94,50 +96,51 @@ public class DriveCalibrationUtility {
         sendDrivePIDConstants();
 
         // NarwhalDashboard.addNumDataListener("calc_wb", (double[] data) -> {
-        //     Log.info("test", "triggered");
-        //     double pL = data[0];
-        //     double pR = data[1];
+        // Log.info("test", "triggered");
+        // double pL = data[0];
+        // double pR = data[1];
 
-        //     int duration = (int) data[2];
-        //     wbSet = new WheelbaseSet();
-            
-        //     drive.new CmdCalculateWheelbase(wbSet, pL, pR, gyro, duration).start();
+        // int duration = (int) data[2];
+        // wbSet = new WheelbaseSet();
+
+        // drive.new CmdCalculateWheelbase(wbSet, pL, pR, gyro, duration).start();
         // });
 
         // NarwhalDashboard.addButton("printCSV_wb", (boolean down) -> {
-        //     if (down) {
-        //         Log.info("DriveCalibrationUtility", "average:\n" + wbSet.getAvgCSV());
-		// 	    Log.info("DriveCalibrationUtility", "data:\n" + wbSet.getAllCSV());
-        //     }
+        // if (down) {
+        // Log.info("DriveCalibrationUtility", "average:\n" + wbSet.getAvgCSV());
+        // Log.info("DriveCalibrationUtility", "data:\n" + wbSet.getAllCSV());
+        // }
         // });
 
         // NarwhalDashboard.addButton("reset_wb_avg", (boolean down) -> {
-        //     if (down) {
-        //         wheelbaseSum = 0;
-        //         wheelbaseCount = 0;
-        //     }
+        // if (down) {
+        // wheelbaseSum = 0;
+        // wheelbaseCount = 0;
+        // }
         // });
         // NarwhalDashboard.addNumDataListener("calc_ffp", (double[] data) -> {
-        //     double pL = data[0];
-        //     double pR = data[1];
+        // double pL = data[0];
+        // double pR = data[1];
 
-        //     int duration = (int) data[2];
+        // int duration = (int) data[2];
 
-        //     ffpmSet = new FeedForwardPowerMultiplierSet();
-        //     drive.new CmdGetFeedForwardPowerMultiplier(ffpmSet,gyro,pL,pR,duration).start();
+        // ffpmSet = new FeedForwardPowerMultiplierSet();
+        // drive.new
+        // CmdGetFeedForwardPowerMultiplier(ffpmSet,gyro,pL,pR,duration).start();
         // });
 
         // NarwhalDashboard.addButton("printCSV", (boolean down) -> {
-        //     if (down) {
-        //         Log.info("DriveCalibrationUtility", "average:\n" + ffpmSet.getAvgCSV());
-		// 	    Log.info("DriveCalibrationUtility", "data:\n" + ffpmSet.getAllCSV());
-        //     }
+        // if (down) {
+        // Log.info("DriveCalibrationUtility", "average:\n" + ffpmSet.getAvgCSV());
+        // Log.info("DriveCalibrationUtility", "data:\n" + ffpmSet.getAllCSV());
+        // }
         // });
-        
+
         // NarwhalDashboard.addButton("pidCalDrive", (boolean down) -> {
-        //     if (down) {
-        //         new Cmd100InchDrive().start();
-        //     }
+        // if (down) {
+        // new Cmd100InchDrive().start();
+        // }
         // });
     }
 
@@ -162,20 +165,21 @@ public class DriveCalibrationUtility {
     }
 
     public double getWheelCirc() {
-        if (drive.getLeftMotors().getSelectedSensorPosition() == 0 || drive.getRightMotors().getSelectedSensorPosition() == 0) {
+        if (drive.getLeftMotors().getSelectedSensorPosition() == 0
+                || drive.getRightMotors().getSelectedSensorPosition() == 0) {
             return -1;
         }
 
-        double averagePosition = (drive.getLeftMotors().getSelectedSensorPosition() + drive.getRightMotors().getSelectedSensorPosition()) / 2;
+        double averagePosition = (drive.getLeftMotors().getSelectedSensorPosition()
+                + drive.getRightMotors().getSelectedSensorPosition()) / 2;
 
-        return 100 * averagePosition/4096;
+        return 100 * averagePosition / 4096;
     }
 
     public double getLeftKf() {
         if (maxLeftSpeed != 0) {
             return 1023 / maxLeftSpeed;
-        }
-        else {
+        } else {
             return -1;
         }
     }
@@ -183,53 +187,49 @@ public class DriveCalibrationUtility {
     public double getRightKf() {
         if (maxLeftSpeed != 0) {
             return 1023 / maxRightSpeed;
-        }
-        else {
+        } else {
             return -1;
         }
     }
 
     public double getLeftSpeedScalar() {
         if (maxLeftSpeed < maxRightSpeed) {
-            return maxLeftSpeed/maxRightSpeed;
-        }
-        else {
+            return maxLeftSpeed / maxRightSpeed;
+        } else {
             return 1.0;
         }
     }
 
     public double getRightSpeedScalar() {
         if (maxRightSpeed < maxLeftSpeed) {
-            return maxRightSpeed/maxLeftSpeed;
-        }
-        else {
+            return maxRightSpeed / maxLeftSpeed;
+        } else {
             return 1.0;
         }
     }
 
-	/**
-	 * Sends PID constants to NarwhalDashboard
-	 */
-	public void sendDrivePIDConstants() {
-		NarwhalDashboard.put("l_f", drive.leftMotionProfilePID.kF);
+    /**
+     * Sends PID constants to NarwhalDashboard
+     */
+    public void sendDrivePIDConstants() {
+        NarwhalDashboard.put("l_f", drive.leftMotionProfilePID.kF);
 
-		NarwhalDashboard.put("l_mp_p", drive.leftMotionProfilePID.kP);
-		NarwhalDashboard.put("l_mp_i", drive.leftMotionProfilePID.kI);
-		NarwhalDashboard.put("l_mp_d", drive.leftMotionProfilePID.kD);
+        NarwhalDashboard.put("l_mp_p", drive.leftMotionProfilePID.kP);
+        NarwhalDashboard.put("l_mp_i", drive.leftMotionProfilePID.kI);
+        NarwhalDashboard.put("l_mp_d", drive.leftMotionProfilePID.kD);
 
-		// NarwhalDashboard.put("l_v_p", leftVelocityPID.kP);
-		// NarwhalDashboard.put("l_v_i", leftVelocityPID.kI);
-		// NarwhalDashboard.put("l_v_d", leftVelocityPID.kD);
+        // NarwhalDashboard.put("l_v_p", leftVelocityPID.kP);
+        // NarwhalDashboard.put("l_v_i", leftVelocityPID.kI);
+        // NarwhalDashboard.put("l_v_d", leftVelocityPID.kD);
 
+        NarwhalDashboard.put("r_f", drive.rightMotionProfilePID.kF);
 
-		NarwhalDashboard.put("r_f", drive.rightMotionProfilePID.kF);
+        NarwhalDashboard.put("r_mp_p", drive.rightMotionProfilePID.kP);
+        NarwhalDashboard.put("r_mp_i", drive.rightMotionProfilePID.kI);
+        NarwhalDashboard.put("r_mp_d", drive.rightMotionProfilePID.kD);
 
-		NarwhalDashboard.put("r_mp_p", drive.rightMotionProfilePID.kP);
-		NarwhalDashboard.put("r_mp_i", drive.rightMotionProfilePID.kI);
-		NarwhalDashboard.put("r_mp_d", drive.rightMotionProfilePID.kD);
-
-		// NarwhalDashboard.put("r_v_p", leftVelocityPID.kP);
-		// NarwhalDashboard.put("r_v_i", leftVelocityPID.kI);
-		// NarwhalDashboard.put("r_v_d", leftVelocityPID.kD);
+        // NarwhalDashboard.put("r_v_p", leftVelocityPID.kP);
+        // NarwhalDashboard.put("r_v_i", leftVelocityPID.kI);
+        // NarwhalDashboard.put("r_v_d", leftVelocityPID.kD);
     }
 }
