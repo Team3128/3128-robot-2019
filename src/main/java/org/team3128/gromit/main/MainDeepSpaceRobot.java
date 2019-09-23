@@ -41,7 +41,7 @@ import org.team3128.gromit.mechanisms.FourBar.FourBarState;
 import org.team3128.gromit.mechanisms.Lift.LiftHeightState;
 import org.team3128.gromit.mechanisms.LiftIntake.LiftIntakeState;
 import org.team3128.gromit.mechanisms.OptimusPrime.RobotState;
-import org.team3128.gromit.constants.GameConstants;
+import org.team3128.gromit.constants.DeepSpaceConstants;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 // import com.ctre.phoenix.motorcontrol.can.TalonSRX;
@@ -408,7 +408,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		NarwhalDashboard.addButton("compute2D", (boolean down) -> {
 			if (down) {
 				Compute2DLocalization locale = Compute2D.compute2D(bottomLimelight,
-						Compute2D.getInput(bottomLimelight, 3), GameConstants.LOW_VISION_TARGET_HEIGHT);
+						Compute2D.getInput(bottomLimelight, 3), DeepSpaceConstants.LOW_VISION_TARGET_HEIGHT);
 
 				Log.info("MainDeepSpaceRobot", "locale = " + locale);
 			}

@@ -19,7 +19,8 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-import org.team3128.gromit.constants.RobotConstants;
+import org.team3128.gromit.constants.GromitConstants;
+import org.team3128.common.generics.RobotConstants;
 
 public class MainGromit extends MainDeepSpaceRobot {
     // Pnuematics
@@ -35,40 +36,40 @@ public class MainGromit extends MainDeepSpaceRobot {
     @Override
     protected void constructHardware() {
         // Setting constants. This shouldn't be edited.
-        wheelbase = RobotConstants.WHEEL_CIRCUMFERENCE;
-        driveMaxSpeed = RobotConstants.DRIVE_MAX_SPEED;
-        wheelCirc = RobotConstants.WHEEL_CIRCUMFERENCE;
-        leftSpeedScalar = RobotConstants.LEFT_SPEED_SCALAR;
-        rightSpeedScalar = RobotConstants.RIGHT_SPEED_SCALAR;
-        shiftUpSpeed = RobotConstants.SHIFT_UP_SPEED;
-        shiftDownSpeed = RobotConstants.SHIFT_DOWN_SPEED;
+        wheelbase = GromitConstants.WHEEL_CIRCUMFERENCE;
+        driveMaxSpeed = GromitConstants.DRIVE_MAX_SPEED;
+        wheelCirc = GromitConstants.WHEEL_CIRCUMFERENCE;
+        leftSpeedScalar = GromitConstants.LEFT_SPEED_SCALAR;
+        rightSpeedScalar = GromitConstants.RIGHT_SPEED_SCALAR;
+        shiftUpSpeed = GromitConstants.SHIFT_UP_SPEED;
+        shiftDownSpeed = GromitConstants.SHIFT_DOWN_SPEED;
 
         // Pnuematics Constants
-        gearshift_Piston = new Piston(RobotConstants.GEARSHIFT_SOL_A, RobotConstants.GEARSHIFT_SOL_B);
+        gearshift_Piston = new Piston(GromitConstants.GEARSHIFT_SOL_A, GromitConstants.GEARSHIFT_SOL_B);
         gearshift_Piston.setPistonOn();
 
-        climb_Piston = new Piston(RobotConstants.CLIMB_SOL_A, RobotConstants.CLIMB_SOL_B);
+        climb_Piston = new Piston(GromitConstants.CLIMB_SOL_A, GromitConstants.CLIMB_SOL_B);
         climb_Piston.setPistonOff();
 
-        hatchIntake_Piston = new Piston(RobotConstants.HATCH_INTAKE_SOL_A, RobotConstants.HATCH_INTAKE_SOL_B);
+        hatchIntake_Piston = new Piston(GromitConstants.HATCH_INTAKE_SOL_A, GromitConstants.HATCH_INTAKE_SOL_B);
 
-        placeholder = new Piston(RobotConstants.PLACEHOLDER_SOL_A, RobotConstants.PLACEHOLDER_SOL_B);
+        placeholder = new Piston(GromitConstants.PLACEHOLDER_SOL_A, GromitConstants.PLACEHOLDER_SOL_B);
         placeholder.setPistonOn();
 
         // Setting Mechanism Constants
-        liftLimitSwitch = new DigitalInput(RobotConstants.LIFT_LIMIT_SWITCH);
-        liftSwitchPosition = RobotConstants.LIFT_SWITCH_POSITION;// 170;
-        liftMaxVelocity = RobotConstants.LIFT_MAX_VELOCITY;
+        liftLimitSwitch = new DigitalInput(GromitConstants.LIFT_LIMIT_SWITCH);
+        liftSwitchPosition = GromitConstants.LIFT_SWITCH_POSITION;// 170;
+        liftMaxVelocity = GromitConstants.LIFT_MAX_VELOCITY;
 
-        fourBarLimitSwitch = new DigitalInput(RobotConstants.FOURBAR_LIMIT_SWITCH);
-        fourBarRatio = RobotConstants.FOURBAR_RATIO;
-        fourBarSwitchPosition = RobotConstants.FOURBAR_SWITCH_POSITION;
-        fourBarMaxVelocity = RobotConstants.FOURBAR_MAX_VELOCITY;
+        fourBarLimitSwitch = new DigitalInput(GromitConstants.FOURBAR_LIMIT_SWITCH);
+        fourBarRatio = GromitConstants.FOURBAR_RATIO;
+        fourBarSwitchPosition = GromitConstants.FOURBAR_SWITCH_POSITION;
+        fourBarMaxVelocity = GromitConstants.FOURBAR_MAX_VELOCITY;
 
-        bottomLLHeight = RobotConstants.BOTTOM_LIMELIGHT_HEIGHT;
-        bottomLLAngle = RobotConstants.BOTTOM_LIMELIGHT_ANGLE;
+        bottomLLHeight = GromitConstants.BOTTOM_LIMELIGHT_HEIGHT;
+        bottomLLAngle = GromitConstants.BOTTOM_LIMELIGHT_ANGLE;
 
-        topLLHeight = RobotConstants.TOP_LIMELIGHT_HEIGHT;
+        topLLHeight = GromitConstants.TOP_LIMELIGHT_HEIGHT;
         topLLAngle = -12.0 * Angle.DEGREES;
 
         // Construct and Configure Drivetrain

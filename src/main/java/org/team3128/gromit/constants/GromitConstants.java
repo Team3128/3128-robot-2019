@@ -1,9 +1,10 @@
 package org.team3128.gromit.constants;
 
+import org.team3128.common.generics.RobotConstants;
 import org.team3128.common.utility.units.Length;
 import org.team3128.common.utility.units.Angle;
 
-public class RobotConstants {
+public class GromitConstants extends RobotConstants {
 
     // PNUEMATICS CONSTANTS:
     public static final int GEARSHIFT_SOL_A = 3;
