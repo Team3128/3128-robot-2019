@@ -96,16 +96,18 @@ public class NEODrive extends Threaded {
 
 		leftSpark = new LazyCANSparkMax(Constants.LEFT_DRIVE_FRONT_ID, MotorType.kBrushless);
 		leftSparkSlave = new LazyCANSparkMax(Constants.LEFT_DRIVE_MIDDLE_ID, MotorType.kBrushless);
-		leftSparkSlave2 = new LazyCANSparkMax(Constants.LEFT_DRIVE_BACK_ID, MotorType.kBrushless);
+		//leftSparkSlave2 = new LazyCANSparkMax(Constants.LEFT_DRIVE_BACK_ID, MotorType.kBrushless);
 
 		rightSpark = new LazyCANSparkMax(Constants.RIGHT_DRIVE_FRONT_ID, MotorType.kBrushless);
 		rightSparkSlave = new LazyCANSparkMax(Constants.RIGHT_DRIVE_MIDDLE_ID, MotorType.kBrushless);
-		rightSparkSlave2 = new LazyCANSparkMax(Constants.RIGHT_DRIVE_BACK_ID, MotorType.kBrushless);
+		//rightSparkSlave2 = new LazyCANSparkMax(Constants.RIGHT_DRIVE_BACK_ID, MotorType.kBrushless);
 
-		leftSpark.setInverted(true);
-		rightSpark.setInverted(false);
-		leftSparkSlave.setInverted(true);
-		rightSparkSlave.setInverted(false);
+		leftSpark.setInverted(false);
+		rightSpark.setInverted(true);
+		leftSparkSlave.setInverted(false);
+		rightSparkSlave.setInverted(true);
+		//leftSparkSlave2.setInverted(false);
+		//rightSparkSlave2.setInverted(false);
 
 		leftSparkPID = leftSpark.getPIDController();
 		rightSparkPID = rightSpark.getPIDController();
@@ -176,12 +178,17 @@ public class NEODrive extends Threaded {
 
 	private void configMotors() {
 		leftSparkSlave.follow(leftSpark);
+		//leftSparkSlave2.follow(leftSpark);
 		rightSparkSlave.follow(rightSpark);
+		//rightSparkSlave2.follow(rightSpark);
 
-		leftSpark.setIdleMode(IdleMode.kCoast);
-		rightSpark.setIdleMode(IdleMode.kCoast);
-		leftSparkSlave.setIdleMode(IdleMode.kCoast);
-		rightSparkSlave.setIdleMode(IdleMode.kCoast);
+		leftSpark.setIdleMode(IdleMode.kBrake);
+		rightSpark.setIdleMode(IdleMode.kBrake);
+		leftSparkSlave.setIdleMode(IdleMode.kBrake);
+		rightSparkSlave.setIdleMode(IdleMode.kBrake);
+		//leftSparkSlave2.setIdleMode(IdleMode.kCoast);
+		//rightSparkSlave2.setIdleMode(IdleMode.kCoast);
+		configAuto();
 	}
 
 	public void resetMotionProfile() {
@@ -303,8 +310,10 @@ public class NEODrive extends Threaded {
 
 		spdL = Constants.DRIVE_HIGH_SPEED * pwrL;
 		spdR = Constants.DRIVE_HIGH_SPEED * pwrR;
-
-		setWheelVelocity(new DriveSignal(spdL, spdR));
+		String tempStr = "pwrL=" + String.valueOf(pwrL) + ", pwrR=" + String.valueOf(pwrR) + ", spdL=" + String.valueOf(spdL) + ", spdR=" + String.valueOf(spdR);
+		Log.info("NEODrive", tempStr);
+		setWheelPower(new DriveSignal(pwrL, pwrR));
+		//setWheelVelocity(new DriveSignal(spdL, spdR));
 	}
 
 	@Override

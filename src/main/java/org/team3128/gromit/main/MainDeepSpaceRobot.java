@@ -268,7 +268,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		ds = DriverStation.getInstance();
 
 		// Setup listeners
-		leftJoystick = new Joystick(1);
+		leftJoystick = new Joystick(0);
 		listenerLeft = new ListenerManager(leftJoystick);
 		addListenerManager(listenerLeft);
 

@@ -18,17 +18,17 @@ public class Constants extends RobotConstants {
     // ---- DRIVE
     public static final MotorType MOTOR_TYPE = MotorType.kBrushless; // indicates that we are using brushless motors
 
-    public static final double ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION = 72 / 11; // basically your gearing. Ask Mech
+    public static final double ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION = 8.3333333; // basically your gearing. Ask Mech
                                                                                    // for gear teeth number to gear
-                                                                                   // teeth number ratio
+                                                                                   // teeth number ratio: 8.3333333
 
-    public static final int RIGHT_DRIVE_FRONT_ID = 0;
-    public static final int RIGHT_DRIVE_MIDDLE_ID = 1;
-    public static final int RIGHT_DRIVE_BACK_ID = 2;
+    public static final int RIGHT_DRIVE_FRONT_ID = 1;
+    public static final int RIGHT_DRIVE_MIDDLE_ID = 2;
+    public static final int RIGHT_DRIVE_BACK_ID = 0;
 
-    public static final int LEFT_DRIVE_FRONT_ID = 3;
+    public static final int LEFT_DRIVE_FRONT_ID = 5;
     public static final int LEFT_DRIVE_MIDDLE_ID = 4;
-    public static final int LEFT_DRIVE_BACK_ID = 5;
+    public static final int LEFT_DRIVE_BACK_ID = 3;
 
     public static final double WHEELBASE = 32.3; // Might be deprecated. I have to find out how to implement arc turns
                                                  // first. (Adham)

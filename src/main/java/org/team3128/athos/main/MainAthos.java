@@ -3,7 +3,6 @@ package org.team3128.athos.main;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 
-import org.team3128.athos.autonomous.*;
 import org.team3128.common.generics.RobotConstants;
 
 import org.team3128.common.NarwhalRobot;

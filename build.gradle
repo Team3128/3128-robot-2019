@@ -3,7 +3,7 @@ plugins {
     id "edu.wpi.first.GradleRIO" version "2019.4.1"
 }
 
-def ROBOT_MAIN_CLASS = "org.team3128.gromit.main.MainAthos"
+def ROBOT_MAIN_CLASS = "org.team3128.athos.main.MainAthos"
 
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
