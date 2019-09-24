@@ -1,3 +1,6 @@
+/** 
+ * @author Adham Elarabawy, amg
+ */
 package org.team3128.common.control.motion;
 
 import org.team3128.common.utility.math.Translation2D;

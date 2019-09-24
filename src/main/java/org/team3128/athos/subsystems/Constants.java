@@ -30,23 +30,31 @@ public class Constants extends RobotConstants {
     public static final int LEFT_DRIVE_MIDDLE_ID = 4;
     public static final int LEFT_DRIVE_BACK_ID = 5;
 
-    public static final double WHEELBASE = 32.3;
+    public static final double WHEELBASE = 32.3; // Might be deprecated. I have to find out how to implement arc turns
+                                                 // first. (Adham)
     public static final int DRIVE_HIGH_SPEED = 180; // TODO: get actual top speed (on ground)
-    public static final double WHEEL_CIRCUMFERENCE = 13.21;
+    public static final double WHEEL_CIRCUMFERENCE = 13.21; // Might be deprecated. I am thinking of switching to using
+                                                            // wheel diameter, as that is significantly easier to
+                                                            // measure.
     public static final double WHEEL_DIAMETER = 4.204874;
 
-    public static final double LEFT_SPEEDSCALAR = 1.0;
-    public static final double RIGHT_SPEEDSCALAR = 1.0;
+    public static final double LEFT_SPEEDSCALAR = 1.0; // purely for TELEOP drive (to make sure that when the drive
+                                                       // pushes the joystick forward, both sides of the drivetrain are
+                                                       // going ROUGHLY the same speed)
+    public static final double RIGHT_SPEEDSCALAR = 1.0;// purely for TELEOP drive (to make sure that when the drive
+                                                       // pushes the joystick forward, both sides of the drivetrain are
+                                                       // going ROUGHLY the same speed)
 
-    public static final double DRIVE_ACCEL_LIMIT = 120;
-    public static final double DRIVE_JERK_LIMIT = 2000;
+    public static final double DRIVE_ACCEL_LIMIT = 120; // Ballpark estimates from mech (Be conservative unless you
+                                                        // really need the quick auto paths)
+    public static final double DRIVE_JERK_LIMIT = 2000; // Ballpark estimates (Be conservative)
 
     public static final double K_AUTO_RIGHT_P = 4 * 0.0005263 * kDriveInchesPerSecPerRPM; // 0.00065
     public static final double K_AUTO_RIGHT_D = 0.000;
     public static final double K_AUTO_RIGHT_F = 1 / 193.12283370478679 * kDriveInchesPerSecPerRPM; // 0.055
     public static final double K_AUTO_LEFT_P = 4 * 0.0005263 * kDriveInchesPerSecPerRPM;
     public static final double K_AUTO_LEFT_D = 0.000; // 0.0001
-    public static final double K_AUTO_LEFT_F = 1 / 203.7763632654868 * kDriveInchesPerSecPerRPM; // 0.0005 too high
+    public static final double K_AUTO_LEFT_F = 1 / 203.7763632654868 * kDriveInchesPerSecPerRPM; // 0.0005 is too high
 
     public static final double K_HOLD_P = 4;
 

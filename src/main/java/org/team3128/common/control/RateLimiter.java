@@ -1,3 +1,6 @@
+/**
+ * @author Adham Elarabawy, amg
+ */
 package org.team3128.common.control;
 
 import org.team3128.common.utility.NarwhalUtility;

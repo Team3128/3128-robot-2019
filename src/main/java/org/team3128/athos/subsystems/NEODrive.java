@@ -1,3 +1,6 @@
+/** 
+ * @author Adham Elarabawy, amg
+ */
 package org.team3128.athos.subsystems;
 
 import org.team3128.common.hardware.motor.LazyCANSparkMax;

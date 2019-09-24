@@ -1,3 +1,6 @@
+/**
+ * @author Adham Elarabawy
+ */
 package org.team3128.common.utility.math;
 
 /**
