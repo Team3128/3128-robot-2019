@@ -5,7 +5,7 @@ import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.gyroscope.Gyro;
 import org.team3128.common.utility.datatypes.PIDConstants;
 import org.team3128.common.utility.units.Angle;
-import org.team3128.gromit.constants.GameConstants;
+import org.team3128.gromit.constants.DeepSpaceConstants;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
@@ -19,7 +19,8 @@ public class CmdPerpendicularDriveToTarget extends CommandGroup {
                                 wallIntersectDistance, xThreshold));
 
                 addSequential(new CmdHorizontalOffsetFeedbackDrive(gyro, bottomLimelight, topLimelight, cmdRunning,
-                                targetHeight, visionPID, -1 * Angle.DEGREES, GameConstants.DECELERATE_START_DISTANCE,
-                                GameConstants.DECELERATE_END_DISTANCE, blindPID, 20 * Angle.DEGREES));// , false));
+                                targetHeight, visionPID, -1 * Angle.DEGREES,
+                                DeepSpaceConstants.DECELERATE_START_DISTANCE,
+                                DeepSpaceConstants.DECELERATE_END_DISTANCE, blindPID, 20 * Angle.DEGREES));// , false));
         }
 }

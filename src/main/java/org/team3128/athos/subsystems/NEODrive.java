@@ -23,13 +23,14 @@ import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Timer;
 import org.team3128.common.hardware.motor.LazyCANSparkMax;
+import org.team3128.common.utility.RobotMath;
 
 import org.team3128.common.utility.Log;
 
 public class NEODrive extends Threaded {
 
 	public enum DriveState {
-		TELEOP, PUREPURSUIT, TURN, HOLD, DONE
+		TELEOP, PUREPURSUIT, TURN, DONE
 	}
 
 	public static class DriveSignal {
@@ -69,18 +70,13 @@ public class NEODrive extends Threaded {
 		return instance;
 	}
 
-	private double quickStopAccumulator;
-
-	private boolean drivePercentVbus;
-
-	private ADXRS450_Gyro gyroSensor;// = new ADXRS450_Gyro(SPI.Port.kOnboardCS0);
+	private ADXRS450_Gyro gyroSensor;
 	// private LazyTalonSRX leftTalon, rightTalon, leftSlaveTalon, leftSlave2Talon,
 	// rightSlaveTalon, rightSlave2Talon;
 	private PurePursuitController autonomousDriver;
 	private AsynchronousPid turnPID;
 	private DriveState driveState;
 	private RateLimiter moveProfiler, turnProfiler;
-	private Solenoid shifter;
 	private Rotation2D wantedHeading;
 	private volatile double driveMultiplier;
 
@@ -115,7 +111,6 @@ public class NEODrive extends Threaded {
 
 		configMotors();
 
-		drivePercentVbus = true;
 		driveState = DriveState.TELEOP;
 
 		turnPID = new AsynchronousPid(1.0, 0, 1.2, 0); // P=1.0 OR 0.8
@@ -162,10 +157,6 @@ public class NEODrive extends Threaded {
 		driveMultiplier = Constants.DRIVE_HIGH_SPEED;
 	}
 
-	// private void configLow() {
-	// driveMultiplier = Constants.DRIVE_LOW_SPEED;
-	// }
-
 	boolean teleopstart = true;
 
 	synchronized public void setTeleop() {
@@ -178,24 +169,6 @@ public class NEODrive extends Threaded {
 
 	public void printCurrent() {
 		System.out.println(leftSpark);
-	}
-
-	public void startHold() {
-		prevPositionL = getLeftDistance();
-		prevPositionR = getRightDistance();
-		driveState = DriveState.HOLD;
-		setShiftState(true);
-	}
-
-	public void endHold() {
-		driveState = DriveState.TELEOP;
-	}
-
-	public void hold() {
-		double errorL = prevPositionL - getLeftDistance();
-		double errorR = prevPositionR - getRightDistance();
-		setWheelVelocity(new DriveSignal(errorL * Constants.K_HOLD_P, errorR * Constants.K_HOLD_P));
-
 	}
 
 	private void configMotors() {
@@ -281,16 +254,54 @@ public class NEODrive extends Threaded {
 			return;
 		}
 		// inches per sec to rotations per min
-		double leftSetpoint = (setVelocity.leftVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d) * 60d
-				* (62d / 22d) * 3d;
-		double rightSetpoint = (setVelocity.rightVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d) * 60d
-				* (62d / 22d) * 3d;
+		double leftSetpoint = (setVelocity.leftVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d) * 1
+				/ Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
+		double rightSetpoint = (setVelocity.rightVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d) * 1
+				/ Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
 		leftSparkPID.setReference(leftSetpoint, ControlType.kVelocity);
 		rightSparkPID.setReference(rightSetpoint, ControlType.kVelocity);
 	}
 
-	public synchronized void setSimpleDrive(boolean setting) {
-		drivePercentVbus = setting;
+	/**
+	 * Update the motor outputs with the given control values.
+	 *
+	 * @param joyX     horizontal control input
+	 * @param joyY     vertical control input
+	 * @param throttle throttle control input scaled between 1 and -1 (-.8 is 10 %,
+	 *                 0 is 50%, 1.0 is 100%)
+	 */
+	public void arcadeDrive(double joyX, double joyY, double throttle, boolean fullSpeed) {
+		synchronized (this) {
+			driveState = DriveState.TELEOP;
+		}
+
+		double spdL, spdR, pwrL, pwrR;
+
+		if (!fullSpeed) {
+			joyY *= .65;
+		} else {
+			joyY *= 1;
+		}
+
+		// scale from 1 to -1 to 1 to 0
+		throttle = (throttle + 1) / 2;
+
+		if (throttle < .3) {
+			throttle = .3;
+		} else if (throttle > .8) {
+			throttle = 1;
+		}
+
+		joyY *= throttle;
+		joyX *= throttle;
+
+		pwrL = Constants.LEFT_SPEEDSCALAR * RobotMath.clampPosNeg1(joyY - joyX);
+		pwrR = Constants.RIGHT_SPEEDSCALAR * RobotMath.clampPosNeg1(joyY + joyX);
+
+		spdL = Constants.DRIVE_HIGH_SPEED * pwrL;
+		spdR = Constants.DRIVE_HIGH_SPEED * pwrR;
+
+		setWheelVelocity(new DriveSignal(spdL, spdR));
 	}
 
 	@Override
@@ -314,11 +325,7 @@ public class NEODrive extends Threaded {
 		case TURN:
 			updateTurn();
 			break;
-		case HOLD:
-			hold();
-			break;
 		}
-
 	}
 
 	public void setRotation(Rotation2D angle) {

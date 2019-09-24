@@ -18,6 +18,10 @@ public class Constants extends RobotConstants {
     // ---- DRIVE
     public static final MotorType MOTOR_TYPE = MotorType.kBrushless; // indicates that we are using brushless motors
 
+    public static final double ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION = 72 / 11; // basically your gearing. Ask Mech
+                                                                                   // for gear teeth number to gear
+                                                                                   // teeth number ratio
+
     public static final int RIGHT_DRIVE_FRONT_ID = 0;
     public static final int RIGHT_DRIVE_MIDDLE_ID = 1;
     public static final int RIGHT_DRIVE_BACK_ID = 2;
@@ -30,6 +34,9 @@ public class Constants extends RobotConstants {
     public static final int DRIVE_HIGH_SPEED = 180; // TODO: get actual top speed (on ground)
     public static final double WHEEL_CIRCUMFERENCE = 13.21;
     public static final double WHEEL_DIAMETER = 4.204874;
+
+    public static final double LEFT_SPEEDSCALAR = 1.0;
+    public static final double RIGHT_SPEEDSCALAR = 1.0;
 
     public static final double DRIVE_ACCEL_LIMIT = 120;
     public static final double DRIVE_JERK_LIMIT = 2000;
