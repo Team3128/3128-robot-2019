@@ -105,10 +105,58 @@ public class MainAthos extends NarwhalRobot {
     protected void teleopPeriodic() {
     }
 
+    double maxLeftSpeed = 0;
+    double maxRightSpeed = 0;
+    double maxSpeed = 0;
+    double minLeftSpeed = 0;
+    double minRightSpeed = 0;
+    double minSpeed = 0;
+
+    double currentLeftSpeed;
+    double currentLeftDistance;
+    double currentRightSpeed;
+    double currentRightDistance;
+    double currentSpeed;
+    double currentDistance;
+
     @Override
     protected void updateDashboard() {
+        currentLeftSpeed = drive.getLeftSpeed();
+        currentLeftDistance = drive.getLeftDistance();
+        currentRightSpeed = drive.getRightSpeed();
+        currentRightDistance = drive.getRightDistance();
+
+        currentSpeed = drive.getSpeed();
+        currentDistance = drive.getDistance();
+
         NarwhalDashboard.put("time", DriverStation.getInstance().getMatchTime());
         NarwhalDashboard.put("voltage", RobotController.getBatteryVoltage());
+
+        SmartDashboard.putNumber("Gyro Angle", drive.getAngle());
+        SmartDashboard.putNumber("Left Distance", currentLeftDistance);
+        SmartDashboard.putNumber("Right Distance", currentRightDistance);
+
+        SmartDashboard.putNumber("Distance", currentDistance);
+
+        SmartDashboard.putNumber("Left Velocity", currentLeftSpeed);
+        SmartDashboard.putNumber("Right Velocity", currentRightSpeed);
+
+        SmartDashboard.putNumber("Velocity", drive.getSpeed());
+
+        maxLeftSpeed = Math.max(maxLeftSpeed, currentLeftSpeed);
+        maxRightSpeed = Math.max(maxRightSpeed, currentRightSpeed);
+        maxSpeed = Math.max(maxSpeed, currentSpeed);
+        minLeftSpeed = Math.min(minLeftSpeed, currentLeftSpeed);
+        minRightSpeed = Math.min(minRightSpeed, currentLeftSpeed);
+        minSpeed = Math.min(minSpeed, currentSpeed);
+
+        SmartDashboard.putNumber("Max Left Speed", maxLeftSpeed);
+        SmartDashboard.putNumber("Min Left Speed", minLeftSpeed);
+        SmartDashboard.putNumber("Max Right Speed", maxRightSpeed);
+        SmartDashboard.putNumber("Min Right Speed", minRightSpeed);
+
+        SmartDashboard.putNumber("Max Speed", maxSpeed);
+        SmartDashboard.putNumber("Min Speed", minSpeed);
     }
 
     public static void main(String... args) {

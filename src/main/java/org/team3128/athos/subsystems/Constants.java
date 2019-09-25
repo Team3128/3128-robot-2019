@@ -27,6 +27,9 @@ public class Constants extends RobotConstants {
                                                                                   // for gear teeth number to gear
                                                                                   // teeth number ratio: 8.3333333
 
+    public static final double WHEEL_ROTATIONS_FOR_ONE_ENCODER_ROTATION = 1
+            / Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
+
     public static final int RIGHT_DRIVE_FRONT_ID = 1;
     public static final int RIGHT_DRIVE_MIDDLE_ID = 2;
     public static final int RIGHT_DRIVE_BACK_ID = 0;

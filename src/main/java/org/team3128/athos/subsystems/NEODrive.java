@@ -216,11 +216,13 @@ public class NEODrive extends Threaded {
 		 * Constants.EncoderTicksPerRotation * Constants.WheelDiameter Math.PI * 22d /
 		 * 62d / 3d;
 		 */
-		return leftSparkEncoder.getPosition() * Constants.WHEEL_DIAMETER * Math.PI * 22d / 62d / 3d;
+		return leftSparkEncoder.getPosition() * Constants.WHEEL_DIAMETER * Math.PI
+				* Constants.WHEEL_ROTATIONS_FOR_ONE_ENCODER_ROTATION;
 	}
 
 	public double getRightDistance() {
-		return rightSparkEncoder.getPosition() * Constants.WHEEL_DIAMETER * Math.PI * 22d / 62d / 3d;
+		return rightSparkEncoder.getPosition() * Constants.WHEEL_DIAMETER * Math.PI
+				* Constants.WHEEL_ROTATIONS_FOR_ONE_ENCODER_ROTATION;
 	}
 
 	public double getSpeed() {
@@ -228,11 +230,11 @@ public class NEODrive extends Threaded {
 	}
 
 	public double getLeftSpeed() {
-		return leftSparkEncoder.getVelocity() * 2 * Math.PI / 60d * Constants.WHEEL_DIAMETER / 2d * 22d / 62d / 3d;
+		return leftSparkEncoder.getVelocity() * Constants.kDriveInchesPerSecPerRPM;
 	}
 
 	public double getRightSpeed() {
-		return rightSparkEncoder.getVelocity() * 2 * Math.PI / 60d * Constants.WHEEL_DIAMETER / 2d * 22d / 62d / 3d;
+		return rightSparkEncoder.getVelocity() * Constants.kDriveInchesPerSecPerRPM;
 	}
 
 	public synchronized void setAutoPath(Path autoPath, boolean isReversed) {
