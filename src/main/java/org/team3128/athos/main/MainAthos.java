@@ -57,6 +57,11 @@ public class MainAthos extends NarwhalRobot {
     public NetworkTable table;
     public NetworkTable limelightTable;
 
+    public double kP = Constants.K_AUTO_LEFT_P;
+    public double kI = Constants.K_AUTO_LEFT_I;
+    public double kD = Constants.K_AUTO_LEFT_D;
+    public double kF = Constants.K_AUTO_LEFT_F;
+
     @Override
     protected void constructHardware() {
 
@@ -73,6 +78,12 @@ public class MainAthos extends NarwhalRobot {
         joystick = new Joystick(1);
         lm = new ListenerManager(joystick);
         addListenerManager(lm);
+
+        // display PID coefficients on SmartDashboard
+        SmartDashboard.putNumber("P Gain", kP);
+        SmartDashboard.putNumber("I Gain", kI);
+        SmartDashboard.putNumber("D Gain", kD);
+        SmartDashboard.putNumber("F Gain", kF);
     }
 
     @Override
@@ -84,6 +95,7 @@ public class MainAthos extends NarwhalRobot {
         lm.nameControl(ControllerExtreme3D.TWIST, "MoveTurn");
         lm.nameControl(ControllerExtreme3D.JOYY, "MoveForwards");
         lm.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");
+        lm.nameControl(new Button(5), "ResetGyro");
 
         lm.addMultiListener(() -> {
             drive.arcadeDrive(-0.7 * RobotMath.thresh(lm.getAxis("MoveTurn"), 0.1),
@@ -98,6 +110,10 @@ public class MainAthos extends NarwhalRobot {
         });
         lm.addButtonUpListener("AlignToTarget", () -> {
             Log.info("MainAthos.java", "[Vision Alignment] Not created yet, would've ended");
+        });
+
+        lm.addButtonDownListener("ResetGyro", () -> {
+            drive.resetGyro();
         });
     }
 
@@ -157,6 +173,21 @@ public class MainAthos extends NarwhalRobot {
 
         SmartDashboard.putNumber("Max Speed", maxSpeed);
         SmartDashboard.putNumber("Min Speed", minSpeed);
+
+         // read PID coefficients from SmartDashboard
+        double p = SmartDashboard.getNumber("P Gain", 0);
+        double i = SmartDashboard.getNumber("I Gain", 0);
+        double d = SmartDashboard.getNumber("D Gain", 0);
+        double f = SmartDashboard.getNumber("F Gain", 0);
+
+        boolean hasChanged = false;
+        if((p != kP)) { kP = p; hasChanged = true;}
+        if((i != kI)) { kI = i; hasChanged = true;}
+        if((d != kD)) { kD = d; hasChanged = true;}
+        if((f != kF)) { kF = f; hasChanged = true;}
+        if(hasChanged){
+            drive.setDualVelocityPID(kP, kI, kD, kF);
+        }
     }
 
     public static void main(String... args) {

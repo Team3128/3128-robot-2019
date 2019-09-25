@@ -268,12 +268,12 @@ public class NEODrive extends Threaded {
 			return;
 		}
 		// inches per sec to rotations per min
-		double leftSetpoint = (setVelocity.leftVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d) * 1
-				/ Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
-		double rightSetpoint = (setVelocity.rightVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d) * 1
-				/ Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
+		double leftSetpoint = (setVelocity.leftVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d) * Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
+		double rightSetpoint = (setVelocity.rightVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d) * Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
 		leftSparkPID.setReference(leftSetpoint, ControlType.kVelocity);
+		Log.info("NEODrive", "setWheelVelocity: " + "leftSetpoint = " + String.valueOf(leftSetpoint));
 		rightSparkPID.setReference(rightSetpoint, ControlType.kVelocity);
+		Log.info("NEODrive", "setWheelVelocity: " + "rightSetpoint = " + String.valueOf(rightSetpoint));
 	}
 
 	/**
@@ -351,6 +351,21 @@ public class NEODrive extends Threaded {
 			driveState = DriveState.TURN;
 		}
 		configHigh();
+	}
+	/**
+	 * Set Velocity PID for both sides of the drivetrain (to the same constants)
+	 */
+	public void setDualVelocityPID(double kP, double kI, double kD, double kF) {
+		leftSparkPID.setP(kP);
+		leftSparkPID.setI(kI);
+		leftSparkPID.setD(kD);
+		leftSparkPID.setFF(kF);
+
+		rightSparkPID.setP(kP);
+		rightSparkPID.setI(kI);
+		rightSparkPID.setD(kD);
+		rightSparkPID.setFF(kF);
+		Log.info("[NEODrive]", "Updated Velocity PID values for both sides of the drivetrain to: kP = " + kP + ", kI = " + kI + ", kD = " + kD + ", kF = " + kF);
 	}
 
 	private void updateTurn() {
