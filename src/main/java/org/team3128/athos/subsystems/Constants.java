@@ -3,6 +3,7 @@ package org.team3128.athos.subsystems;
 import org.team3128.common.utility.units.Length;
 import org.team3128.common.utility.units.Angle;
 
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import org.team3128.common.generics.RobotConstants;
@@ -12,15 +13,19 @@ public class Constants extends RobotConstants {
 
     // MECHANISM CONSTANTS:
 
-    public static final double kDriveInchesPerSecPerRPM = 2 * Math.PI / 60d * Constants.WHEEL_DIAMETER / 2d * 22d / 62d
-            / 3d; // a fairly basic relationship between tangential and rotational speed
+    public static final double kDriveInchesPerSecPerRPM = 2 * Math.PI / 60d * Constants.WHEEL_DIAMETER / 2d * 1
+            / Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION; // a fairly basic relationship between tangential and
+                                                                  // rotational speed: rpm * 1min/60seconds * CIRCUM *
+                                                                  // (relation between encoder rotations and wheel
+                                                                  // rotations) = in/s
 
     // ---- DRIVE
     public static final MotorType MOTOR_TYPE = MotorType.kBrushless; // indicates that we are using brushless motors
+    public static final IdleMode DRIVE_IDLE_MODE = IdleMode.kBrake;
 
-    public static final double ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION = 8.3333333; // basically your gearing. Ask Mech
-                                                                                   // for gear teeth number to gear
-                                                                                   // teeth number ratio: 8.3333333
+    public static final double ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION = 75 / 9; // basically your gearing. Ask Mech
+                                                                                  // for gear teeth number to gear
+                                                                                  // teeth number ratio: 8.3333333
 
     public static final int RIGHT_DRIVE_FRONT_ID = 1;
     public static final int RIGHT_DRIVE_MIDDLE_ID = 2;

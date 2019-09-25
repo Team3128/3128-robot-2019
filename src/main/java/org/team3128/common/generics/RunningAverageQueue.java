@@ -1,6 +1,6 @@
 /**
  * Implementation of a running average queue.
- * @author Adham Elarabawy, amg
+ * @author Adham Elarabawy 
  */
 
 package org.team3128.common.generics;
