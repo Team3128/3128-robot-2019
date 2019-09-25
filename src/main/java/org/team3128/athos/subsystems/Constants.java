@@ -13,11 +13,11 @@ public class Constants extends RobotConstants {
 
     // MECHANISM CONSTANTS:
 
-    public static final double kDriveInchesPerSecPerRPM = 2 * Math.PI / 60d * Constants.WHEEL_DIAMETER / 2d * 1
-            / Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION; // a fairly basic relationship between tangential and
-                                                                  // rotational speed: rpm * 1min/60seconds * CIRCUM *
-                                                                  // (relation between encoder rotations and wheel
-                                                                  // rotations) = in/s
+    public static final double kDriveInchesPerSecPerRPM = 2 * Math.PI / 60d * Constants.WHEEL_DIAMETER / 2d
+            * Constants.WHEEL_ROTATIONS_FOR_ONE_ENCODER_ROTATION; // a fairly basic relationship between tangential and
+    // rotational speed: rpm * 1min/60seconds * CIRCUM *
+    // (relation between encoder rotations and wheel
+    // rotations) = in/s
 
     // ---- DRIVE
     public static final MotorType MOTOR_TYPE = MotorType.kBrushless; // indicates that we are using brushless motors
