@@ -92,6 +92,60 @@ public class Translation2D implements Interpolable<Translation2D> {
 	}
 
 	/**
+	 * Adds two translations in 2d space and returns the sum. This is similar to
+	 * vector addition.
+	 *
+	 * <p>
+	 * For example, Translation2d{1.0, 2.5} + Translation2d{2.0, 5.5} =
+	 * Translation2d{3.0, 8.0}
+	 *
+	 * @param other The translation to add.
+	 * @return The sum of the translations.
+	 */
+	public Translation2D plus(Translation2D other) {
+		return new Translation2D(this.x + other.x, this.y + other.y);
+	}
+
+	/**
+	 * Subtracts the other translation from the other translation and returns the
+	 * difference.
+	 *
+	 * <p>
+	 * For example, Translation2d{5.0, 4.0} - Translation2d{1.0, 2.0} =
+	 * Translation2d{4.0, 2.0}
+	 *
+	 * @param other The translation to subtract.
+	 * @return The difference between the two translations.
+	 */
+	public Translation2D minus(Translation2D other) {
+		return new Translation2D(x - other.x, y - other.y);
+	}
+
+	/**
+	 * Returns the inverse of the current translation. This is equivalent to
+	 * rotating by 180 degrees, flipping the point over both axes, or simply
+	 * negating both components of the translation.
+	 *
+	 * @return The inverse of the current translation.
+	 */
+	public Translation2D unaryMinus() {
+		return new Translation2D(-x, -y);
+	}
+
+	/**
+	 * Multiplies the translation by a scalar and returns the new translation.
+	 *
+	 * <p>
+	 * For example, Translation2d{2.0, 2.5} * 2 = Translation2d{4.0, 5.0}
+	 *
+	 * @param scalar The scalar to multiply by.
+	 * @return The scaled translation.
+	 */
+	public Translation2D times(double scalar) {
+		return new Translation2D(x * scalar, y * scalar);
+	}
+
+	/**
 	 *
 	 * @return X value of this object.
 	 */

@@ -58,7 +58,6 @@ public class MainAthos extends NarwhalRobot {
     public NetworkTable limelightTable;
 
     public double kP = Constants.K_AUTO_LEFT_P;
-    public double kI = Constants.K_AUTO_LEFT_I;
     public double kD = Constants.K_AUTO_LEFT_D;
     public double kF = Constants.K_AUTO_LEFT_F;
 
@@ -81,7 +80,6 @@ public class MainAthos extends NarwhalRobot {
 
         // display PID coefficients on SmartDashboard
         SmartDashboard.putNumber("P Gain", kP);
-        SmartDashboard.putNumber("I Gain", kI);
         SmartDashboard.putNumber("D Gain", kD);
         SmartDashboard.putNumber("F Gain", kF);
     }
@@ -159,6 +157,10 @@ public class MainAthos extends NarwhalRobot {
 
         SmartDashboard.putNumber("Velocity", drive.getSpeed());
 
+        SmartDashboard.putNumber("RobotTracker - x:", robotTracker.getOdometry().getTranslation().getX());
+        SmartDashboard.putNumber("RobotTracker - y:", robotTracker.getOdometry().getTranslation().getY());
+        SmartDashboard.putNumber("RobotTracker - theta:", robotTracker.getOdometry().getRotation().getDegrees());
+
         maxLeftSpeed = Math.max(maxLeftSpeed, currentLeftSpeed);
         maxRightSpeed = Math.max(maxRightSpeed, currentRightSpeed);
         maxSpeed = Math.max(maxSpeed, currentSpeed);
@@ -174,19 +176,26 @@ public class MainAthos extends NarwhalRobot {
         SmartDashboard.putNumber("Max Speed", maxSpeed);
         SmartDashboard.putNumber("Min Speed", minSpeed);
 
-         // read PID coefficients from SmartDashboard
+        // read PID coefficients from SmartDashboard
         double p = SmartDashboard.getNumber("P Gain", 0);
-        double i = SmartDashboard.getNumber("I Gain", 0);
         double d = SmartDashboard.getNumber("D Gain", 0);
         double f = SmartDashboard.getNumber("F Gain", 0);
 
         boolean hasChanged = false;
-        if((p != kP)) { kP = p; hasChanged = true;}
-        if((i != kI)) { kI = i; hasChanged = true;}
-        if((d != kD)) { kD = d; hasChanged = true;}
-        if((f != kF)) { kF = f; hasChanged = true;}
-        if(hasChanged){
-            drive.setDualVelocityPID(kP, kI, kD, kF);
+        if ((p != kP)) {
+            kP = p;
+            hasChanged = true;
+        }
+        if ((d != kD)) {
+            kD = d;
+            hasChanged = true;
+        }
+        if ((f != kF)) {
+            kF = f;
+            hasChanged = true;
+        }
+        if (hasChanged) {
+            drive.setDualVelocityPID(kP, kD, kF);
         }
     }
 

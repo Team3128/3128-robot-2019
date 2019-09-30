@@ -113,6 +113,56 @@ public class Rotation2D implements Interpolable<Rotation2D> {
 	}
 
 	/**
+	 * Subtracts the new rotation from the current rotation and returns the new
+	 * rotation.
+	 *
+	 * <p>
+	 * For example, Rotation2d.fromDegrees(10) - Rotation2d.fromDegrees(100) =
+	 * Rotation2d{-pi/2}
+	 *
+	 * @param other The rotation to subtract.
+	 * @return The difference between the two rotations.
+	 */
+	public Rotation2D minus(Rotation2D other) {
+		return rotateBy(other.unaryMinus());
+	}
+
+	/**
+	 * Adds two rotations together, with the result being bounded between -pi and
+	 * pi.
+	 *
+	 * <p>
+	 * For example, Rotation2d.fromDegrees(30) + Rotation2d.fromDegrees(60) =
+	 * Rotation2d{-pi/2}
+	 *
+	 * @param other The rotation to add.
+	 * @return The sum of the two rotations.
+	 */
+	public Rotation2D plus(Rotation2D other) {
+		return rotateBy(other);
+	}
+
+	/**
+	 * Takes the inverse of the current rotation. This is simply the negative of the
+	 * current angular value.
+	 *
+	 * @return The inverse of the current rotation.
+	 */
+	public Rotation2D unaryMinus() {
+		return this.times(-1);
+	}
+
+	/**
+	 * Multiplies the current rotation by a scalar.
+	 *
+	 * @param scalar The scalar.
+	 * @return The new scaled Rotation2d.
+	 */
+	public Rotation2D times(double scalar) {
+		return Rotation2D.fromDegrees(this.getDegrees() * scalar);
+	}
+
+	/**
 	 *
 	 * @param rotationMat Multiply this Rotation2D by this specified Rotation
 	 * @return The multiplied Rotation

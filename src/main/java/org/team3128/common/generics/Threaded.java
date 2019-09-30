@@ -12,12 +12,16 @@ import edu.wpi.first.wpilibj.Timer;
  * Classes that want to be threaded using ThreadScheduler need to implement this
  * class
  */
+
+/**
+ * Effectively runs at 200hz
+ */
 public abstract class Threaded implements Runnable {
 
 	private boolean isUpdated = true;
 	private boolean isPaused = false;
 	private double lastRuntime = 0;
-	private long period = Duration.ofMillis(5).toNanos();
+	private long period = Duration.ofMillis(5).toNanos(); // period of 5 ms = 0.005 s -> frequency of 1 / 0.005 = 200hz
 
 	@Override
 	public void run() {

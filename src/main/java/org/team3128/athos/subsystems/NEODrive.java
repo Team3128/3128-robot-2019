@@ -7,8 +7,9 @@ import org.team3128.common.hardware.motor.LazyCANSparkMax;
 import org.team3128.common.generics.Threaded;
 import org.team3128.common.control.RateLimiter;
 import org.team3128.common.control.AsynchronousPid;
-import org.team3128.common.control.motion.Path;
-import org.team3128.common.control.motion.PurePursuitController;
+import org.team3128.common.control.motion.RamseteController;
+import org.team3128.common.control.trajectory.Trajectory;
+import org.team3128.common.control.trajectory.Trajectory.State;
 import org.team3128.common.utility.math.Rotation2D;
 import org.team3128.common.utility.NarwhalUtility;
 
@@ -28,12 +29,14 @@ import edu.wpi.first.wpilibj.Timer;
 import org.team3128.common.hardware.motor.LazyCANSparkMax;
 import org.team3128.common.utility.RobotMath;
 
+import edu.wpi.first.wpilibj.Timer;
+
 import org.team3128.common.utility.Log;
 
 public class NEODrive extends Threaded {
 
 	public enum DriveState {
-		TELEOP, PUREPURSUIT, TURN, DONE
+		TELEOP, RAMSETECONTROL, TURN, DONE
 	}
 
 	public static class DriveSignal {
@@ -76,12 +79,18 @@ public class NEODrive extends Threaded {
 	private ADXRS450_Gyro gyroSensor;
 	// private LazyTalonSRX leftTalon, rightTalon, leftSlaveTalon, leftSlave2Talon,
 	// rightSlaveTalon, rightSlave2Talon;
-	private PurePursuitController autonomousDriver;
+	private RamseteController autonomousDriver;
+	private Trajectory trajectory;
 	private AsynchronousPid turnPID;
 	private DriveState driveState;
 	private RateLimiter moveProfiler, turnProfiler;
 	private Rotation2D wantedHeading;
 	private volatile double driveMultiplier;
+
+	private double previousTime;
+	private double currentTime;
+	private double startTime;
+	private double totalTime;
 
 	double prevPositionL = 0;
 	double prevPositionR = 0;
@@ -237,15 +246,13 @@ public class NEODrive extends Threaded {
 		return rightSparkEncoder.getVelocity() * Constants.kDriveInchesPerSecPerRPM;
 	}
 
-	public synchronized void setAutoPath(Path autoPath, boolean isReversed) {
-		driveState = DriveState.PUREPURSUIT;
-		autonomousDriver = new PurePursuitController(autoPath, isReversed, Constants.TRACK_RADIUS,
-				Constants.MIN_PATH_SPEED, Constants.MAX_PATH_SPEED, Constants.MIN_LOOKAHEAD_DISTANCE,
-				Constants.MAX_LOOKAHEAD_DISTANCE);
-		autonomousDriver.resetTime();
+	public synchronized void setAutoTrajectory(Trajectory autoTraj, boolean isReversed) {
+		this.trajectory = autoTraj;
+		totalTime = trajectory.getTotalTimeSeconds();
+		autonomousDriver = new RamseteController(2.0, 0.7, isReversed, Constants.TRACK_RADIUS);
 		configAuto();
-		// System.out.println("even more bad");
-		updatePurePursuit();
+		updateRamseteController(autoTraj, true);
+		driveState = DriveState.RAMSETECONTROL;
 	}
 
 	public void setBrakeState(NeutralMode mode) {
@@ -268,8 +275,10 @@ public class NEODrive extends Threaded {
 			return;
 		}
 		// inches per sec to rotations per min
-		double leftSetpoint = (setVelocity.leftVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d) * Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
-		double rightSetpoint = (setVelocity.rightVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d) * Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
+		double leftSetpoint = (setVelocity.leftVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d)
+				* Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
+		double rightSetpoint = (setVelocity.rightVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d)
+				* Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
 		leftSparkPID.setReference(leftSetpoint, ControlType.kVelocity);
 		Log.info("NEODrive", "setWheelVelocity: " + "leftSetpoint = " + String.valueOf(leftSetpoint));
 		rightSparkPID.setReference(rightSetpoint, ControlType.kVelocity);
@@ -335,9 +344,8 @@ public class NEODrive extends Threaded {
 		switch (snapDriveState) {
 		case TELEOP:
 			break;
-		case PUREPURSUIT:
-			// System.out.println("bad!");
-			updatePurePursuit();
+		case RAMSETECONTROL:
+			updateRamseteController(trajectory, false);
 			break;
 		case TURN:
 			updateTurn();
@@ -352,20 +360,20 @@ public class NEODrive extends Threaded {
 		}
 		configHigh();
 	}
+
 	/**
 	 * Set Velocity PID for both sides of the drivetrain (to the same constants)
 	 */
-	public void setDualVelocityPID(double kP, double kI, double kD, double kF) {
+	public void setDualVelocityPID(double kP, double kD, double kF) {
 		leftSparkPID.setP(kP);
-		leftSparkPID.setI(kI);
 		leftSparkPID.setD(kD);
 		leftSparkPID.setFF(kF);
 
 		rightSparkPID.setP(kP);
-		rightSparkPID.setI(kI);
 		rightSparkPID.setD(kD);
 		rightSparkPID.setFF(kF);
-		Log.info("[NEODrive]", "Updated Velocity PID values for both sides of the drivetrain to: kP = " + kP + ", kI = " + kI + ", kD = " + kD + ", kF = " + kF);
+		Log.info("[NEODrive]", "Updated Velocity PID values for both sides of the drivetrain to: kP = " + kP + ", kD = "
+				+ kD + ", kF = " + kF);
 	}
 
 	private void updateTurn() {
@@ -392,10 +400,18 @@ public class NEODrive extends Threaded {
 		configHigh();
 	}
 
-	private void updatePurePursuit() {
-		Log.info("NEODrive", "Updating Pure Pursuit");
-		AutoDriveSignal signal = autonomousDriver.calculate(RobotTracker.getInstance().getOdometry());
-		if (signal.isDone) {
+	private void updateRamseteController(Trajectory trajectory, boolean isStart) {
+		Log.info("NEODrive", "Updating Ramsete Follower");
+		currentTime = Timer.getFPGATimestamp();
+		if (isStart) {
+			startTime = currentTime;
+			previousTime = currentTime;
+		}
+		State currentTrajectoryState = trajectory.sample(currentTime - previousTime);
+
+		AutoDriveSignal signal = autonomousDriver.calculate(RobotTracker.getInstance().getOdometry(),
+				currentTrajectoryState);
+		if ((currentTime - startTime) == 0) {
 			synchronized (this) {
 				driveState = DriveState.DONE;
 			}
