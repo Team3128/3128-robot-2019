@@ -268,17 +268,15 @@ public class NEODrive extends Threaded {
 	}
 
 	private void setWheelVelocity(DriveSignal setVelocity) {
-		if (Math.abs(setVelocity.rightVelocity) > Constants.DRIVE_HIGH_SPEED
-				|| Math.abs(setVelocity.leftVelocity) > Constants.DRIVE_HIGH_SPEED) {
+		if (Math.abs(setVelocity.rightVelocity) > (Constants.DRIVE_HIGH_SPEED)
+				|| Math.abs(setVelocity.leftVelocity) > (Constants.DRIVE_HIGH_SPEED)) {
 			DriverStation.getInstance();
 			DriverStation.reportError("Velocity set over " + Constants.DRIVE_HIGH_SPEED + " !", false);
 			return;
 		}
 		// inches per sec to rotations per min
-		double leftSetpoint = (setVelocity.leftVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d)
-				* Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
-		double rightSetpoint = (setVelocity.rightVelocity) / (2 * Math.PI * Constants.WHEEL_DIAMETER / 2d)
-				* Constants.ENCODER_ROTATIONS_FOR_ONE_WHEEL_ROTATION;
+		double leftSetpoint = (setVelocity.leftVelocity) * 1 / Constants.kDriveInchesPerSecPerRPM;
+		double rightSetpoint = (setVelocity.rightVelocity) * 1 / Constants.kDriveInchesPerSecPerRPM;
 		leftSparkPID.setReference(leftSetpoint, ControlType.kVelocity);
 		Log.info("NEODrive", "setWheelVelocity: " + "leftSetpoint = " + String.valueOf(leftSetpoint));
 		rightSparkPID.setReference(rightSetpoint, ControlType.kVelocity);
@@ -326,8 +324,8 @@ public class NEODrive extends Threaded {
 		String tempStr = "pwrL=" + String.valueOf(pwrL) + ", pwrR=" + String.valueOf(pwrR) + ", spdL="
 				+ String.valueOf(spdL) + ", spdR=" + String.valueOf(spdR);
 		Log.info("NEODrive", tempStr);
-		setWheelPower(new DriveSignal(pwrL, pwrR));
-		// setWheelVelocity(new DriveSignal(spdL, spdR));
+		// setWheelPower(new DriveSignal(pwrL, pwrR));
+		setWheelVelocity(new DriveSignal(spdL, spdR));
 	}
 
 	@Override

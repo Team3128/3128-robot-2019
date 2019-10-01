@@ -4,6 +4,10 @@
 package org.team3128.athos.subsystems;
 
 import org.team3128.common.utility.structure.CircularQueue;
+
+import com.ctre.phoenix.Logger;
+
+import org.team3128.common.utility.Log;
 import org.team3128.common.generics.Threaded;
 import org.team3128.common.utility.RobotMath;
 import org.team3128.common.utility.math.InterpolablePair;

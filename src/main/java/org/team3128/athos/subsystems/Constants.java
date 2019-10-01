@@ -44,11 +44,11 @@ public class Constants extends RobotConstants {
                                                      // turns
                                                      // first. (Adham)
         public static final int DRIVE_HIGH_SPEED = 140; // Empirical Max Linear Speed: 146.57 in/s
-        public static final double WHEEL_CIRCUMFERENCE = 13.21; // Might be deprecated. I am thinking of switching to
+        // public static final double WHEEL_CIRCUMFERENCE = 13.21; // Might be deprecated. I am thinking of switching to
                                                                 // using
                                                                 // wheel diameter, as that is significantly easier to
                                                                 // measure.
-        public static final double WHEEL_DIAMETER = 4.204874;
+        public static final double WHEEL_DIAMETER = 3.55; // effective wheel diameter (measure first then tune this number until distances are accurate)
 
         public static final double LEFT_SPEEDSCALAR = 1.0; // purely for TELEOP drive (to make sure that when the drive
                                                            // pushes the joystick forward, both sides of the drivetrain

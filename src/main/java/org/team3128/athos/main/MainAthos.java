@@ -62,6 +62,8 @@ public class MainAthos extends NarwhalRobot {
     public double kD = Constants.K_AUTO_LEFT_D;
     public double kF = Constants.K_AUTO_LEFT_F;
 
+    public double startTime = 0;
+
     public String trackerCSV = "Time, X, Y, Theta";
 
     @Override
@@ -98,6 +100,8 @@ public class MainAthos extends NarwhalRobot {
         lm.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");
         lm.nameControl(new Button(5), "ResetGyro");
         lm.nameControl(new Button(6), "PrintCSV");
+        lm.nameControl(new Button(3), "ClearTracker");
+        lm.nameControl(new Button(4), "ClearCSV");
 
         lm.addMultiListener(() -> {
             drive.arcadeDrive(-0.7 * RobotMath.thresh(lm.getAxis("MoveTurn"), 0.1),
@@ -120,6 +124,16 @@ public class MainAthos extends NarwhalRobot {
         lm.addButtonDownListener("PrintCSV", () -> {
             Log.info("MainAthos", trackerCSV);
         });
+        lm.addButtonDownListener("ClearCSV", () -> {
+            trackerCSV = "Time, X, Y, Theta";
+            Log.info("MainAthos", "CSV CLEARED");
+            startTime = Timer.getFPGATimestamp();
+        });
+        
+        lm.addButtonDownListener("ClearTracker", () -> {
+            robotTracker.resetOdometry();
+        });
+
     }
 
     @Override
@@ -205,12 +219,26 @@ public class MainAthos extends NarwhalRobot {
             drive.setDualVelocityPID(kP, kD, kF);
         }
 
-        trackerCSV += "\n" + String.valueOf(Timer.getFPGATimestamp()) + ","
+        trackerCSV += "\n" + String.valueOf(Timer.getFPGATimestamp() - startTime) + ","
                 + String.valueOf(robotTracker.getOdometry().translationMat.getX()) + ","
                 + String.valueOf(robotTracker.getOdometry().translationMat.getY()) + ","
                 + String.valueOf(robotTracker.getOdometry().rotationMat.getDegrees());
     }
 
+    @Override
+    protected void teleopInit() {
+        scheduler.resume();
+    }
+
+    @Override
+    protected void autonomousInit() {
+        scheduler.resume();
+    }
+
+    @Override
+    protected void disabledInit() {
+        scheduler.pause();
+    }
     public static void main(String... args) {
         RobotBase.startRobot(MainAthos::new);
     }
