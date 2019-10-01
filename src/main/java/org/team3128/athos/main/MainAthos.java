@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import edu.wpi.first.networktables.NetworkTable;
@@ -60,6 +61,8 @@ public class MainAthos extends NarwhalRobot {
     public double kP = Constants.K_AUTO_LEFT_P;
     public double kD = Constants.K_AUTO_LEFT_D;
     public double kF = Constants.K_AUTO_LEFT_F;
+
+    public String trackerCSV = "Time, X, Y, Theta";
 
     @Override
     protected void constructHardware() {
@@ -94,6 +97,7 @@ public class MainAthos extends NarwhalRobot {
         lm.nameControl(ControllerExtreme3D.JOYY, "MoveForwards");
         lm.nameControl(ControllerExtreme3D.THROTTLE, "Throttle");
         lm.nameControl(new Button(5), "ResetGyro");
+        lm.nameControl(new Button(6), "PrintCSV");
 
         lm.addMultiListener(() -> {
             drive.arcadeDrive(-0.7 * RobotMath.thresh(lm.getAxis("MoveTurn"), 0.1),
@@ -112,6 +116,9 @@ public class MainAthos extends NarwhalRobot {
 
         lm.addButtonDownListener("ResetGyro", () -> {
             drive.resetGyro();
+        });
+        lm.addButtonDownListener("PrintCSV", () -> {
+            Log.info("MainAthos", trackerCSV);
         });
     }
 
@@ -197,6 +204,11 @@ public class MainAthos extends NarwhalRobot {
         if (hasChanged) {
             drive.setDualVelocityPID(kP, kD, kF);
         }
+
+        trackerCSV += "\n" + String.valueOf(Timer.getFPGATimestamp()) + ","
+                + String.valueOf(robotTracker.getOdometry().translationMat.getX()) + ","
+                + String.valueOf(robotTracker.getOdometry().translationMat.getY()) + ","
+                + String.valueOf(robotTracker.getOdometry().rotationMat.getDegrees());
     }
 
     public static void main(String... args) {
