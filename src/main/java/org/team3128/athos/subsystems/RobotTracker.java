@@ -57,7 +57,7 @@ public class RobotTracker extends Threaded {
 	@Override
 	public void update() {
 		currentDistance = drive.getDistance();
-		currentTheta = -drive.getAngle();
+		currentTheta = drive.getAngle();
 
 		double deltaDistance = currentDistance - oldDistance;
 

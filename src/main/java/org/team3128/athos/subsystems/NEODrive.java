@@ -206,7 +206,7 @@ public class NEODrive extends Threaded {
 	}
 
 	public double getAngle() {
-		return gyroSensor.getAngle();
+		return -gyroSensor.getAngle();
 	}
 
 	public double getDistance() {
@@ -286,9 +286,11 @@ public class NEODrive extends Threaded {
 		double leftSetpoint = (setVelocity.leftVelocity) * 1 / Constants.kDriveInchesPerSecPerRPM;
 		double rightSetpoint = (setVelocity.rightVelocity) * 1 / Constants.kDriveInchesPerSecPerRPM;
 		leftSparkPID.setReference(leftSetpoint, ControlType.kVelocity);
-		// Log.info("NEODrive", "setWheelVelocity: " + "leftSetpoint = " + String.valueOf(leftSetpoint));
+		// Log.info("NEODrive", "setWheelVelocity: " + "leftSetpoint = " +
+		// String.valueOf(leftSetpoint));
 		rightSparkPID.setReference(rightSetpoint, ControlType.kVelocity);
-		// Log.info("NEODrive", "setWheelVelocity: " + "rightSetpoint = " + String.valueOf(rightSetpoint));
+		// Log.info("NEODrive", "setWheelVelocity: " + "rightSetpoint = " +
+		// String.valueOf(rightSetpoint));
 	}
 
 	/**
@@ -411,7 +413,7 @@ public class NEODrive extends Threaded {
 		if (isStart) {
 			startTime = currentTime;
 		}
-		State currentTrajectoryState = trajectory.sample(currentTime - startTime);		
+		State currentTrajectoryState = trajectory.sample(currentTime - startTime);
 
 		AutoDriveSignal signal = autonomousDriver.calculate(RobotTracker.getInstance().getOdometry(),
 				currentTrajectoryState);

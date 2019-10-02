@@ -13,7 +13,6 @@ import org.team3128.common.utility.math.Translation2D;
 import org.team3128.common.utility.math.Rotation2D;
 import org.team3128.common.utility.Log;
 import org.team3128.common.utility.NarwhalUtility;
-import org.team3128.common.utility.RobotMath;
 import org.team3128.athos.subsystems.Constants;
 
 public class RamseteController {
@@ -45,9 +44,11 @@ public class RamseteController {
 		double setpointLinearVelocity;
 		double setpointAngularVelocity;
 
-		double actualXPosition = robotPose.getTranslation().getX() * Constants.inchesToMeters; // actual X position in meters
-		double actualYPosition = robotPose.getTranslation().getY() * Constants.inchesToMeters; // actual Y position in meters
-		double actualTheta = robotPose.getRotation().getDegrees(); // actual theta in degrees
+		double actualXPosition = robotPose.getTranslation().getX() * Constants.inchesToMeters; // actual X position in
+																								// meters
+		double actualYPosition = robotPose.getTranslation().getY() * Constants.inchesToMeters; // actual Y position in
+																								// meters
+		double actualTheta = robotPose.getRotation().getRadians(); // actual theta in radians
 
 		double desiredLinearVelocity = currentTrajectoryState.velocityMetersPerSecond; // trajectory
 		// desired
@@ -57,8 +58,8 @@ public class RamseteController {
 		Log.info("desiredlinearvel", String.valueOf(desiredLinearVelocity));
 
 		double desiredAngularVelocity = currentTrajectoryState.velocityMetersPerSecond
-				* currentTrajectoryState.curvatureRadPerMeter * 180 / Math.PI; // trajectory desired angular velocity in
-																				// deg/s
+				* currentTrajectoryState.curvatureRadPerMeter; // trajectory desired angular velocity in
+																// rad/s
 		double desiredXPosition = currentTrajectoryState.poseMeters.getTranslation().getX(); // trajectory
 		// desired
 		// X
@@ -71,23 +72,27 @@ public class RamseteController {
 		// position
 		// in
 		// meters
-		double desiredTheta = currentTrajectoryState.poseMeters.getRotation().getDegrees(); // trajectory desired theta
-																							// in degrees
+		double desiredTheta = currentTrajectoryState.poseMeters.getRotation().getRadians(); // trajectory desired theta
+																							// in radians
 
 		double deltaTheta = desiredTheta - actualTheta;
+		if (deltaTheta > Math.PI) {
+			deltaTheta = -(2 * Math.PI - deltaTheta);
+		}
+		if (deltaTheta < -Math.PI) {
+			deltaTheta = 2 * Math.PI + deltaTheta;
+		}
 		double deltaX = desiredXPosition - actualXPosition;
 		double deltaY = desiredYPosition - actualYPosition;
 
 		double k = 2 * zeta * Math.sqrt(Math.pow(desiredAngularVelocity, 2) + b * Math.pow(desiredLinearVelocity, 2));
-		double sinc = (RobotMath.sin(deltaTheta)) / (deltaTheta);
+		double sinc = (Math.sin(deltaTheta)) / (deltaTheta);
 
-		setpointLinearVelocity = desiredLinearVelocity * RobotMath.cos(deltaTheta)
-				+ k * ((deltaX) * RobotMath.cos(actualTheta) + (deltaY) * RobotMath.sin(actualTheta));
-		setpointAngularVelocity = desiredAngularVelocity
-				+ b * desiredLinearVelocity * sinc
-						* ((deltaY) * RobotMath.cos(actualTheta) - (deltaX) * RobotMath.sin(actualTheta))
-				+ k * (deltaTheta);
-		
+		setpointLinearVelocity = desiredLinearVelocity * Math.cos(deltaTheta)
+				+ k * ((deltaX) * Math.cos(actualTheta) + (deltaY) * Math.sin(actualTheta));
+		setpointAngularVelocity = desiredAngularVelocity + b * desiredLinearVelocity * sinc
+				* ((deltaY) * Math.cos(actualTheta) - (deltaX) * Math.sin(actualTheta)) + k * (deltaTheta);
+
 		setpointLinearVelocity /= Constants.inchesToMeters;
 		double rightVelocity = setpointLinearVelocity + trackRadius * setpointAngularVelocity;
 		double leftVelocity = setpointLinearVelocity - trackRadius * setpointAngularVelocity;
