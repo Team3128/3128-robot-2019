@@ -6,6 +6,9 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import org.team3128.common.generics.RobotConstants;
 
 import org.team3128.common.NarwhalRobot;
+import org.team3128.common.control.trajectory.Trajectory;
+import org.team3128.common.control.trajectory.TrajectoryGenerator;
+import org.team3128.common.control.trajectory.constraint.TrajectoryConstraint;
 import org.team3128.common.drive.DriveCommandRunning;
 import org.team3128.common.hardware.limelight.Limelight;
 import org.team3128.common.hardware.gyroscope.Gyro;
@@ -23,7 +26,8 @@ import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.controllers.ControllerExtreme3D;
 import org.team3128.common.listener.controltypes.Button;
 import org.team3128.common.hardware.motor.LazyCANSparkMax;
-
+import org.team3128.common.utility.math.Pose2D;
+import org.team3128.common.utility.math.Rotation2D;
 import org.team3128.athos.subsystems.NEODrive;
 import org.team3128.athos.subsystems.RobotTracker;
 
@@ -37,6 +41,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
+import java.util.ArrayList;
 import java.util.concurrent.*;
 
 import org.team3128.common.generics.ThreadScheduler;
@@ -66,6 +71,9 @@ public class MainAthos extends NarwhalRobot {
 
     public String trackerCSV = "Time, X, Y, Theta";
 
+    public ArrayList<Pose2D> waypoints = new ArrayList<Pose2D>();
+    public Trajectory trajectory;
+
     @Override
     protected void constructHardware() {
 
@@ -87,6 +95,14 @@ public class MainAthos extends NarwhalRobot {
         SmartDashboard.putNumber("P Gain", kP);
         SmartDashboard.putNumber("D Gain", kD);
         SmartDashboard.putNumber("F Gain", kF);
+
+        waypoints.add(new Pose2D(0, 0, Rotation2D.fromDegrees(0)));
+        waypoints.add(
+                new Pose2D(20 * Constants.inchesToMeters, 10 * Constants.inchesToMeters, Rotation2D.fromDegrees(0)));
+        waypoints.add(new Pose2D(40 * Constants.inchesToMeters, 0, Rotation2D.fromDegrees(0)));
+
+        trajectory = TrajectoryGenerator.generateTrajectory(waypoints, new ArrayList<TrajectoryConstraint>(), 0, 0,
+                Constants.DRIVE_HIGH_SPEED * Constants.inchesToMeters, 0.1, false);
     }
 
     @Override
@@ -129,7 +145,7 @@ public class MainAthos extends NarwhalRobot {
             Log.info("MainAthos", "CSV CLEARED");
             startTime = Timer.getFPGATimestamp();
         });
-        
+
         lm.addButtonDownListener("ClearTracker", () -> {
             robotTracker.resetOdometry();
         });
@@ -233,12 +249,16 @@ public class MainAthos extends NarwhalRobot {
     @Override
     protected void autonomousInit() {
         scheduler.resume();
+        robotTracker.resetOdometry();
+        drive.setAutoTrajectory(trajectory, false);
+
     }
 
     @Override
     protected void disabledInit() {
         scheduler.pause();
     }
+
     public static void main(String... args) {
         RobotBase.startRobot(MainAthos::new);
     }

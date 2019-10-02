@@ -13,10 +13,10 @@ import org.team3128.common.utility.math.Translation2D;
 import org.team3128.common.utility.math.Rotation2D;
 import org.team3128.common.utility.NarwhalUtility;
 import org.team3128.common.utility.RobotMath;
+import org.team3128.athos.subsystems.Constants;
 
 public class RamseteController {
 
-	double metersToInches = 39.3700787;
 	double b;
 	double zeta;
 
@@ -48,25 +48,25 @@ public class RamseteController {
 		double actualYPosition = robotPose.getTranslation().getY(); // actual Y position in inches
 		double actualTheta = robotPose.getRotation().getDegrees(); // actual theta in degrees
 
-		double desiredLinearVelocity = currentTrajectoryState.velocityMetersPerSecond * metersToInches; // trajectory
-																										// desired
-																										// velocity in
-																										// in/s
+		double desiredLinearVelocity = currentTrajectoryState.velocityMetersPerSecond / Constants.inchesToMeters; // trajectory
+		// desired
+		// velocity in
+		// in/s
 		double desiredAngularVelocity = currentTrajectoryState.velocityMetersPerSecond
 				* currentTrajectoryState.curvatureRadPerMeter * 180 / Math.PI; // trajectory desired angular velocity in
 																				// deg/s
-		double desiredXPosition = currentTrajectoryState.poseMeters.getTranslation().getX() * metersToInches; // trajectory
-																												// desired
-																												// X
-																												// position
-																												// in
-																												// inches
-		double desiredYPosition = currentTrajectoryState.poseMeters.getTranslation().getY() * metersToInches; // trajectory
-																												// desired
-																												// Y
-																												// position
-																												// in
-																												// inches
+		double desiredXPosition = currentTrajectoryState.poseMeters.getTranslation().getX() / Constants.inchesToMeters; // trajectory
+		// desired
+		// X
+		// position
+		// in
+		// inches
+		double desiredYPosition = currentTrajectoryState.poseMeters.getTranslation().getY() / Constants.inchesToMeters; // trajectory
+		// desired
+		// Y
+		// position
+		// in
+		// inches
 		double desiredTheta = currentTrajectoryState.poseMeters.getRotation().getDegrees(); // trajectory desired theta
 																							// in degrees
 

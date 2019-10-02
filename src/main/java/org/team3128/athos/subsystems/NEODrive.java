@@ -80,7 +80,7 @@ public class NEODrive extends Threaded {
 	// private LazyTalonSRX leftTalon, rightTalon, leftSlaveTalon, leftSlave2Talon,
 	// rightSlaveTalon, rightSlave2Talon;
 	private RamseteController autonomousDriver;
-	private Trajectory trajectory;
+	private Trajectory trajectory = null;
 	private AsynchronousPid turnPID;
 	private DriveState driveState;
 	private RateLimiter moveProfiler, turnProfiler;
@@ -250,9 +250,18 @@ public class NEODrive extends Threaded {
 		this.trajectory = autoTraj;
 		totalTime = trajectory.getTotalTimeSeconds();
 		autonomousDriver = new RamseteController(2.0, 0.7, isReversed, Constants.TRACK_RADIUS);
-		configAuto();
-		updateRamseteController(autoTraj, true);
-		driveState = DriveState.RAMSETECONTROL;
+	}
+
+	public synchronized void startTrajectory() {
+		if (trajectory == null) {
+			Log.info("NEODrive", "FATAL // FAILED TRAJECTORY - NULL TRAJECTORY INPUTTED");
+			Log.info("NEODrive", "Returned to teleop control");
+			driveState = DriveState.TELEOP;
+		} else {
+			configAuto();
+			updateRamseteController(true);
+			driveState = DriveState.RAMSETECONTROL;
+		}
 	}
 
 	public void setBrakeState(NeutralMode mode) {
@@ -343,7 +352,7 @@ public class NEODrive extends Threaded {
 		case TELEOP:
 			break;
 		case RAMSETECONTROL:
-			updateRamseteController(trajectory, false);
+			updateRamseteController(false);
 			break;
 		case TURN:
 			updateTurn();
@@ -398,7 +407,7 @@ public class NEODrive extends Threaded {
 		configHigh();
 	}
 
-	private void updateRamseteController(Trajectory trajectory, boolean isStart) {
+	private void updateRamseteController(boolean isStart) {
 		Log.info("NEODrive", "Updating Ramsete Follower");
 		currentTime = Timer.getFPGATimestamp();
 		if (isStart) {
@@ -409,8 +418,9 @@ public class NEODrive extends Threaded {
 
 		AutoDriveSignal signal = autonomousDriver.calculate(RobotTracker.getInstance().getOdometry(),
 				currentTrajectoryState);
-		if ((currentTime - startTime) == 0) {
+		if ((currentTime - startTime) == totalTime) {
 			synchronized (this) {
+				Log.info("NEODrive", "Finished Trajectory Pursuit with RamseteController successfully.");
 				driveState = DriveState.DONE;
 			}
 			configHigh();
