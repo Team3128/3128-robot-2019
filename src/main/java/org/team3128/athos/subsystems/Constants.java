@@ -41,7 +41,7 @@ public class Constants extends RobotConstants {
         public static final int LEFT_DRIVE_MIDDLE_ID = 4;
         public static final int LEFT_DRIVE_BACK_ID = 3;
 
-        public static final double WHEELBASE = 32.3; // Might be deprecated. I have to find out how to implement arc
+        // public static final double WHEELBASE = 32.3; // Might be deprecated. I have to find out how to implement arc
                                                      // turns
                                                      // first. (Adham)
         public static final int DRIVE_HIGH_SPEED = 140; // Empirical Max Linear Speed: 146.57 in/s
@@ -81,7 +81,7 @@ public class Constants extends RobotConstants {
         public static final double K_HOLD_P = 4;
 
         // ---- AUTONOMOUS DRIVE
-        public static final double TRACK_RADIUS = -12;
+        public static final double TRACK_RADIUS = 28;
         public static final double MIN_TURNING_RADIUS = 40;
         public static final double MIN_PATH_SPEED = 20;
         public static final double MAX_PATH_SPEED = 120;

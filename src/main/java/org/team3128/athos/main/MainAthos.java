@@ -97,12 +97,11 @@ public class MainAthos extends NarwhalRobot {
         SmartDashboard.putNumber("F Gain", kF);
 
         waypoints.add(new Pose2D(0, 0, Rotation2D.fromDegrees(0)));
-        waypoints.add(
-                new Pose2D(20 * Constants.inchesToMeters, 10 * Constants.inchesToMeters, Rotation2D.fromDegrees(0)));
+        waypoints.add(new Pose2D(20 * Constants.inchesToMeters, 10 * Constants.inchesToMeters, Rotation2D.fromDegrees(0)));
         waypoints.add(new Pose2D(40 * Constants.inchesToMeters, 0, Rotation2D.fromDegrees(0)));
 
         trajectory = TrajectoryGenerator.generateTrajectory(waypoints, new ArrayList<TrajectoryConstraint>(), 0, 0,
-                Constants.DRIVE_HIGH_SPEED * Constants.inchesToMeters, 0.1, false);
+                Constants.DRIVE_HIGH_SPEED * Constants.inchesToMeters, 0.5, false);
     }
 
     @Override
@@ -248,9 +247,11 @@ public class MainAthos extends NarwhalRobot {
 
     @Override
     protected void autonomousInit() {
+        Log.info("MainAthos", "going into autonomousinit");
         scheduler.resume();
         robotTracker.resetOdometry();
         drive.setAutoTrajectory(trajectory, false);
+        drive.startTrajectory();
 
     }
 

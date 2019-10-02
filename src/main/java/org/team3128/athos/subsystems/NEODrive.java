@@ -87,7 +87,6 @@ public class NEODrive extends Threaded {
 	private Rotation2D wantedHeading;
 	private volatile double driveMultiplier;
 
-	private double previousTime;
 	private double currentTime;
 	private double startTime;
 	private double totalTime;
@@ -287,9 +286,9 @@ public class NEODrive extends Threaded {
 		double leftSetpoint = (setVelocity.leftVelocity) * 1 / Constants.kDriveInchesPerSecPerRPM;
 		double rightSetpoint = (setVelocity.rightVelocity) * 1 / Constants.kDriveInchesPerSecPerRPM;
 		leftSparkPID.setReference(leftSetpoint, ControlType.kVelocity);
-		Log.info("NEODrive", "setWheelVelocity: " + "leftSetpoint = " + String.valueOf(leftSetpoint));
+		// Log.info("NEODrive", "setWheelVelocity: " + "leftSetpoint = " + String.valueOf(leftSetpoint));
 		rightSparkPID.setReference(rightSetpoint, ControlType.kVelocity);
-		Log.info("NEODrive", "setWheelVelocity: " + "rightSetpoint = " + String.valueOf(rightSetpoint));
+		// Log.info("NEODrive", "setWheelVelocity: " + "rightSetpoint = " + String.valueOf(rightSetpoint));
 	}
 
 	/**
@@ -408,20 +407,18 @@ public class NEODrive extends Threaded {
 	}
 
 	private void updateRamseteController(boolean isStart) {
-		Log.info("NEODrive", "Updating Ramsete Follower");
 		currentTime = Timer.getFPGATimestamp();
 		if (isStart) {
 			startTime = currentTime;
-			previousTime = currentTime;
 		}
-		State currentTrajectoryState = trajectory.sample(currentTime - previousTime);
+		State currentTrajectoryState = trajectory.sample(currentTime - startTime);		
 
 		AutoDriveSignal signal = autonomousDriver.calculate(RobotTracker.getInstance().getOdometry(),
 				currentTrajectoryState);
 		if ((currentTime - startTime) == totalTime) {
 			synchronized (this) {
 				Log.info("NEODrive", "Finished Trajectory Pursuit with RamseteController successfully.");
-				driveState = DriveState.DONE;
+				driveState = DriveState.TELEOP;
 			}
 			configHigh();
 		}
