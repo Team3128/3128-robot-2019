@@ -96,10 +96,21 @@ public class MainAthos extends NarwhalRobot {
         SmartDashboard.putNumber("D Gain", kD);
         SmartDashboard.putNumber("F Gain", kF);
 
+
+        //straight
+        // waypoints.add(new Pose2D(0, 0, Rotation2D.fromDegrees(0)));
+        // waypoints.add(new Pose2D(60 * Constants.inchesToMeters, 0 * Constants.inchesToMeters, Rotation2D.fromDegrees(0)));
+
+        //quarterturn
+        // waypoints.add(new Pose2D(0, 0, Rotation2D.fromDegrees(0)));
+        // waypoints.add(new Pose2D(60 * Constants.inchesToMeters, 60 * Constants.inchesToMeters, Rotation2D.fromDegrees(90)));
+
+        // waypoints.add(new Pose2D(0, 0, Rotation2D.fromDegrees(0)));
+        // waypoints.add(new Pose2D(60 * Constants.inchesToMeters, 30 * Constants.inchesToMeters, Rotation2D.fromDegrees(45)));
+
         waypoints.add(new Pose2D(0, 0, Rotation2D.fromDegrees(0)));
-        waypoints.add(
-                new Pose2D(60 * Constants.inchesToMeters, 50 * Constants.inchesToMeters, Rotation2D.fromDegrees(0)));
-        waypoints.add(new Pose2D(120 * Constants.inchesToMeters, 30, Rotation2D.fromDegrees(0)));
+        waypoints.add(new Pose2D(60 * Constants.inchesToMeters, 30 * Constants.inchesToMeters, Rotation2D.fromDegrees(90)));
+        waypoints.add(new Pose2D(0 * Constants.inchesToMeters, 60 * Constants.inchesToMeters, Rotation2D.fromDegrees(180)));
 
         trajectory = TrajectoryGenerator.generateTrajectory(waypoints, new ArrayList<TrajectoryConstraint>(), 0, 0,
                 130 * Constants.inchesToMeters, 0.4, false);

@@ -248,7 +248,7 @@ public class NEODrive extends Threaded {
 	public synchronized void setAutoTrajectory(Trajectory autoTraj, boolean isReversed) {
 		this.trajectory = autoTraj;
 		totalTime = trajectory.getTotalTimeSeconds();
-		autonomousDriver = new RamseteController(2.0, 0.7, isReversed, Constants.TRACK_RADIUS);
+		autonomousDriver = new RamseteController(1.8, 0.7, isReversed, Constants.TRACK_RADIUS); //2,0.7
 	}
 
 	public synchronized void startTrajectory() {
