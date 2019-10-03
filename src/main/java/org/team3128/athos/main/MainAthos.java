@@ -69,7 +69,7 @@ public class MainAthos extends NarwhalRobot {
 
     public double startTime = 0;
 
-    public String trackerCSV = "Time, X, Y, Theta";
+    public String trackerCSV = "Time, X, Y, Theta, Xdes, Ydes";
 
     public ArrayList<Pose2D> waypoints = new ArrayList<Pose2D>();
     public Trajectory trajectory;
@@ -102,7 +102,7 @@ public class MainAthos extends NarwhalRobot {
         waypoints.add(new Pose2D(120 * Constants.inchesToMeters, 30, Rotation2D.fromDegrees(0)));
 
         trajectory = TrajectoryGenerator.generateTrajectory(waypoints, new ArrayList<TrajectoryConstraint>(), 0, 0,
-                Constants.DRIVE_HIGH_SPEED * Constants.inchesToMeters, 0.5, false);
+                130 * Constants.inchesToMeters, 0.4, false);
     }
 
     @Override
@@ -141,7 +141,7 @@ public class MainAthos extends NarwhalRobot {
             Log.info("MainAthos", trackerCSV);
         });
         lm.addButtonDownListener("ClearCSV", () -> {
-            trackerCSV = "Time, X, Y, Theta";
+            trackerCSV = "Time, X, Y, Theta, Xdes, Ydes";
             Log.info("MainAthos", "CSV CLEARED");
             startTime = Timer.getFPGATimestamp();
         });
@@ -238,7 +238,9 @@ public class MainAthos extends NarwhalRobot {
         trackerCSV += "\n" + String.valueOf(Timer.getFPGATimestamp() - startTime) + ","
                 + String.valueOf(robotTracker.getOdometry().translationMat.getX()) + ","
                 + String.valueOf(robotTracker.getOdometry().translationMat.getY()) + ","
-                + String.valueOf(robotTracker.getOdometry().rotationMat.getDegrees());
+                + String.valueOf(robotTracker.getOdometry().rotationMat.getDegrees()) + ","
+                + String.valueOf(robotTracker.trajOdometry.translationMat.getX()) + "," 
+                + String.valueOf(robotTracker.trajOdometry.translationMat.getY());
     }
 
     @Override
@@ -248,12 +250,13 @@ public class MainAthos extends NarwhalRobot {
 
     @Override
     protected void autonomousInit() {
+        trackerCSV = "Time, X, Y, Theta, Xdes, Ydes";
         Log.info("MainAthos", "going into autonomousinit");
         scheduler.resume();
         robotTracker.resetOdometry();
         drive.setAutoTrajectory(trajectory, false);
         drive.startTrajectory();
-
+        startTime = Timer.getFPGATimestamp();
     }
 
     @Override

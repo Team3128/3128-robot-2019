@@ -25,6 +25,7 @@ public class RobotTracker extends Threaded {
 
 	private NEODrive drive;
 	private Pose2D currentOdometry;
+	public Pose2D trajOdometry;
 	private double oldDistance = 0;
 	private double currentDistance;
 	private double oldTheta = 0;
@@ -33,6 +34,8 @@ public class RobotTracker extends Threaded {
 	private RobotTracker() {
 		drive = NEODrive.getInstance();
 		currentOdometry = new Pose2D(new Translation2D(), drive.getGyroAngle());
+		trajOdometry = new Pose2D(new Translation2D(), new Rotation2D());
+
 	}
 
 	// synchronized public Rotation2D getGyroAngle(long time) {

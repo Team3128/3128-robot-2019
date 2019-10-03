@@ -14,6 +14,7 @@ import org.team3128.common.utility.math.Rotation2D;
 import org.team3128.common.utility.Log;
 import org.team3128.common.utility.NarwhalUtility;
 import org.team3128.athos.subsystems.Constants;
+import org.team3128.athos.subsystems.RobotTracker;
 
 public class RamseteController {
 
@@ -55,8 +56,6 @@ public class RamseteController {
 		// velocity in
 		// m/s
 
-		Log.info("desiredlinearvel", String.valueOf(desiredLinearVelocity));
-
 		double desiredAngularVelocity = currentTrajectoryState.velocityMetersPerSecond
 				* currentTrajectoryState.curvatureRadPerMeter; // trajectory desired angular velocity in
 																// rad/s
@@ -72,6 +71,8 @@ public class RamseteController {
 		// position
 		// in
 		// meters
+
+		RobotTracker.getInstance().trajOdometry = new Pose2D(new Translation2D(desiredXPosition / Constants.inchesToMeters, desiredYPosition / Constants.inchesToMeters), new Rotation2D());
 		double desiredTheta = currentTrajectoryState.poseMeters.getRotation().getRadians(); // trajectory desired theta
 																							// in radians
 
