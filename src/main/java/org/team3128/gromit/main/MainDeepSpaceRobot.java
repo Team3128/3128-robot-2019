@@ -33,6 +33,7 @@ import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
 
 import org.team3128.gromit.autonomous.CmdAutoPrime;
+import org.team3128.gromit.autonomous.CmdAutoTest;
 
 import org.team3128.gromit.mechanisms.FourBar;
 import org.team3128.gromit.mechanisms.Lift;
@@ -597,6 +598,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot{
 	{
 		//NarwhalDashboard.addAuto("90 In Place", drive.new CmdInPlaceTurn(90, Direction.RIGHT, 1.0, 5000));
 		//NarwhalDashboard.addAuto("Test Drive Train", new CmdTestDriveTrain());
+		NarwhalDashboard.addAuto("autoTest", new CmdAutoTest());
 	}
 	
 	@Override
