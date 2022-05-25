@@ -32,6 +32,8 @@ import org.team3128.common.util.units.Angle;
 import org.team3128.common.util.units.Length;
 
 import org.team3128.gromit.commands.CmdAutoVisionScore;
+import org.team3128.gromit.autonomous.CmdAutoPrime;
+import org.team3128.gromit.autonomous.CmdAutoTest;
 import org.team3128.gromit.mechanisms.FourBar;
 import org.team3128.gromit.mechanisms.Lift;
 import org.team3128.gromit.mechanisms.LiftIntake;
@@ -281,6 +283,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 
 		rightJoystick = new Joystick(0);
 		listenerRight = new ListenerManager(rightJoystick);
+		//listenerLeft = new ListenerManager(leftJoystick);
 		addListenerManager(listenerRight);
 
 		// DCU
@@ -296,6 +299,8 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		bottomLimelight = new Limelight("limelight-bottom", bottomLLAngle,  bottomLLHeight, 11 * Length.in, 14.5 * Length.in);
 
 		topLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
+		bottomLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
+
 	
 
 
@@ -397,6 +402,24 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 			}
 
 			ledOn = !ledOn;
+		});
+
+		NarwhalDashboard.addButton("lift_up", (boolean down) -> {
+			if (down) {
+				lift.powerControl(0.8);
+			}
+			else {
+				lift.powerControl(0);
+			}
+		});
+
+		NarwhalDashboard.addButton("lift_down", (boolean down) -> {
+			if (down) {
+				lift.powerControl(-0.2);
+			}
+			else {
+				lift.powerControl(0);
+			}
 		});
 
 		NarwhalDashboard.addButton("compute2D", (boolean down) -> {
@@ -539,6 +562,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		listenerLeft.nameControl(ControllerExtreme3D.JOYY, "ManualControl");
 
 		listenerLeft.addMultiListener(() -> {
+			
 			if (listenerLeft.getButton("ManualMode")) {
 				lift.override = false;
 				lift.powerControl(0);
@@ -587,7 +611,12 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 	}
 
 	@Override
-	protected void constructAutoPrograms() {
+
+	protected void constructAutoPrograms()
+	{
+		//NarwhalDashboard.addAuto("90 In Place", drive.new CmdInPlaceTurn(90, Direction.RIGHT, 1.0, 5000));
+		//NarwhalDashboard.addAuto("Test Drive Train", new CmdTestDriveTrain());
+		NarwhalDashboard.addAuto("autoTest", new CmdAutoTest());
 	}
 	
 	@Override
@@ -605,6 +634,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		drive.shiftToLow();
 
 		topLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
+		bottomLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
 
 		fourBar.brake();
 		lift.powerControl(0);
@@ -615,6 +645,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		drive.shiftToLow();
 
 		topLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
+		bottomLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
 
 		driveCmdRunning.isRunning = false;
 	}
@@ -650,7 +681,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		//Log.info("roll, pitch", String.valueOf(gyro.getRoll()) + ", " + String.valueOf(gyro.getPitch()));
 
 		maxLeftSpeed = Math.max(leftDriveLeader.getSelectedSensorVelocity(), maxLeftSpeed);
-        maxRightSpeed = Math.max(rightDriveLeader.getSelectedSensorVelocity(), maxRightSpeed);
+		maxRightSpeed = Math.max(rightDriveLeader.getSelectedSensorVelocity(), maxRightSpeed);
 
         SmartDashboard.putNumber("Max Left Speed", maxLeftSpeed);
         SmartDashboard.putNumber("Max Right Speed", maxRightSpeed);
@@ -658,6 +689,7 @@ public class MainDeepSpaceRobot extends NarwhalRobot {
 		SmartDashboard.putNumber("pitch", gyro.getPitch());
 		SmartDashboard.putBoolean("Lift: Can Raise", lift.canRaise);
 		SmartDashboard.putBoolean("Lift: Can Lower", lift.canLower);
+		SmartDashboard.putBoolean("Lift Switch Triggered", lift.getLimitSwitch());
 
 		SmartDashboard.putNumber("Lift Height (inches)", lift.getCurrentHeight() / Length.in);
 		SmartDashboard.putNumber("Lift Position (nu)", liftMotorLeader.getSelectedSensorPosition());

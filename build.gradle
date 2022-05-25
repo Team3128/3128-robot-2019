@@ -7,6 +7,9 @@ plugins {
 //def ROBOT_MAIN_CLASS = "org.team3128.prebot.main.MainPrebot"
 def ROBOT_MAIN_CLASS = "org.team3128.gromit.main.MainGromit"
 //def ROBOT_MAIN_CLASS = "org.team3128.gromit.main.MainWallace"
+//def ROBOT_MAIN_CLASS = "org.team3128.athos.main.MainAthos"
+//def ROBOT_MAIN_CLASS = "org.team3128.aramis.main.MainAramis"
+//def ROBOT_MAIN_CLASS = "org.team3128.porthos.main.MainPorthos"
 
 
 // Define my targets (RoboRIO) and artifacts (deployable files)

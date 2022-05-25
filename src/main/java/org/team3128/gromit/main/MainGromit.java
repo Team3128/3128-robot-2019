@@ -57,7 +57,7 @@ public class MainGromit extends MainDeepSpaceRobot {
         placeholder = new Piston(2, 5);
         placeholder.setPistonOn();
 
-        liftLimitSwitch = new DigitalInput(2);
+        liftLimitSwitch = new DigitalInput(8);
         liftSwitchPosition = 40;//170;
         liftMaxVelocity = 4200;
 
@@ -82,6 +82,8 @@ public class MainGromit extends MainDeepSpaceRobot {
         super.constructHardware();
 
         topLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
+        bottomLimelight.setStreamMode(StreamMode.DRIVER_CAMERA);
+
 
         leftDriveLeader.setInverted(InvertType.None);
         leftDriveFollower.setInverted(InvertType.FollowMaster);
@@ -139,7 +141,7 @@ public class MainGromit extends MainDeepSpaceRobot {
         liftMotorLeader.setInverted(false);
         liftMotorLeader.setSensorPhase(true);
 
-        liftMotorFollower.setInverted(true);
+        liftMotorFollower.setInverted(false);
 
         // Lift Intake Invert
         liftIntakeMotor.setInverted(false);
@@ -156,31 +158,31 @@ public class MainGromit extends MainDeepSpaceRobot {
     protected void setupListeners() {
         super.setupListeners();
 
-        listenerLeft.nameControl(new Button(9), "ClimbPistonExtend");
-        listenerLeft.addButtonDownListener("ClimbPistonExtend", () -> {
-            climbPiston.setPistonOn();
-        });
+        // listenerLeft.nameControl(new Button(9), "ClimbPistonExtend");
+        // listenerLeft.addButtonDownListener("ClimbPistonExtend", () -> {
+        //     climbPiston.setPistonOn();
+        // });
 
-        listenerLeft.nameControl(new Button(10), "ClimbPistonRetract");
-        listenerLeft.addButtonDownListener("ClimbPistonRetract", () -> {
-            climbPiston.setPistonOff();
-        });
+        // listenerLeft.nameControl(new Button(10), "ClimbPistonRetract");
+        // listenerLeft.addButtonDownListener("ClimbPistonRetract", () -> {
+        //     climbPiston.setPistonOff();
+        // });
 
-        listenerLeft.nameControl(new Button(11), "BackLegDown");
-        listenerLeft.nameControl(new Button(12), "BackLegUp");
-        listenerLeft.addMultiListener(() -> {
-            if (listenerLeft.getButton("BackLegDown") &&
-               !listenerLeft.getButton("BackLegUp")) {
-                climbMotor.set(ControlMode.PercentOutput, +1.0);
-            }
-            else if (listenerLeft.getButton("BackLegUp") &&
-                    !listenerLeft.getButton("BackLegDown")) {
-                climbMotor.set(ControlMode.PercentOutput, -1.0);
-            }
-            else {
-                climbMotor.set(ControlMode.PercentOutput, 0.0);
-            }
-        }, "BackLegDown", "BackLegUp");
+        // listenerLeft.nameControl(new Button(11), "BackLegDown");
+        // listenerLeft.nameControl(new Button(12), "BackLegUp");
+        // listenerLeft.addMultiListener(() -> {
+        //     if (listenerLeft.getButton("BackLegDown") &&
+        //        !listenerLeft.getButton("BackLegUp")) {
+        //         climbMotor.set(ControlMode.PercentOutput, +1.0);
+        //     }
+        //     else if (listenerLeft.getButton("BackLegUp") &&
+        //             !listenerLeft.getButton("BackLegDown")) {
+        //         climbMotor.set(ControlMode.PercentOutput, -1.0);
+        //     }
+        //     else {
+        //         climbMotor.set(ControlMode.PercentOutput, 0.0);
+        //     }
+        // }, "BackLegDown", "BackLegUp");
     }
 
     @Override

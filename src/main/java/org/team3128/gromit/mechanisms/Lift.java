@@ -145,8 +145,8 @@ public class Lift extends Mechanism {
 
 		setControlMode(LiftControlMode.PERCENT);
 
-		liftMotor.configMotionCruiseVelocity((int) (0.9 * liftMaxVelocity), Constants.CAN_TIMEOUT);
-		liftMotor.configMotionAcceleration((int) (1.5 * liftMaxVelocity), Constants.CAN_TIMEOUT);
+		liftMotor.configMotionCruiseVelocity((int) (0.8 * liftMaxVelocity), Constants.CAN_TIMEOUT);
+		liftMotor.configMotionAcceleration((int) (1.3 * liftMaxVelocity), Constants.CAN_TIMEOUT);
 
 		liftMotor.configOpenloopRamp(0.2, Constants.CAN_TIMEOUT);
 	}
@@ -256,6 +256,7 @@ public class Lift extends Mechanism {
 			Log.info(this, "Setting height to " + heightTarget.targetHeight + " cm.");
 
 			desiredTarget = heightTarget.targetHeight;
+
 		}
 	}
 
