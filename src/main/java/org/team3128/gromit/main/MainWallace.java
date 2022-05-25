@@ -13,6 +13,11 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotBase;
 
 public class MainWallace extends MainDeepSpaceRobot {
+    @Override
+	public String getTag() {
+		return "MainWallace";
+    }
+    
     Piston placeholder1, placeholder2;    
     
 
@@ -49,7 +54,6 @@ public class MainWallace extends MainDeepSpaceRobot {
         fourBarLimitSwitch = new DigitalInput(1);
         fourBarRatio = 4600 / (180 * Angle.DEGREES);
         fourBarSwitchPosition = +99 * Angle.DEGREES;
-        fourBarMaxVelocity = 100;
         
         cargoBumperSwitch = new DigitalInput(2);
 

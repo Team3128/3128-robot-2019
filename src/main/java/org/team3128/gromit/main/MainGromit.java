@@ -19,6 +19,11 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class MainGromit extends MainDeepSpaceRobot {
+    @Override
+	public String getTag() {
+		return "MainGromit";
+    }
+    
     Piston placeholder;
 
     // Climber
@@ -59,7 +64,6 @@ public class MainGromit extends MainDeepSpaceRobot {
         fourBarLimitSwitch = new DigitalInput(0);
         fourBarRatio = 4600 / (180 * Angle.DEGREES); //4550
         fourBarSwitchPosition = +96 * Angle.DEGREES;
-        fourBarMaxVelocity = 100;
         
         cargoBumperSwitch = new DigitalInput(1);
 
@@ -89,10 +93,15 @@ public class MainGromit extends MainDeepSpaceRobot {
         rightDriveFollower.setInverted(InvertType.FollowMaster);
         rightDriveLeader.setSensorPhase(true);
 
-        // Create the Climber
+        /**
+         * Climber Construction
+         */
 		climbMotor = new TalonSRX(40);
-		Climber.initialize(climbPiston, climbMotor);
+        Climber.initialize(climbPiston, climbMotor);
+        
         climber = Climber.getInstance();
+
+        addMechanism(climber);
         
         NarwhalDashboard.addButton("climb_12", (boolean down) -> {
 			if (down) {

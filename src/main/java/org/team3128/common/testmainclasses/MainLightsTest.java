@@ -7,6 +7,10 @@ import org.team3128.common.hardware.lights.PWMLights;
 import org.team3128.common.util.Log;
 
 public class MainLightsTest extends NarwhalRobot {
+	@Override
+	public String getTag() {
+		return "MainLightsTest";
+	}
 
 	public PWMLights lights;	
 	
