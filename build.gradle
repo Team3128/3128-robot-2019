@@ -1,6 +1,6 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2019.3.2"
+    id "edu.wpi.first.GradleRIO" version "2019.4.1"
 }
 
 //def ROBOT_MAIN_CLASS = "org.team3128.testbench.main.MainTestBench"
@@ -65,6 +65,16 @@ dependencies {
     compile files('lib/minlog-info-1.2.jar')
     compile files('lib/objenesis-2.4.jar')
     compile files('lib/reflectasm-1.09-all.jar')
+    // ejml dependencies:
+    compile files('lib/ejml-v0.38-libs/ejml-cdense-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-core-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-ddense-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-dsparse-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-experimental-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-fdense-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-simple-0.38.jar')
+    compile files('lib/ejml-v0.38-libs/ejml-zdense-0.38.jar')
+
 }
 
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')
