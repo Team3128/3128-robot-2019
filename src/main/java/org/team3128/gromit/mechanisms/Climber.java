@@ -315,6 +315,7 @@ public class Climber {
         @Override
         protected void interrupted() {
             end();
+            // Pwter was here
         }
     }
 }
